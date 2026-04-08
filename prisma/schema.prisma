@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider  = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  topic     String
+  stage     Int      @default(0)
+  step      String   @default("step0")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  interactions ProjectInteraction[]
+  
+  @@index([stage])
+  @@index([step])
+}
+
+model ProjectInteraction {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  stage     Int
+  stepId    String
+  stepLabel String
+  
+  userInput   String
+  aiOutput    String
+  
+  mode      String?  // "quick", "advanced", etc
+  tokens    Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([projectId])
+  @@index([stage])
+  @@index([stepId])
+}

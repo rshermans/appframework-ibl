@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>X10 · Research Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #070B14;
+  --surface: #0D1220;
+  --surface2: #131929;
+  --border: rgba(188,151,83,0.18);
+  --gold: #BC9753;
+  --gold-light: #D4A843;
+  --teal: #00C9B8;
+  --teal-dim: rgba(0,201,184,0.12);
+  --text: #E8E8F0;
+  --text-muted: #7A8099;
+  --danger: #FF6B6B;
+  --success: #4ECDC4;
+  --stage0: #8B5CF6;
+  --stage1: #3B82F6;
+  --stage2: #10B981;
+  --stage3: #F59E0B;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── GRAIN OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: .5;
+}
+
+/* ── HEADER ── */
+.header {
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, rgba(188,151,83,0.06) 0%, transparent 60%);
+  z-index: 10;
+}
+
+.logo-area {
+  display: flex; align-items: center; gap: 14px;
+}
+
+.logo-glyph {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 900; color: #070B14;
+}
+
+.logo-text { line-height: 1.1; }
+.logo-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 17px; font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .02em;
+}
+.logo-sub {
+  font-size: 11px; color: var(--text-muted);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+
+/* Stage pills */
+.stage-pills { display: flex; gap: 6px; }
+.stage-pill {
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  border: 1px solid transparent; cursor: default;
+  transition: all .2s;
+}
+.stage-pill.s0 { background: rgba(139,92,246,.15); border-color: rgba(139,92,246,.3); color: #A78BFA; }
+.stage-pill.s1 { background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.3); color: #93C5FD; }
+.stage-pill.s2 { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.3); color: #6EE7B7; }
+.stage-pill.s3 { background: rgba(245,158,11,.15); border-color: rgba(245,158,11,.3); color: #FCD34D; }
+
+/* ── NAV TABS ── */
+.nav-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 12px 32px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 9;
+}
+
+.nav-tab {
+  padding: 10px 20px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  transition: all .2s;
+  display: flex; align-items: center; gap: 7px;
+  position: relative; bottom: -1px;
+}
+
+.nav-tab:hover { color: var(--text); background: var(--surface); }
+
+.nav-tab.active {
+  background: var(--surface);
+  color: var(--gold);
+  border-color: var(--border);
+  border-bottom-color: var(--surface);
+}
+
+.tab-icon { font-size: 15px; }
+
+/* ── MAIN AREA ── */
+.main {
+  padding: 28px 32px;
+  position: relative; z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.panel { display: none; }
+.panel.active { display: block; animation: fadeIn .3s ease; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── SECTION TITLE ── */
+.section-header {
+  margin-bottom: 24px;
+}
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px; font-weight: 700;
+  color: var(--gold);
+  line-height: 1.2;
+}
+.section-desc {
+  font-size: 14px; color: var(--text-muted); margin-top: 6px;
+  max-width: 680px; line-height: 1.6;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.card-title {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.card-title .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold);
+}
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+@media (max-width: 800px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .main { padding: 18px 16px; }
+  .nav-tabs { padding: 10px 16px 0; overflow-x: auto; }
+  .header { padding: 16px; flex-wrap: wrap; gap: 12px; }
+  .stage-pills { display: none; }
+}
+
+/* ── INPUTS ── */
+label {
+  display: block; font-size: 12px;
+  font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: 6px;
+}
+
+input, select, textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(188,151,83,.08);
+}
+
+textarea { resize: vertical; line-height: 1.6; min-height: 120px; }
+
+select option { background: #131929; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none;
+  transition: all .2s;
+  letter-spacing: .02em;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #070B14;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(188,151,83,.35); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+.btn-teal {
+  background: var(--teal);
+  color: #070B14;
+}
+.btn-teal:hover { box-shadow: 0 4px 20px rgba(0,201,184,.3); transform: translateY(-1px); }
+
+.btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+/* ── AI OUTPUT ── */
+.ai-output {
+  background: linear-gradient(135deg, rgba(0,201,184,.05) 0%, rgba(0,201,184,.02) 100%);
+  border: 1px solid rgba(0,201,184,.2);
+  border-radius: var(--radius);
+  padding: 20px;
+  font-size: 14px; line-height: 1.7;
+  min-height: 80px;
+  white-space: pre-wrap;
+  color: var(--text);
+  position: relative;
+}
+
+.ai-output:empty::before {
+  content: 'AI response will appear here...';
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.ai-badge {
+  position: absolute; top: -10px; left: 16px;
+  background: var(--teal); color: #070B14;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 10px; border-radius: 10px;
+  letter-spacing: .06em;
+}
+
+/* ── THINKING INDICATOR ── */
+.thinking {
+  display: none;
+  align-items: center; gap: 10px;
+  padding: 14px 18px;
+  background: rgba(0,201,184,.06);
+  border: 1px solid rgba(0,201,184,.15);
+  border-radius: var(--radius);
+  font-size: 13px; color: var(--teal);
+  font-family: 'Space Mono', monospace;
+}
+.thinking.active { display: flex; }
+
+.dots span {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+  margin: 0 2px;
+  animation: bounce .9s infinite;
+}
+.dots span:nth-child(2) { animation-delay: .15s; }
+.dots span:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+/* ── STAGE SELECTOR ── */
+.stage-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stage-btn {
+  padding: 14px 12px;
+  border-radius: 9px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  background: var(--surface2);
+  text-align: center;
+  transition: all .2s;
+}
+.stage-btn:hover { transform: translateY(-2px); }
+.stage-btn.active { border-color: var(--gold); background: rgba(188,151,83,.08); }
+
+.stage-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 700;
+}
+.stage-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+
+.s0-clr { color: #A78BFA; }
+.s1-clr { color: #93C5FD; }
+.s2-clr { color: #6EE7B7; }
+.s3-clr { color: #FCD34D; }
+
+/* ── STEP LIST ── */
+.step-list {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 16px;
+}
+
+.step-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--text-muted);
+}
+.step-chip:hover { border-color: var(--gold); color: var(--gold); }
+.step-chip.active { background: var(--gold); color: #070B14; border-color: var(--gold); }
+
+/* ── RUBRIC SCORE ── */
+.score-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.score-row:last-child { border-bottom: none; }
+
+.score-criterion { font-size: 14px; font-weight: 500; }
+.score-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.score-badge {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px;
+  flex-shrink: 0;
+}
+.score-1 { background: rgba(255,107,107,.15); color: #FF6B6B; }
+.score-2 { background: rgba(255,165,0,.15); color: #FFA500; }
+.score-3 { background: rgba(59,130,246,.15); color: #93C5FD; }
+.score-4 { background: rgba(78,205,196,.15); color: #4ECDC4; }
+
+/* ── TOTAL SCORE ── */
+.total-score {
+  background: linear-gradient(135deg, rgba(188,151,83,.12), rgba(188,151,83,.04));
+  border: 1px solid rgba(188,151,83,.3);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 16px;
+}
+.total-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gold); }
+.total-value { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: var(--gold); }
+
+/* ── PROGRESS BAR ── */
+.progress-track {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  margin: 8px 0 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--teal));
+  transition: width .6s ease;
+}
+
+/* ── METRIC CARDS ── */
+.metric-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-align: center;
+}
+.metric-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px; font-weight: 700;
+  color: var(--gold);
+}
+.metric-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* ── RQ CARD ── */
+.rq-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--teal);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.rq-card:hover { border-left-color: var(--gold); background: rgba(188,151,83,.04); }
+
+.rq-num { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--teal); margin-bottom: 6px; }
+.rq-text { font-size: 14px; line-height: 1.6; }
+.rq-type { font-size: 11px; color: var(--text-muted); margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+/* ── EVIDENCE ── */
+.evidence-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em;
+  margin-bottom: 8px;
+}
+.tag-hyp { background: rgba(139,92,246,.2); color: #A78BFA; }
+.tag-method { background: rgba(59,130,246,.2); color: #93C5FD; }
+.tag-find { background: rgba(16,185,129,.2); color: #6EE7B7; }
+.tag-limit { background: rgba(255,107,107,.2); color: #FF6B6B; }
+.tag-cite { background: rgba(188,151,83,.2); color: var(--gold); }
+.tag-ai { background: rgba(0,201,184,.2); color: var(--teal); }
+
+.evidence-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+/* ── ETHICAL SCORE ── */
+.ethical-meter {
+  height: 10px;
+  background: var(--surface2);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.ethical-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width .8s ease;
+}
+.ethical-low { background: linear-gradient(90deg, #FF6B6B, #FF9A9A); }
+.ethical-med { background: linear-gradient(90deg, #FFA500, #FFD166); }
+.ethical-high { background: linear-gradient(90deg, var(--teal), #00E5D4); }
+
+/* ── COPY BTN ── */
+.copy-btn-sm {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all .15s;
+}
+.copy-btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── PROMPT DISPLAY ── */
+.prompt-display {
+  background: var(--surface2);
+  border: 1px solid rgba(188,151,83,.2);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #C8C8D8;
+  white-space: pre-wrap;
+  margin-bottom: 12px;
+}
+
+/* ── FLOW DIAGRAM ── */
+.flow-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 10px 0 20px;
+}
+
+.flow-node {
+  flex-shrink: 0;
+  width: 140px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 14px 12px;
+  text-align: center;
+  position: relative;
+}
+
+.flow-node .fn-stage {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+}
+.flow-node .fn-name { font-size: 12px; font-weight: 600; line-height: 1.3; }
+.flow-node .fn-steps { font-size: 10px; color: var(--text-muted); margin-top: 5px; }
+
+.flow-arrow {
+  flex-shrink: 0;
+  display: flex; align-items: center;
+  color: var(--border);
+  font-size: 20px;
+  padding: 0 4px;
+  margin-top: 20px;
+}
+
+/* ── MONITOR (ethical) ── */
+.flag-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.flag-ok { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); }
+.flag-warn { background: rgba(255,165,0,.08); border: 1px solid rgba(255,165,0,.2); }
+.flag-bad { background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.2); }
+.flag-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: rgba(188,151,83,.3); border-radius: 3px; }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* ── INLINE FLEX ── */
+.flex { display: flex; align-items: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-4 { margin-bottom: 4px; }
+.mb-12 { margin-bottom: 12px; }
+
+.text-sm { font-size: 13px; }
+.text-muted { color: var(--text-muted); }
+.text-gold { color: var(--gold); }
+.text-teal { color: var(--teal); }
+.mono { font-family: 'Space Mono', monospace; }
+
+.w-full { width: 100%; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     HEADER
+══════════════════════════════════════ -->
+<header class="header">
+  <div class="logo-area">
+    <div class="logo-glyph">X</div>
+    <div class="logo-text">
+      <div class="logo-title">X10 Research Intelligence Platform</div>
+      <div class="logo-sub">IBL + AI Automation · Arqus Alliance Framework</div>
+    </div>
+  </div>
+  <div class="stage-pills">
+    <span class="stage-pill s0">Stage 0 · Setup</span>
+    <span class="stage-pill s1">Stage 1 · Ask & Research</span>
+    <span class="stage-pill s2">Stage 2 · Explain & Create</span>
+    <span class="stage-pill s3">Stage 3 · Reflect</span>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════
+     NAV TABS
+══════════════════════════════════════ -->
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('copilot', this)">
+    <span class="tab-icon">🧠</span> AI Step Co-pilot
+  </div>
+  <div class="nav-tab" onclick="switchTab('rubric', this)">
+    <span class="tab-icon">📊</span> Rubric Auto-Scorer
+  </div>
+  <div class="nav-tab" onclick="switchTab('evidence', this)">
+    <span class="tab-icon">🔬</span> Evidence Forge
+  </div>
+  <div class="nav-tab" onclick="switchTab('rqlab', this)">
+    <span class="tab-icon">⚗️</span> RQ Laboratory
+  </div>
+  <div class="nav-tab" onclick="switchTab('monitor', this)">
+    <span class="tab-icon">🛡️</span> Ethics Monitor
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN
+══════════════════════════════════════ -->
+<div class="main">
+
+<!-- ─────────────────────────────────────
+     TAB 1 · AI STEP CO-PILOT
+───────────────────────────────────── -->
+<div id="panel-copilot" class="panel active">
+  <div class="section-header">
+    <div class="section-title">AI Step Co-pilot</div>
+    <div class="section-desc">Select your current Stage and Step. Describe your research context. The AI generates tailored, framework-aligned guidance — matching the exact cognitive demands of each step.</div>
+  </div>
+
+  <!-- FLOW OVERVIEW -->
+  <div class="card mb-12">
+    <div class="card-title"><span class="dot"></span> Framework Pipeline</div>
+    <div class="flow-container">
+      <div class="flow-node">
+        <div class="fn-stage s0-clr">Stage 0</div>
+        <div class="fn-name">Team Setup</div>
+        <div class="fn-steps">Team formation, roles, task distribution</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="fn-stage s1-clr">Stage 1</div>
+        <div class="fn-name">Ask & Research</div>
+        <div class="fn-steps">Steps 0–8B · RQ, sources, evidence, glossary</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="fn-stage s2-clr">Stage 2</div>
+        <div class="fn-name">Explain & Create</div>
+        <div class="fn-steps">Steps 9–10D · Explanation, multimodal outputs</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="fn-stage s3-clr">Stage 3</div>
+        <div class="fn-name">Reflect & Improve</div>
+        <div class="fn-steps">Peer review, self-assessment, extension</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- LEFT: STAGE + STEP SELECTOR -->
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Select Stage</div>
+        <div class="stage-selector">
+          <div class="stage-btn active" id="sb0" onclick="selectStage(0)">
+            <div class="stage-num s0-clr">0</div>
+            <div class="stage-label">Setup</div>
+          </div>
+          <div class="stage-btn" id="sb1" onclick="selectStage(1)">
+            <div class="stage-num s1-clr">1</div>
+            <div class="stage-label">Research</div>
+          </div>
+          <div class="stage-btn" id="sb2" onclick="selectStage(2)">
+            <div class="stage-num s2-clr">2</div>
+            <div class="stage-label">Create</div>
+          </div>
+          <div class="stage-btn" id="sb3" onclick="selectStage(3)">
+            <div class="stage-num s3-clr">3</div>
+            <div class="stage-label">Reflect</div>
+          </div>
+        </div>
+
+        <div class="card-title mt-8"><span class="dot"></span> Select Step</div>
+        <div class="step-list" id="step-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Your Research Context</div>
+        <div class="mb-12">
+          <label>Research Topic / Question</label>
+          <input type="text" id="copilot-topic" placeholder="e.g. CRISPR gene editing in zebrafish development"/>
+        </div>
+        <div class="mb-12">
+          <label>Current Work or Challenge (optional)</label>
+          <textarea id="copilot-context" rows="3" placeholder="Describe what you have done so far or where you are stuck..."></textarea>
+        </div>
+        <div class="mb-12">
+          <label>Role</label>
+          <select id="copilot-role">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+        <button class="btn btn-primary w-full" id="copilot-btn" onclick="runCopilot()">
+          ✦ Generate Step Guidance
+        </button>
+      </div>
+    </div>
+
+    <!-- RIGHT: AI OUTPUT -->
+    <div>
+      <div class="thinking" id="copilot-thinking">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <span id="copilot-thinking-msg">Generating framework-aligned guidance...</span>
+      </div>
+
+      <div class="card" style="position:relative; min-height:300px;">
+        <div class="flex-between mb-12">
+          <div class="card-title" style="margin:0"><span class="dot"></span> AI Guidance Output</div>
+          <div>
+            <button class="copy-btn-sm" onclick="copyText('copilot-output')">Copy</button>
+          </div>
+        </div>
+        <div id="copilot-output" class="ai-output" style="min-height:260px; position:relative;">
+          <span class="ai-badge">AI · CLAUDE</span>
+        </div>
+      </div>
+
+      <!-- SUGGESTED PROMPT -->
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Framework Prompt (Ready to Use)</div>
+        <div id="suggested-prompt" class="prompt-display">Select a step to see its framework-aligned prompt template...</div>
+        <button class="copy-btn-sm" onclick="copyText('suggested-prompt')">Copy Prompt</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     TAB 2 · RUBRIC AUTO-SCORER
+───────────────────────────────────── -->
+<div id="panel-rubric" class="panel">
+  <div class="section-header">
+    <div class="section-title">Rubric Auto-Scorer</div>
+    <div class="section-desc">Paste student work and select one of the 8 framework rubrics. The AI scores each criterion (1–4) with evidence-based justification — reducing teacher workload by 80%.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Select Rubric</div>
+        <select id="rubric-select" onchange="updateRubricInfo()">
+          <option value="">— Choose a rubric —</option>
+          <option value="1">Rubric 1 — Research Question Quality</option>
+          <option value="2">Rubric 2 — Evidence & Source Use</option>
+          <option value="3">Rubric 3 — Scientific Explanation</option>
+          <option value="4">Rubric 4 — Multimodal Output</option>
+          <option value="5">Rubric 5 — Interactive Science Game</option>
+          <option value="6">Rubric 6 — Oral Presentation</option>
+          <option value="7">Rubric 7 — Group Collaboration</option>
+          <option value="8">Rubric 8 — Ethical AI Use</option>
+        </select>
+
+        <div id="rubric-info" class="mt-16" style="display:none;">
+          <div class="card-title mt-8"><span class="dot"></span> Criteria Being Evaluated</div>
+          <div id="rubric-criteria-list" class="text-sm text-muted" style="line-height:2"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Student Work to Evaluate</div>
+        <textarea id="rubric-work" rows="10" placeholder="Paste the student's research question, explanation, oral script, evidence summary, or any submitted work here..."></textarea>
+        <button class="btn btn-primary w-full mt-16" onclick="runRubric()" id="rubric-btn">
+          ✦ Auto-Score with AI
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="thinking" id="rubric-thinking">
+        <div class="dots"><span></span><span></span><span></span></div>
+        Scoring against rubric criteria...
+      </div>
+
+      <div class="card" id="rubric-results" style="display:none;">
+        <div class="card-title"><span class="dot"></span> Scoring Results</div>
+        <div id="rubric-scores-list"></div>
+        <div class="total-score" id="total-score-area" style="display:none;">
+          <div>
+            <div class="total-label">Total Score</div>
+            <div class="text-sm text-muted mt-8" id="total-score-desc"></div>
+          </div>
+          <div class="total-value" id="total-score-value"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Feedback Narrative</div>
+        <div id="rubric-feedback" class="ai-output" style="min-height:140px; position:relative;">
+          <span class="ai-badge">AI · CLAUDE</span>
+        </div>
+        <button class="copy-btn-sm mt-8" onclick="copyText('rubric-feedback')">Copy Feedback</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     TAB 3 · EVIDENCE FORGE
+───────────────────────────────────── -->
+<div id="panel-evidence" class="panel">
+  <div class="section-header">
+    <div class="section-title">Evidence Forge</div>
+    <div class="section-desc">Paste any scientific abstract, article excerpt, or paper. The AI extracts structured evidence aligned with the framework's Step 4 requirements — hypothesis, methods, findings, limitations, and citation readiness.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Input Source Text</div>
+        <div class="mb-12">
+          <label>Research Question (for relevance filtering)</label>
+          <input type="text" id="ev-rq" placeholder="e.g. How does Wnt signalling regulate zebrafish fin regeneration?"/>
+        </div>
+        <div class="mb-12">
+          <label>Paste Abstract / Excerpt</label>
+          <textarea id="ev-text" rows="9" placeholder="Paste the abstract or excerpt from the scientific paper here..."></textarea>
+        </div>
+        <div class="mb-12">
+          <label>Source Reference (optional)</label>
+          <input type="text" id="ev-ref" placeholder="e.g. Smith et al. (2023). Nature Cell Biology, 25(3), 112–128."/>
+        </div>
+        <button class="btn btn-primary w-full" onclick="runEvidence()" id="ev-btn">
+          ✦ Extract & Structure Evidence
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="thinking" id="ev-thinking">
+        <div class="dots"><span></span><span></span><span></span></div>
+        Extracting and structuring evidence...
+      </div>
+
+      <div id="ev-output-area" style="display:none;">
+        <div class="card">
+          <div class="flex-between mb-12">
+            <div class="card-title" style="margin:0"><span class="dot"></span> Structured Evidence</div>
+            <button class="copy-btn-sm" onclick="copyText('ev-structured')">Copy All</button>
+          </div>
+          <div id="ev-structured"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span> Relevance Assessment</div>
+          <div id="ev-relevance" class="ai-output" style="min-height:80px; position:relative;">
+            <span class="ai-badge">AI · CLAUDE</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span> Student Step 4 Fill-in (Ready to Use)</div>
+          <div id="ev-step4" class="prompt-display" style="min-height:60px;"></div>
+          <button class="copy-btn-sm" onclick="copyText('ev-step4')">Copy Step 4 Entry</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     TAB 4 · RQ LABORATORY
+───────────────────────────────────── -->
+<div id="panel-rqlab" class="panel">
+  <div class="section-header">
+    <div class="section-title">Research Question Laboratory</div>
+    <div class="section-desc">Generate, evaluate, and refine research questions using the framework's epistemological analysis engine (Steps 0–1). The AI produces multiple candidates with full epistemic type classification and IBL-alignment scoring.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Research Question Generator</div>
+        <div class="mb-12">
+          <label>Broad Topic / Theme</label>
+          <input type="text" id="rq-topic" placeholder="e.g. Animal developmental biology, CRISPR, climate change adaptation..."/>
+        </div>
+        <div class="mb-12">
+          <label>Level of Study</label>
+          <select id="rq-level">
+            <option value="undergraduate">Undergraduate</option>
+            <option value="master">Master's</option>
+            <option value="secondary">Secondary / High School</option>
+          </select>
+        </div>
+        <div class="mb-12">
+          <label>Preferred Epistemic Type</label>
+          <select id="rq-type">
+            <option value="any">Any (AI decides)</option>
+            <option value="empirical">Empirical (observation-based)</option>
+            <option value="causal">Causal (cause–effect)</option>
+            <option value="comparative">Comparative (X vs Y)</option>
+            <option value="mechanistic">Mechanistic (how it works)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary w-full" onclick="runRQLab()" id="rq-btn">
+          ✦ Generate Research Questions
+        </button>
+      </div>
+
+      <div class="card mt-8">
+        <div class="card-title"><span class="dot"></span> Evaluate My Own RQ</div>
+        <textarea id="rq-eval-input" rows="3" placeholder="Paste your research question here to get an epistemological analysis and improvement suggestions..."></textarea>
+        <button class="btn btn-ghost w-full mt-16" onclick="runRQEval()">
+          ✦ Analyse My Research Question
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="thinking" id="rq-thinking">
+        <div class="dots"><span></span><span></span><span></span></div>
+        Generating research questions...
+      </div>
+
+      <div id="rq-output-area" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="dot"></span> Generated Research Questions</div>
+          <div id="rq-list"></div>
+        </div>
+      </div>
+
+      <div id="rq-eval-area" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="dot"></span> Epistemological Analysis</div>
+          <div id="rq-eval-output" class="ai-output" style="min-height:160px; position:relative;">
+            <span class="ai-badge">AI · CLAUDE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────
+     TAB 5 · ETHICS MONITOR
+───────────────────────────────────── -->
+<div id="panel-monitor" class="panel">
+  <div class="section-header">
+    <div class="section-title">Ethics Monitor</div>
+    <div class="section-desc">Before sending any prompt to an AI tool, run it through the Ethics Monitor. The AI checks for compliance with the framework's Rubric 8 — Ethical AI Use and flags boundary violations, transparency gaps, and prompt quality issues.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Prompt to Audit</div>
+        <div class="mb-12">
+          <label>Stage / Step Context</label>
+          <select id="mon-stage">
+            <option value="Stage 0 — Team Setup">Stage 0 — Team Setup</option>
+            <option value="Stage 1 — Ask & Research">Stage 1 — Ask & Research</option>
+            <option value="Stage 2 — Explain & Create">Stage 2 — Explain & Create</option>
+            <option value="Stage 3 — Reflect & Improve">Stage 3 — Reflect & Improve</option>
+          </select>
+        </div>
+        <div class="mb-12">
+          <label>Intended AI Tool</label>
+          <select id="mon-tool">
+            <option value="Claude (Anthropic)">Claude (Anthropic)</option>
+            <option value="ChatGPT (OpenAI)">ChatGPT (OpenAI)</option>
+            <option value="Gemini (Google)">Gemini (Google)</option>
+            <option value="Perplexity AI">Perplexity AI</option>
+            <option value="Other AI tool">Other AI tool</option>
+          </select>
+        </div>
+        <div class="mb-12">
+          <label>Your Prompt to Audit</label>
+          <textarea id="mon-prompt" rows="8" placeholder="Paste the prompt you plan to send to an AI tool here. The Ethics Monitor will check if it respects the framework's boundaries, transparency requirements, and academic integrity standards..."></textarea>
+        </div>
+        <button class="btn btn-primary w-full" onclick="runMonitor()" id="mon-btn">
+          🛡️ Run Ethics Audit
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="thinking" id="mon-thinking">
+        <div class="dots"><span></span><span></span><span></span></div>
+        Auditing prompt against Rubric 8 criteria...
+      </div>
+
+      <div id="mon-output-area" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="dot"></span> Ethical Compliance Score</div>
+          <div class="flex-between mb-4">
+            <span class="text-sm">Overall Ethics Rating</span>
+            <span class="mono text-sm text-gold" id="mon-score-text">—</span>
+          </div>
+          <div class="ethical-meter">
+            <div class="ethical-fill" id="mon-score-bar" style="width:0%"></div>
+          </div>
+          <div class="text-sm text-muted mt-8" id="mon-score-label"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span> Rubric 8 Criteria Check</div>
+          <div id="mon-flags-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span> Revised Prompt (Ethics-Compliant)</div>
+          <div id="mon-revised" class="prompt-display" style="min-height:80px;"></div>
+          <button class="copy-btn-sm" onclick="copyText('mon-revised')">Copy Revised Prompt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════ -->
+<script>
+// ──────────────────────────────────────
+// DATA: Steps per stage
+// ──────────────────────────────────────
+const STAGES = {
+  0: {
+    label: 'Team Setup',
+    steps: [
+      { id: 's0-form', label: 'Form Team' },
+      { id: 's0-roles', label: 'Assign Roles' },
+      { id: 's0-tasks', label: 'Task Distribution' },
+      { id: 's0-ai', label: 'AI Use Agreement' }
+    ]
+  },
+  1: {
+    label: 'Ask & Research',
+    steps: [
+      { id: 'step0', label: 'Step 0 · Candidate Questions' },
+      { id: 'step1', label: 'Step 1 · Epistemic Analysis' },
+      { id: 'step2', label: 'Step 2 · Search Strings' },
+      { id: 'step3', label: 'Step 3 · Search Databases' },
+      { id: 'step4', label: 'Step 4 · Extract Evidence' },
+      { id: 'step5', label: 'Step 5 · Select Sources' },
+      { id: 'step6', label: 'Step 6 · Topics & Subtopics' },
+      { id: 'step7', label: 'Step 7 · Mind Map' },
+      { id: 'step8a', label: 'Step 8A · Glossary Terms' },
+      { id: 'step8b', label: 'Step 8B · Glossary App' }
+    ]
+  },
+  2: {
+    label: 'Explain & Create',
+    steps: [
+      { id: 'step9', label: 'Step 9 · Scientific Explanation' },
+      { id: 'step10', label: 'Step 10 · Multimodal Plan' },
+      { id: 'step10a', label: 'Step 10A · Visual Output' },
+      { id: 'step10b', label: 'Step 10B · Podcast' },
+      { id: 'step10c', label: 'Step 10C · Videocast' },
+      { id: 'step10d', label: 'Step 10D · Science Game' }
+    ]
+  },
+  3: {
+    label: 'Reflect & Improve',
+    steps: [
+      { id: 's3-peer', label: 'Peer Review' },
+      { id: 's3-self', label: 'Self-Assessment' },
+      { id: 's3-reflect', label: 'Reflection' },
+      { id: 's3-extend', label: 'Extension' }
+    ]
+  }
+};
+
+const STEP_PROMPTS = {
+  's0-form': `You are beginning Stage 0 of an IBL research project. Your first task is to form a research team.
+
+TASK: Help students establish an effective team by defining:
+1. Optimal team size (3–4 members) and rationale
+2. Suggested role titles (e.g. Lead Researcher, Communication Manager, Data Analyst, Ethics Officer)
+3. Team Charter template (goals, norms, communication plan)
+4. Initial AI Use Agreement — what AI is allowed/not allowed to do for the team
+
+Research Topic: [INSERT TOPIC]
+Level: [INSERT LEVEL]`,
+
+  'step0': `You are a scientific research advisor supporting Stage 1, Step 0 of an IBL framework.
+
+TASK: Generate 5 candidate research questions on the topic below.
+Requirements for each question:
+- Scientifically testable or literature-resolvable
+- Specific enough to be answered in a 3–6 week project
+- Varied in epistemic type (empirical, causal, comparative, mechanistic)
+- Appropriate for the level of study
+
+Topic: [INSERT TOPIC]
+
+For each question, provide:
+→ The question
+→ Epistemic type
+→ Why it is researchable
+→ Potential challenges`,
+
+  'step1': `You are an expert in the philosophy of science supporting Step 1 — Epistemological Analysis.
+
+TASK: Perform a full epistemological analysis of the following research question.
+
+Research Question: [INSERT RQ]
+
+Analyse:
+1. Epistemic type (empirical / causal / comparative / mechanistic / normative)
+2. Scope — too broad, too narrow, or appropriate?
+3. Testability — can it be answered with scientific literature?
+4. Precision — are all key terms defined?
+5. Potential bias or assumption embedded in the question
+6. Recommended refinement (improved version)
+7. Suitable scientific databases for this question`,
+
+  'step2': `You are a research librarian supporting Step 2 — Search String Construction.
+
+TASK: Build optimised search strings for the following research question.
+
+Research Question: [INSERT RQ]
+
+Provide:
+1. Core keywords and synonyms
+2. Boolean search string (AND/OR/NOT)
+3. Recommended MeSH / domain-specific terms
+4. 3 ready-to-use search strings for: Web of Science / PubMed / Google Scholar
+5. Filters to apply (date range, peer-reviewed, language)`,
+
+  'step4': `You are a scientific evidence analyst supporting Step 4 — Extract Evidence.
+
+TASK: Extract and structure evidence from the provided source.
+
+Research Question: [INSERT RQ]
+Source: [INSERT ABSTRACT OR TEXT]
+
+Extract:
+1. Main hypothesis or claim
+2. Methodology used
+3. Key findings (bullet points)
+4. Statistical significance or effect size (if present)
+5. Limitations stated by authors
+6. Relevance score to the research question (1–5)
+7. Ready-to-use citation (APA 7th)`,
+
+  'step9': `You are a scientific communication specialist supporting Step 9 — Scientific Explanation.
+
+TASK: Guide the student to write a rigorous scientific explanation.
+
+Research Question: [INSERT RQ]
+Evidence Summary: [INSERT EVIDENCE]
+Audience: [Expert / General]
+
+Structure the explanation with:
+1. Opening hook + research question framing
+2. Background context (1 paragraph)
+3. Evidence synthesis (findings from 3+ sources)
+4. Critical analysis (what the evidence does/doesn't prove)
+5. Limitations of current knowledge
+6. Implications and future directions
+7. APA citations
+
+Apply: accuracy, precision, appropriate terminology, hedging language.`,
+
+  'step10a': `You are a data visualisation and scientific communication expert supporting Step 10A — Visual Output.
+
+TASK: Design a scientific poster/infographic plan for the research.
+
+Research Question: [INSERT RQ]
+Main Findings: [INSERT FINDINGS]
+
+Provide:
+1. Recommended visual type (poster / infographic / diagram / data chart)
+2. Visual structure (sections and hierarchy)
+3. Key messages per visual section
+4. Design principles to follow (colour, typography, white space)
+5. Tools recommended (Canva, BioRender, Flourish, etc.)
+6. Common mistakes to avoid`,
+
+  'step10b': `You are a science podcast producer supporting Step 10B — Podcast Creation.
+
+TASK: Create a complete podcast episode plan.
+
+Research Question: [INSERT RQ]
+Audience: [Expert / General Public]
+Duration: 5–8 minutes
+
+Provide:
+1. Episode title and hook
+2. Full script outline (intro → background → findings → interview question → conclusion)
+3. Suggested interview questions for a simulated expert
+4. Tone and language guidance
+5. Technical recording tips
+6. Multimodal integration (where to reference visual outputs)`,
+
+  's3-peer': `You are a peer review coordinator supporting Stage 3 — Peer Review.
+
+TASK: Generate a structured peer review protocol.
+
+Work Being Reviewed: [INSERT DESCRIPTION]
+Rubric to Apply: [INSERT RUBRIC NUMBER]
+
+Provide:
+1. Peer review form (criterion-by-criterion)
+2. Guiding questions for each criterion
+3. Constructive feedback sentence starters
+4. Common errors to watch for
+5. Ethical peer review guidelines (honesty + respect)
+6. Score justification template`
+};
+
+const DEFAULT_PROMPT = `You are an IBL scientific research advisor. 
+Research Topic: [INSERT TOPIC]
+Current Work: [INSERT CONTEXT]
+
+Provide structured, step-specific guidance aligned with the IBL+AI framework.`;
+
+const RUBRIC_DATA = {
+  '1': {
+    name: 'Research Question Quality',
+    criteria: ['Precision & Clarity', 'Scientific Relevance', 'Testability', 'Scope Appropriateness', 'Originality', 'Epistemic Type Clarity']
+  },
+  '2': {
+    name: 'Evidence & Source Use',
+    criteria: ['Source Quality', 'Evidence Breadth', 'Critical Evaluation', 'Citation Accuracy', 'Relevance to RQ', 'Balance of Perspectives']
+  },
+  '3': {
+    name: 'Scientific Explanation',
+    criteria: ['Scientific Accuracy', 'Conceptual Depth', 'Logical Structure', 'Use of Evidence', 'Audience Adaptation', 'Critical Analysis']
+  },
+  '4': {
+    name: 'Multimodal Output',
+    criteria: ['Visual Quality', 'Scientific Accuracy', 'Accessibility', 'Audience Fit', 'Integration with Explanation', 'Creativity']
+  },
+  '5': {
+    name: 'Interactive Science Game',
+    criteria: ['Game Mechanics', 'Educational Value', 'User Experience', 'Audience Fit', 'Creativity', 'Scientific Accuracy']
+  },
+  '6': {
+    name: 'Oral Presentation',
+    criteria: ['Structure & Organisation', 'Clarity & Communication', 'Delivery', 'Use of Multimodal Outputs', 'Audience Adaptation', 'Overall Impact']
+  },
+  '7': {
+    name: 'Group Collaboration',
+    criteria: ['Task Distribution', 'Communication', 'Engagement', 'Collective Decision-Making', 'Problem-Solving', 'AI Use Quality']
+  },
+  '8': {
+    name: 'Ethical AI Use',
+    criteria: ['Transparency', 'Respect for AI Boundaries', 'Validation of AI Output', 'Human Reasoning Primacy', 'Prompt Quality', 'Citation Integrity']
+  }
+};
+
+// ──────────────────────────────────────
+// STATE
+// ──────────────────────────────────────
+let currentStage = 0;
+let currentStep = null;
+
+// ──────────────────────────────────────
+// TAB SWITCHING
+// ──────────────────────────────────────
+function switchTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ──────────────────────────────────────
+// STAGE / STEP SELECTION
+// ──────────────────────────────────────
+function selectStage(n) {
+  currentStage = n;
+  currentStep = null;
+  document.querySelectorAll('.stage-btn').forEach((b,i) => {
+    b.classList.toggle('active', i === n);
+  });
+  renderSteps();
+  document.getElementById('suggested-prompt').textContent = 'Select a step to see its framework-aligned prompt template...';
+}
+
+function renderSteps() {
+  const list = document.getElementById('step-list');
+  list.innerHTML = '';
+  STAGES[currentStage].steps.forEach(s => {
+    const chip = document.createElement('div');
+    chip.className = 'step-chip';
+    chip.textContent = s.label;
+    chip.onclick = () => selectStep(s.id, chip);
+    list.appendChild(chip);
+  });
+}
+
+function selectStep(id, el) {
+  currentStep = id;
+  document.querySelectorAll('.step-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const prompt = STEP_PROMPTS[id] || DEFAULT_PROMPT;
+  document.getElementById('suggested-prompt').textContent = prompt;
+}
+
+// ──────────────────────────────────────
+// CLAUDE API CALL
+// ──────────────────────────────────────
+async function callClaude(systemPrompt, userMessage) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }]
+    })
+  });
+  if (!response.ok) throw new Error(`API error: ${response.status}`);
+  const data = await response.json();
+  return data.content.map(b => b.text || '').join('');
+}
+
+// ──────────────────────────────────────
+// CO-PILOT
+// ──────────────────────────────────────
+async function runCopilot() {
+  const topic = document.getElementById('copilot-topic').value.trim();
+  const context = document.getElementById('copilot-context').value.trim();
+  const role = document.getElementById('copilot-role').value;
+  const btn = document.getElementById('copilot-btn');
+  const thinking = document.getElementById('copilot-thinking');
+  const output = document.getElementById('copilot-output');
+
+  if (!topic) { alert('Please enter a research topic.'); return; }
+
+  btn.disabled = true;
+  thinking.classList.add('active');
+  output.textContent = '';
+
+  const stepInfo = currentStep
+    ? `Current Step: ${STAGES[currentStage].steps.find(s => s.id === currentStep)?.label || currentStep}`
+    : `Stage ${currentStage}: ${STAGES[currentStage].label} (no specific step selected)`;
+
+  const system = `You are an expert IBL (Inquiry-Based Learning) research coach embedded in the Arqus Alliance IBL+AI Framework. You support both teachers and students through a structured 4-stage research process (Stage 0: Team Setup → Stage 1: Ask & Research → Stage 2: Explain & Create → Stage 3: Reflect & Improve).
+
+Your role: Generate precise, actionable, framework-aligned guidance. Be concrete, not vague. Use structured output with clear sections. Match the cognitive demands of the specific step. The user is a ${role}.`;
+
+  const user = `Research Topic: ${topic}
+${stepInfo}
+${context ? `Current work/challenge: ${context}` : ''}
+
+Generate detailed, step-specific guidance for this exact point in the IBL framework. Include:
+1. What to do at this step (clear actions)
+2. What AI can legitimately help with at this step
+3. What must remain 100% human reasoning
+4. Concrete example or template
+5. Common mistakes to avoid at this step
+6. How to know this step is complete (completion criteria)`;
+
+  try {
+    const result = await callClaude(system, user);
+    output.textContent = result;
+  } catch (e) {
+    output.textContent = `Error: ${e.message}. Please check your network connection.`;
+  }
+  btn.disabled = false;
+  thinking.classList.remove('active');
+}
+
+// ──────────────────────────────────────
+// RUBRIC INFO UPDATE
+// ──────────────────────────────────────
+function updateRubricInfo() {
+  const val = document.getElementById('rubric-select').value;
+  const info = document.getElementById('rubric-info');
+  const list = document.getElementById('rubric-criteria-list');
+  if (!val) { info.style.display = 'none'; return; }
+  info.style.display = 'block';
+  const r = RUBRIC_DATA[val];
+  list.innerHTML = r.criteria.map((c,i) => `<span class="text-gold" style="font-weight:600">C${i+1}</span> &nbsp;${c}<br/>`).join('');
+}
+
+// ──────────────────────────────────────
+// RUBRIC SCORER
+// ──────────────────────────────────────
+async function runRubric() {
+  const rubricNum = document.getElementById('rubric-select').value;
+  const work = document.getElementById('rubric-work').value.trim();
+  const btn = document.getElementById('rubric-btn');
+  const thinking = document.getElementById('rubric-thinking');
+
+  if (!rubricNum) { alert('Please select a rubric.'); return; }
+  if (!work) { alert('Please paste the student work to evaluate.'); return; }
+
+  btn.disabled = true;
+  thinking.classList.add('active');
+
+  const r = RUBRIC_DATA[rubricNum];
+  const criteriaStr = r.criteria.map((c,i) => `C${i+1}: ${c}`).join('\n');
+
+  const system = `You are an expert academic assessor trained in the Arqus Alliance IBL+AI Framework. You use a 1–4 scoring rubric where: 1=Beginning, 2=Developing, 3=Good, 4=Excellent. You score student work against specific criteria with evidence-based justification. Be fair, specific, and constructive. Always base scores on what is actually present in the submitted work.`;
+
+  const user = `Score this student work against Rubric ${rubricNum}: ${r.name}.
+
+CRITERIA:
+${criteriaStr}
+
+STUDENT WORK:
+---
+${work}
+---
+
+Respond ONLY in this exact JSON format (no markdown, no extra text):
+{
+  "scores": [
+    {"criterion": "C1 name", "score": 3, "justification": "Brief evidence-based reason"},
+    {"criterion": "C2 name", "score": 2, "justification": "Brief evidence-based reason"},
+    {"criterion": "C3 name", "score": 4, "justification": "Brief evidence-based reason"},
+    {"criterion": "C4 name", "score": 3, "justification": "Brief evidence-based reason"},
+    {"criterion": "C5 name", "score": 2, "justification": "Brief evidence-based reason"},
+    {"criterion": "C6 name", "score": 3, "justification": "Brief evidence-based reason"}
+  ],
+  "feedback": "2–3 sentence overall feedback narrative highlighting strengths and key improvement areas",
+  "priority_action": "The single most important thing the student should do to improve"
+}`;
+
+  try {
+    const raw = await callClaude(system, user);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    renderRubricResults(parsed, r);
+  } catch(e) {
+    document.getElementById('rubric-feedback').textContent = `Scoring error: ${e.message}. The AI may have returned an unexpected format.`;
+  }
+
+  btn.disabled = false;
+  thinking.classList.remove('active');
+}
+
+function renderRubricResults(data, rubric) {
+  const resultCard = document.getElementById('rubric-results');
+  const scoresList = document.getElementById('rubric-scores-list');
+  const totalArea = document.getElementById('total-score-area');
+  const totalVal = document.getElementById('total-score-value');
+  const totalDesc = document.getElementById('total-score-desc');
+  const feedbackEl = document.getElementById('rubric-feedback');
+
+  resultCard.style.display = 'block';
+
+  let totalScore = 0;
+  scoresList.innerHTML = '';
+
+  data.scores.forEach(s => {
+    totalScore += s.score;
+    const row = document.createElement('div');
+    row.className = 'score-row';
+    row.innerHTML = `
+      <div>
+        <div class="score-criterion">${s.criterion}</div>
+        <div class="score-desc">${s.justification}</div>
+      </div>
+      <div class="score-badge score-${s.score}">${s.score}</div>
+    `;
+    scoresList.appendChild(row);
+  });
+
+  const max = data.scores.length * 4;
+  const pct = Math.round((totalScore / max) * 100);
+  totalArea.style.display = 'flex';
+  totalVal.textContent = `${totalScore} / ${max}`;
+  totalDesc.textContent = `${pct}% · ${pct >= 85 ? 'Excellent' : pct >= 65 ? 'Good' : pct >= 45 ? 'Developing' : 'Beginning'}`;
+
+  feedbackEl.textContent = data.feedback + (data.priority_action ? `\n\nPriority action: ${data.priority_action}` : '');
+}
+
+// ──────────────────────────────────────
+// EVIDENCE FORGE
+// ──────────────────────────────────────
+async function runEvidence() {
+  const rq = document.getElementById('ev-rq').value.trim();
+  const text = document.getElementById('ev-text').value.trim();
+  const ref = document.getElementById('ev-ref').value.trim();
+  const btn = document.getElementById('ev-btn');
+  const thinking = document.getElementById('ev-thinking');
+
+  if (!text) { alert('Please paste a source text.'); return; }
+
+  btn.disabled = true;
+  thinking.classList.add('active');
+
+  const system = `You are a scientific evidence extraction specialist trained in IBL research methods. Extract and structure evidence from scientific texts with precision. Always base extractions strictly on what is stated in the text — never fabricate or infer beyond the text. Output valid JSON only.`;
+
+  const user = `Extract structured evidence from this scientific text for Step 4 of the IBL framework.
+${rq ? `Research Question: ${rq}` : ''}
+${ref ? `Source Reference: ${ref}` : ''}
+
+SOURCE TEXT:
+---
+${text}
+---
+
+Respond ONLY in this JSON format:
+{
+  "hypothesis": "Main hypothesis or claim of the study",
+  "methodology": "Research method(s) used",
+  "key_findings": ["Finding 1", "Finding 2", "Finding 3"],
+  "statistical_significance": "Any p-values, effect sizes, or quantitative results (or 'Not stated')",
+  "limitations": ["Limitation 1", "Limitation 2"],
+  "relevance_score": 4,
+  "relevance_reason": "Why this source is relevant to the RQ",
+  "step4_entry": "One paragraph formatted evidence entry ready for the student's Step 4 evidence table",
+  "apa_citation": "APA 7th edition citation if reference was provided, otherwise 'Full citation needed — please add author, year, journal details'"
+}`;
+
+  try {
+    const raw = await callClaude(system, user);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    renderEvidence(parsed);
+  } catch(e) {
+    document.getElementById('ev-relevance').textContent = `Extraction error: ${e.message}`;
+    document.getElementById('ev-output-area').style.display = 'block';
+  }
+
+  btn.disabled = false;
+  thinking.classList.remove('active');
+}
+
+function renderEvidence(d) {
+  const area = document.getElementById('ev-output-area');
+  area.style.display = 'block';
+
+  const struct = document.getElementById('ev-structured');
+  struct.innerHTML = `
+    <div class="evidence-block">
+      <div class="evidence-tag tag-hyp">Hypothesis</div>
+      <div class="text-sm">${d.hypothesis}</div>
+    </div>
+    <div class="evidence-block">
+      <div class="evidence-tag tag-method">Methodology</div>
+      <div class="text-sm">${d.methodology}</div>
+    </div>
+    <div class="evidence-block">
+      <div class="evidence-tag tag-find">Key Findings</div>
+      ${d.key_findings.map(f => `<div class="text-sm" style="padding:3px 0; border-bottom:1px solid var(--border)">→ ${f}</div>`).join('')}
+      ${d.statistical_significance !== 'Not stated' ? `<div class="text-sm mt-8 text-muted">Stats: ${d.statistical_significance}</div>` : ''}
+    </div>
+    <div class="evidence-block">
+      <div class="evidence-tag tag-limit">Limitations</div>
+      ${d.limitations.map(l => `<div class="text-sm" style="padding:2px 0">• ${l}</div>`).join('')}
+    </div>
+    <div class="evidence-block">
+      <div class="evidence-tag tag-cite">Citation</div>
+      <div class="text-sm mono">${d.apa_citation}</div>
+    </div>
+  `;
+
+  const stars = '★'.repeat(d.relevance_score) + '☆'.repeat(5 - d.relevance_score);
+  document.getElementById('ev-relevance').textContent = `Relevance: ${stars} (${d.relevance_score}/5)\n\n${d.relevance_reason}`;
+  document.getElementById('ev-step4').textContent = d.step4_entry;
+}
+
+// ──────────────────────────────────────
+// RQ LABORATORY
+// ──────────────────────────────────────
+async function runRQLab() {
+  const topic = document.getElementById('rq-topic').value.trim();
+  const level = document.getElementById('rq-level').value;
+  const type = document.getElementById('rq-type').value;
+  const btn = document.getElementById('rq-btn');
+  const thinking = document.getElementById('rq-thinking');
+
+  if (!topic) { alert('Please enter a research topic.'); return; }
+
+  btn.disabled = true;
+  thinking.classList.add('active');
+
+  const system = `You are a research question design specialist trained in IBL epistemology and scientific inquiry. You generate high-quality, level-appropriate research questions with full epistemological analysis. Output valid JSON only.`;
+
+  const user = `Generate 4 research questions for an IBL project.
+
+Topic: ${topic}
+Level: ${level}
+Preferred Type: ${type === 'any' ? 'Varied (use different epistemic types)' : type}
+
+Respond ONLY in this JSON format:
+{
+  "questions": [
+    {
+      "question": "Full research question text",
+      "type": "Epistemic type (empirical/causal/comparative/mechanistic)",
+      "rationale": "Why this question is well-formed and researchable",
+      "databases": ["Database1", "Database2"],
+      "ibl_score": 4
+    }
+  ]
+}`;
+
+  try {
+    const raw = await callClaude(system, user);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    renderRQList(parsed.questions);
+  } catch(e) {
+    document.getElementById('rq-output-area').style.display = 'block';
+    document.getElementById('rq-list').textContent = `Error: ${e.message}`;
+  }
+
+  btn.disabled = false;
+  thinking.classList.remove('active');
+}
+
+function renderRQList(questions) {
+  const area = document.getElementById('rq-output-area');
+  const list = document.getElementById('rq-list');
+  area.style.display = 'block';
+  list.innerHTML = '';
+  questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'rq-card';
+    const stars = '★'.repeat(q.ibl_score) + '☆'.repeat(5 - q.ibl_score);
+    card.innerHTML = `
+      <div class="rq-num">RQ ${i+1} · ${stars} IBL Score</div>
+      <div class="rq-text">${q.question}</div>
+      <div class="rq-type">${q.type} · ${q.databases.join(', ')}</div>
+      <div class="text-sm text-muted mt-8" style="font-style:italic">${q.rationale}</div>
+    `;
+    card.onclick = () => {
+      document.getElementById('copilot-topic').value = q.question;
+      switchTab('copilot', document.querySelector('.nav-tab'));
+      document.querySelectorAll('.nav-tab').forEach((t,i) => { if(i===0) t.classList.add('active'); else t.classList.remove('active'); });
+    };
+    list.appendChild(card);
+  });
+}
+
+async function runRQEval() {
+  const input = document.getElementById('rq-eval-input').value.trim();
+  if (!input) { alert('Please enter a research question.'); return; }
+
+  document.getElementById('rq-eval-area').style.display = 'block';
+  document.getElementById('rq-thinking').classList.add('active');
+  document.getElementById('rq-btn').disabled = true;
+
+  const system = `You are an epistemologist and IBL research coach. Analyse research questions with precision and provide constructive improvement guidance.`;
+
+  const user = `Perform a full epistemological analysis of this research question in the context of the IBL framework.
+
+Research Question: "${input}"
+
+Analyse:
+1. Epistemic type classification
+2. Scope (too broad / appropriate / too narrow)
+3. Testability with scientific literature
+4. Precision of key terms
+5. Embedded assumptions or bias
+6. IBL appropriateness score (1–5)
+7. Improved version of the question
+8. Recommended databases for this question`;
+
+  try {
+    const result = await callClaude(system, user);
+    document.getElementById('rq-eval-output').textContent = result;
+  } catch(e) {
+    document.getElementById('rq-eval-output').textContent = `Error: ${e.message}`;
+  }
+
+  document.getElementById('rq-thinking').classList.remove('active');
+  document.getElementById('rq-btn').disabled = false;
+}
+
+// ──────────────────────────────────────
+// ETHICS MONITOR
+// ──────────────────────────────────────
+async function runMonitor() {
+  const stage = document.getElementById('mon-stage').value;
+  const tool = document.getElementById('mon-tool').value;
+  const prompt = document.getElementById('mon-prompt').value.trim();
+  const btn = document.getElementById('mon-btn');
+  const thinking = document.getElementById('mon-thinking');
+
+  if (!prompt) { alert('Please paste a prompt to audit.'); return; }
+
+  btn.disabled = true;
+  thinking.classList.add('active');
+
+  const system = `You are an academic integrity and AI ethics specialist trained in the Arqus Alliance IBL+AI Framework Rubric 8 (Ethical AI Use). You audit student and teacher AI prompts for compliance with ethical AI use standards. Be honest, direct, and constructive. Output valid JSON only.`;
+
+  const user = `Audit this AI prompt for ethical compliance against Rubric 8 of the IBL Framework.
+
+Stage/Context: ${stage}
+AI Tool: ${tool}
+Prompt to Audit:
+---
+${prompt}
+---
+
+Evaluate against these 6 Rubric 8 criteria and respond ONLY in this JSON format:
+{
+  "overall_score": 75,
+  "criteria": [
+    {"name": "Transparency of AI Use", "status": "ok|warn|bad", "comment": "brief comment"},
+    {"name": "Respect for AI Boundaries", "status": "ok|warn|bad", "comment": "brief comment"},
+    {"name": "Validation Requirement", "status": "ok|warn|bad", "comment": "brief comment"},
+    {"name": "Human Reasoning Primacy", "status": "ok|warn|bad", "comment": "brief comment"},
+    {"name": "Prompt Quality & Framing", "status": "ok|warn|bad", "comment": "brief comment"},
+    {"name": "Citation Integrity Risk", "status": "ok|warn|bad", "comment": "brief comment"}
+  ],
+  "revised_prompt": "An ethically improved version of the prompt that addresses all issues",
+  "verdict": "COMPLIANT|NEEDS REVISION|NON-COMPLIANT"
+}`;
+
+  try {
+    const raw = await callClaude(system, user);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    renderMonitorResults(parsed);
+  } catch(e) {
+    document.getElementById('mon-output-area').style.display = 'block';
+    document.getElementById('mon-revised').textContent = `Audit error: ${e.message}`;
+  }
+
+  btn.disabled = false;
+  thinking.classList.remove('active');
+}
+
+function renderMonitorResults(d) {
+  const area = document.getElementById('mon-output-area');
+  area.style.display = 'block';
+
+  const score = d.overall_score;
+  const bar = document.getElementById('mon-score-bar');
+  bar.style.width = score + '%';
+  bar.className = 'ethical-fill ' + (score >= 70 ? 'ethical-high' : score >= 45 ? 'ethical-med' : 'ethical-low');
+
+  document.getElementById('mon-score-text').textContent = `${score}% · ${d.verdict}`;
+  document.getElementById('mon-score-label').textContent = score >= 70 ? '✓ Prompt meets ethical standards' : score >= 45 ? '⚠ Prompt needs revision before use' : '✗ Prompt violates ethical boundaries — do not use as-is';
+
+  const flagsList = document.getElementById('mon-flags-list');
+  flagsList.innerHTML = '';
+  d.criteria.forEach(c => {
+    const div = document.createElement('div');
+    div.className = `flag-item flag-${c.status}`;
+    const icons = { ok: '✅', warn: '⚠️', bad: '❌' };
+    div.innerHTML = `<span class="flag-icon">${icons[c.status]}</span><div><strong>${c.name}</strong><br/><span class="text-sm text-muted">${c.comment}</span></div>`;
+    flagsList.appendChild(div);
+  });
+
+  document.getElementById('mon-revised').textContent = d.revised_prompt;
+}
+
+// ──────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────
+function copyText(id) {
+  const el = document.getElementById(id);
+  const text = el.textContent || el.value || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+// ──────────────────────────────────────
+// INIT
+// ──────────────────────────────────────
+renderSteps();
+</script>
+</body>
+</html>
