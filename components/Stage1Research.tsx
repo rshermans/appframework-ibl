@@ -1,46 +1,104 @@
 'use client'
 
 import { useWizardStore } from '@/store/wizardStore'
-import { STAGES } from '@/types/wizard'
+import { getStepContract, resolveWorkflowStepId } from '@/lib/workflow'
+import StepSelect from './StepSelect'
+import Step1A from './Step1A'
+import Step1B from './Step1B'
+import Step2Search from './Step2Search'
 import Step0 from './steps/Step0'
 
+const ACTIVE_WORKFLOW_STEPS = [
+  'step0_generate',
+  'step1_select',
+  'step1a_compare',
+  'step1b_synthesize',
+  'step2_search_design',
+] as const
+
+const STEP_BADGES: Record<(typeof ACTIVE_WORKFLOW_STEPS)[number], string> = {
+  step0_generate: 'Step 0',
+  step1_select: 'Step 1',
+  step1a_compare: 'Step 1A',
+  step1b_synthesize: 'Step 1B',
+  step2_search_design: 'Step 2',
+}
+
+function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
+  switch (stepId) {
+    case 'step0_generate':
+      return <Step0 />
+    case 'step1_select':
+      return <StepSelect />
+    case 'step1a_compare':
+      return <Step1A />
+    case 'step1b_synthesize':
+      return <Step1B />
+    case 'step2_search_design':
+      return <Step2Search />
+    default:
+      return <Step0 />
+  }
+}
+
 export default function Stage1Research() {
-  const { stage, step, setStep } = useWizardStore()
+  const { finalResearchQuestion, stage, workflowStep, setWorkflowStep } = useWizardStore()
 
   if (stage !== 1) return null
 
+  const activeStep = resolveWorkflowStepId(workflowStep)
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold mb-2">Stage 1: Ask & Research</h2>
+        <h2 className="mb-2 text-2xl font-bold">Stage 1: Ask and Research</h2>
         <p className="text-gray-600">
-          Develop rigorous research questions and find scientific evidence
+          Generate, select, compare, synthesise, and operationalise a rigorous research question
+          before moving into evidence work.
         </p>
       </div>
 
-      {/* Step Navigation */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {STAGES[1].steps.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setStep(s.id)}
-            className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${
-              step === s.id
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-            }`}
-          >
-            {s.stageName || s.label}
-          </button>
-        ))}
+      <div className="grid gap-3 md:grid-cols-5">
+        {ACTIVE_WORKFLOW_STEPS.map((stepId) => {
+          const step = getStepContract(stepId)
+          const isActive = activeStep === stepId
+          const isStep2Locked =
+            stepId === 'step2_search_design' && !finalResearchQuestion?.approvedByUser
+
+          return (
+            <button
+              key={stepId}
+              onClick={() => {
+                if (!isStep2Locked) {
+                  setWorkflowStep(stepId)
+                }
+              }}
+              disabled={isStep2Locked}
+              className={`rounded-xl border p-4 text-left transition ${
+                isActive
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-white text-slate-900 hover:border-slate-400'
+              } ${isStep2Locked ? 'cursor-not-allowed opacity-50' : ''}`}
+            >
+              <div
+                className={`text-xs uppercase tracking-wide ${
+                  isActive ? 'text-slate-300' : 'text-slate-500'
+                }`}
+              >
+                {STEP_BADGES[stepId]}
+              </div>
+              <div className="mt-1 font-semibold">{step.label}</div>
+              <div className={`mt-2 text-sm ${isActive ? 'text-slate-200' : 'text-slate-600'}`}>
+                {isStep2Locked
+                  ? 'Locked until the final research question is approved.'
+                  : step.description}
+              </div>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Step Content */}
-      <div className="bg-white rounded-lg shadow p-6">
-        {step === 'step0' && <Step0 />}
-        {/* Other steps will be added here */}
-      </div>
+      <div className="rounded-xl bg-white p-6 shadow">{renderStep(activeStep)}</div>
     </div>
   )
 }

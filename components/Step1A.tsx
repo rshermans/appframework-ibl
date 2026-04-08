@@ -5,7 +5,7 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { ComparisonResult } from '@/types/research-workflow'
 
 export default function Step1A() {
-  const { selectedRQs, setComparisonResult, setStep, setAnalysis } = useWizardStore()
+  const { selectedRQs, setComparisonResult, setWorkflowStep, setAnalysis } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'quick' | 'advanced'>('quick')
   const [error, setError] = useState('')
@@ -54,7 +54,7 @@ export default function Step1A() {
       } catch {
         setComparisonResult(null)
       }
-      setStep(3)
+      setWorkflowStep('step1b_synthesize')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to compare questions')
     } finally {

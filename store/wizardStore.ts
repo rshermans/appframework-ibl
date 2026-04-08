@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { WizardState, Stage, InteractionRecord } from '@/types/wizard'
-import { resolveWorkflowStepId } from '@/lib/workflow'
+import { resolveWorkflowStepId, toLegacyStepId } from '@/lib/workflow'
 
 export const useWizardStore = create<WizardState>((set) => ({
   projectId: '',
@@ -18,6 +18,8 @@ export const useWizardStore = create<WizardState>((set) => ({
   rqAnalysis: '',
   comparisonResult: null,
   finalResearchQuestion: null,
+  searchDesign: null,
+  evidenceRecords: [],
   interactions: [],
 
   setProject: (id: string, topic: string) =>
@@ -30,7 +32,7 @@ export const useWizardStore = create<WizardState>((set) => ({
     set({ step, workflowStep: resolveWorkflowStepId(step) }),
 
   setWorkflowStep: (workflowStep) =>
-    set({ workflowStep }),
+    set({ workflowStep, step: toLegacyStepId(workflowStep) }),
 
   setInput: (input: string) =>
     set({ currentInput: input }),
@@ -67,6 +69,17 @@ export const useWizardStore = create<WizardState>((set) => ({
 
   setFinalResearchQuestion: (finalResearchQuestion) =>
     set({ finalResearchQuestion }),
+
+  setSearchDesign: (searchDesign) =>
+    set({ searchDesign }),
+
+  addEvidenceRecord: (record) =>
+    set((state) => ({
+      evidenceRecords: [...state.evidenceRecords, record],
+    })),
+
+  setEvidenceRecords: (evidenceRecords) =>
+    set({ evidenceRecords }),
 
   addInteraction: (record: InteractionRecord) =>
     set((state) => ({

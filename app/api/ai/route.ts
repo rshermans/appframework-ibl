@@ -30,17 +30,22 @@ export async function POST(req: Request) {
     const safeStepLabel = stepLabel || 'AI response'
     const safeMode: PromptMode =
       mode === 'quick' || mode === 'advanced' || mode === 'standard' ? mode : 'standard'
+    const finalResearchQuestion = body.finalResearchQuestion
+    const resolvedRQ =
+      rq ||
+      finalRQ ||
+      (typeof finalResearchQuestion?.question === 'string' ? finalResearchQuestion.question : '')
     const promptVariables = {
       TOPIC: topic || '',
-      RQ: rq || '',
+      RQ: resolvedRQ,
       LEVEL: body.level || '',
       SOURCE: body.source || '',
       EVIDENCE: body.evidence || '',
       AUDIENCE: body.audience || '',
       CONTENT: content || '',
       CONTEXT: context || '',
-      FINAL_RQ: finalRQ || rq || '',
-      SELECTED_RQS: Array.isArray(selectedRQs) ? selectedRQs.join('\n') : rq || '',
+      FINAL_RQ: finalRQ || resolvedRQ,
+      SELECTED_RQS: Array.isArray(selectedRQs) ? selectedRQs.join('\n') : resolvedRQ,
     }
     const missingFields = resolvedWorkflowStep
       ? getMissingRequiredFields(resolvedWorkflowStep, {
@@ -48,7 +53,8 @@ export async function POST(req: Request) {
           level: body.level,
           selectedQuestions: body.selectedQuestions || selectedRQs,
           comparisonResult: body.comparisonResult,
-          finalResearchQuestion: body.finalResearchQuestion || finalRQ,
+          finalResearchQuestion: finalResearchQuestion || finalRQ,
+          searchDesign: body.searchDesign,
           source: body.source,
           evidenceRecords: body.evidenceRecords,
           knowledgeStructure: body.knowledgeStructure,
@@ -66,6 +72,36 @@ export async function POST(req: Request) {
           error: 'Missing required step inputs',
           details: `Missing fields for ${resolvedWorkflowStep}: ${missingFields.join(', ')}`,
           missingFields,
+          workflowStep: resolvedWorkflowStep,
+        },
+        { status: 400 }
+      )
+    }
+
+    if (
+      resolvedWorkflowStep === 'step2_search_design' &&
+      !finalResearchQuestion?.approvedByUser
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Final research question must be approved',
+          details: 'Step 2 requires an approved final research question before search design can run.',
+          workflowStep: resolvedWorkflowStep,
+        },
+        { status: 400 }
+      )
+    }
+
+    if (
+      resolvedWorkflowStep === 'step3_evidence_extraction' &&
+      !body.searchDesign
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Search design is required',
+          details: 'Step 3 requires an existing search design before evidence extraction can run.',
           workflowStep: resolvedWorkflowStep,
         },
         { status: 400 }

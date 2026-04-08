@@ -42,6 +42,13 @@ export const WORKFLOW_STEP_ORDER: WorkflowStepId[] = [
   'step7_reflection',
 ]
 
+export const PHASE_ONE_WORKFLOW_STEPS: WorkflowStepId[] = [
+  'step0_generate',
+  'step1_select',
+  'step1a_compare',
+  'step1b_synthesize',
+]
+
 export const LEGACY_WORKFLOW_STEP_ALIASES: Record<string, WorkflowStepId> = {
   '0': 'step0_generate',
   '1': 'step1_select',
@@ -69,6 +76,19 @@ export const LEGACY_WORKFLOW_STEP_ALIASES: Record<string, WorkflowStepId> = {
   's3-self': 'step7_reflection',
   's3-reflect': 'step7_reflection',
   's3-extend': 'step7_reflection',
+}
+
+export const WORKFLOW_TO_LEGACY_STEP: Record<WorkflowStepId, string> = {
+  step0_generate: 'step0',
+  step1_select: 'step1-select',
+  step1a_compare: 'step1',
+  step1b_synthesize: 'step1b',
+  step2_search_design: 'step2',
+  step3_evidence_extraction: 'step3',
+  step4_knowledge_structure: 'step4',
+  step5_explanation: 'step9',
+  step6_multimodal: 'step10',
+  step7_reflection: 's3-reflect',
 }
 
 function field(
@@ -177,6 +197,7 @@ export const WORKFLOW_STEP_CONTRACTS: Record<WorkflowStepId, WorkflowStepContrac
     description: 'Extract evidence from external sources into structured records.',
     inputSchema: [
       field('finalResearchQuestion', 'object', true, 'store', 'Final research question.'),
+      field('searchDesign', 'object', true, 'store', 'Search design created from the final question.'),
       field('source', 'string', true, 'user', 'Source content or abstract to analyse.'),
     ],
     outputSchema: [
@@ -270,6 +291,10 @@ export function resolveWorkflowStepId(stepId?: WorkflowStepId | string | number)
 
 export function getStepContract(stepId?: WorkflowStepId | string | number): WorkflowStepContract {
   return WORKFLOW_STEP_CONTRACTS[resolveWorkflowStepId(stepId)]
+}
+
+export function toLegacyStepId(stepId: WorkflowStepId): string {
+  return WORKFLOW_TO_LEGACY_STEP[stepId]
 }
 
 export function getNextStepContracts(

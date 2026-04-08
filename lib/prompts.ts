@@ -193,12 +193,19 @@ Level: [LEVEL]`,
 
 Research Question: [RQ]
 
-Provide:
-1. Core keywords and synonyms
-2. Boolean search string
-3. Recommended domain-specific terms
-4. Ready-to-use search strings for Web of Science, PubMed, and Google Scholar
-5. Filters to apply`,
+Respond with valid JSON only:
+{
+  "keywords": ["keyword 1", "keyword 2"],
+  "synonyms": ["synonym 1", "synonym 2"],
+  "boolean_query": "keyword 1 AND keyword 2",
+  "search_strings": [
+    { "database": "Web of Science", "query": "..." },
+    { "database": "PubMed", "query": "..." },
+    { "database": "Google Scholar", "query": "..." }
+  ],
+  "recommended_databases": ["Web of Science", "PubMed", "Google Scholar"],
+  "filters": ["peer reviewed", "last 5 years", "english"]
+}`,
   },
   step4: {
     id: 'step4',
@@ -207,14 +214,17 @@ Provide:
 Research Question: [RQ]
 Source: [SOURCE]
 
-Extract:
-1. Main hypothesis or claim
-2. Methodology used
-3. Key findings
-4. Statistical significance or effect size, if present
-5. Limitations
-6. Relevance score to the research question
-7. Ready-to-use APA 7 citation`,
+Respond with valid JSON only:
+{
+  "title": "Source title if identifiable",
+  "source_type": "paper | report | website | book | unknown",
+  "claim": "Main hypothesis or claim",
+  "methodology": "Methodology used",
+  "findings": ["Finding 1", "Finding 2"],
+  "limitations": ["Limitation 1", "Limitation 2"],
+  "relevance_score": 4,
+  "citation": "APA 7 citation"
+}`,
   },
   step9: {
     id: 'step9',
@@ -306,6 +316,10 @@ export function buildDefaultUserMessage(
       return 'Synthesize one final research question and justify it in one sentence.'
     case 'copilot':
       return 'Guide the next research step based on the final research question.'
+    case 'step2':
+      return 'Design a search strategy from the final research question and return structured search outputs.'
+    case 'step4':
+      return 'Extract structured evidence from the provided source and return a valid JSON evidence record.'
     default:
       return 'Provide structured research guidance for the current step.'
   }

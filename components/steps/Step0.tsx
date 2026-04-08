@@ -16,7 +16,15 @@ interface Question {
 }
 
 export default function Step0() {
-  const { projectId, topic, setCandidates, setCandidateResearchQuestions, setInput, setOutput } = useWizardStore()
+  const {
+    projectId,
+    topic,
+    setCandidates,
+    setCandidateResearchQuestions,
+    setInput,
+    setOutput,
+    setWorkflowStep,
+  } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [localTopic, setLocalTopic] = useState(topic)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -148,6 +156,13 @@ export default function Step0() {
               </div>
             </div>
           ))}
+
+          <button
+            onClick={() => setWorkflowStep('step1_select')}
+            className="w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
+          >
+            Continue to Selection
+          </button>
         </div>
       )}
     </div>
