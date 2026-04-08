@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { callChatGPT } from '@/lib/ai'
-import { getPrompt } from '@/lib/prompts'
+import { buildDefaultUserMessage, getPrompt, resolvePromptId, type PromptMode } from '@/lib/prompts'
 import { saveInteraction } from '@/lib/db'
 
 export async function POST(req: Request) {
@@ -9,32 +9,50 @@ export async function POST(req: Request) {
     const {
       projectId,
       stage,
+      promptId,
       stepId,
       stepLabel,
       topic,
       rq,
+      selectedRQs,
+      finalRQ,
+      context,
       content,
       mode = 'standard',
     } = body
 
     const parsedStage = typeof stage === 'number' ? stage : Number(stage) || 0
     const safeStepId = stepId || 'unknown-step'
+    const safePromptKey = promptId || stepId || 'generic_guidance'
+    const resolvedPromptId = resolvePromptId(safePromptKey)
     const safeStepLabel = stepLabel || 'AI response'
+    const safeMode: PromptMode =
+      mode === 'quick' || mode === 'advanced' || mode === 'standard' ? mode : 'standard'
+    const promptVariables = {
+      TOPIC: topic || '',
+      RQ: rq || '',
+      LEVEL: body.level || '',
+      SOURCE: body.source || '',
+      EVIDENCE: body.evidence || '',
+      AUDIENCE: body.audience || '',
+      CONTENT: content || '',
+      CONTEXT: context || '',
+      FINAL_RQ: finalRQ || rq || '',
+      SELECTED_RQS: Array.isArray(selectedRQs) ? selectedRQs.join('\n') : rq || '',
+    }
 
-    console.log(`[API] Received request - Step: ${safeStepId}, Topic: ${topic}`)
+    console.log(`[API] Received request - Step: ${safeStepId}, Prompt: ${resolvedPromptId}, Topic: ${topic}`)
 
-    // Get the prompt template
-    const systemPrompt = getPrompt(safeStepId, { TOPIC: topic || '', RQ: rq || '' })
-    console.log(`[API] Generated system prompt for step: ${safeStepId}`)
+    const systemPrompt = getPrompt(safePromptKey, promptVariables, { mode: safeMode })
+    console.log(`[API] Generated system prompt for prompt: ${resolvedPromptId}`)
 
-    // Call ChatGPT
-    const userMessage = content || `Please provide guidance for ${safeStepLabel}`
+    const userMessage =
+      content || buildDefaultUserMessage(safePromptKey, promptVariables, { mode: safeMode })
     console.log(`[API] Calling ChatGPT with user message length: ${userMessage.length}`)
 
     const { content: aiOutput, tokens } = await callChatGPT(systemPrompt, userMessage)
     console.log(`[API] ChatGPT responded with ${tokens} tokens`)
 
-    // Save to database (non-blocking for AI response)
     let dbSaved = false
     let dbError: string | null = null
     if (projectId) {
@@ -47,7 +65,7 @@ export async function POST(req: Request) {
           userMessage,
           aiOutput,
           topic,
-          mode,
+          safeMode,
           tokens
         )
         dbSaved = true
@@ -59,8 +77,19 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
+      ok: true,
+      data: {
+        output: aiOutput,
+        tokens,
+        promptId: resolvedPromptId,
+        stepId: safeStepId,
+        stepLabel: safeStepLabel,
+        dbSaved,
+        dbError,
+      },
       output: aiOutput,
       tokens,
+      promptId: resolvedPromptId,
       stepId: safeStepId,
       stepLabel: safeStepLabel,
       dbSaved,
@@ -72,7 +101,11 @@ export async function POST(req: Request) {
     console.error('Error details:', error)
 
     return NextResponse.json(
-      { error: 'Failed to process request', details: errorMsg },
+      {
+        ok: false,
+        error: 'Failed to process request',
+        details: errorMsg,
+      },
       { status: 500 }
     )
   }

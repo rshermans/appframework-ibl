@@ -5,10 +5,9 @@ IBL Framework with OpenAI + Prisma + Supabase.
 ## Structure
 
 ```
-/app              -> Next.js app router
-/api              -> legacy API routes mirror
+/app              -> Next.js app router and API routes
 /components       -> React components
-/lib              -> AI, DB and prompts
+/lib              -> AI, DB and canonical prompt registry
 /types            -> TypeScript types
 /store            -> Zustand state
 /prisma           -> Prisma schema
@@ -49,6 +48,14 @@ Set `.env.local` with:
 - `DATABASE_URL`
 - `DIRECT_URL`
 - `NEXT_PUBLIC_APP_URL=http://localhost:3011`
+
+## Prompt architecture
+
+The canonical prompt registry lives in `lib/prompts.ts`.
+
+- Domain prompt IDs: `rq_generation`, `rq_analysis`, `rq_synthesis`, `copilot`
+- Legacy step aliases such as `step0` and `step1` resolve to the canonical prompt IDs
+- UI should send structured inputs to `/api/ai`; prompt assembly happens on the server
 
 ## Build
 

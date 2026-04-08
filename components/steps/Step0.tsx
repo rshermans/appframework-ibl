@@ -5,13 +5,17 @@ import { useWizardStore } from '@/store/wizardStore'
 
 interface Question {
   question: string
-  epistemic_type: string
-  why_researchable: string
-  challenges: string
+  type?: string
+  epistemic_type?: string
+  rationale?: string
+  why_researchable?: string
+  challenges?: string
+  databases?: string[]
+  ibl_score?: number
 }
 
 export default function Step0() {
-  const { projectId, topic, setInput, setOutput } = useWizardStore()
+  const { projectId, topic, setCandidates, setInput, setOutput } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [localTopic, setLocalTopic] = useState(topic)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -33,29 +37,37 @@ export default function Step0() {
         body: JSON.stringify({
           projectId,
           stage: 1,
+          promptId: 'rq_generation',
           stepId: 'step0',
           stepLabel: 'Candidate Questions',
           topic: localTopic,
-          content: `Generate 5 candidate research questions for: ${localTopic}`,
-          mode: 'standard',
+          level: 'higher-education',
         }),
       })
 
       const data = await response.json()
+      const payload = data?.data ?? data
 
-      if (!response.ok) {
+      if (!response.ok || !data?.ok) {
         throw new Error(data?.details || data?.error || 'Failed to process request')
       }
 
-      setOutput(data.output)
+      setOutput(payload.output)
       setInput(localTopic)
 
-      // Parse JSON if possible
       try {
-        const parsed = JSON.parse(data.output)
-        setQuestions(Array.isArray(parsed) ? parsed : [])
+        const parsed = JSON.parse(payload.output)
+        const nextQuestions = Array.isArray(parsed)
+          ? parsed
+          : Array.isArray(parsed?.questions)
+            ? parsed.questions
+            : []
+
+        setQuestions(nextQuestions)
+        setCandidates(nextQuestions.map((question: Question) => question.question))
       } catch {
-        // If not JSON, just show as text
+        setQuestions([])
+        setCandidates([])
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate')
@@ -99,14 +111,26 @@ export default function Step0() {
               <div className="font-semibold text-blue-700 mb-2">Q{idx + 1}: {q.question}</div>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="font-semibold">Type:</span> {q.epistemic_type}
+                  <span className="font-semibold">Type:</span> {q.type || q.epistemic_type || 'Not provided'}
                 </div>
                 <div>
-                  <span className="font-semibold">Researchable?</span> {q.why_researchable}
+                  <span className="font-semibold">Researchable?</span> {q.rationale || q.why_researchable || 'Not provided'}
                 </div>
-                <div>
-                  <span className="font-semibold">Challenges:</span> {q.challenges}
-                </div>
+                {q.challenges && (
+                  <div>
+                    <span className="font-semibold">Challenges:</span> {q.challenges}
+                  </div>
+                )}
+                {Array.isArray(q.databases) && q.databases.length > 0 && (
+                  <div>
+                    <span className="font-semibold">Databases:</span> {q.databases.join(', ')}
+                  </div>
+                )}
+                {typeof q.ibl_score === 'number' && (
+                  <div>
+                    <span className="font-semibold">IBL score:</span> {q.ibl_score}/5
+                  </div>
+                )}
               </div>
             </div>
           ))}

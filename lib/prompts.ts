@@ -1,75 +1,208 @@
-export const PROMPTS = {
-  // Stage 0
-  's0-form': `You are beginning Stage 0 of an IBL research project. Your first task is to form a research team.
+export type PromptMode = 'standard' | 'quick' | 'advanced'
 
-TASK: Help students establish an effective team by defining:
-1. Optimal team size (3–4 members) and rationale
-2. Suggested role titles (e.g. Lead Researcher, Communication Manager, Data Analyst, Ethics Officer)
-3. Team Charter template (goals, norms, communication plan)
-4. Initial AI Use Agreement — what AI is allowed/not allowed to do for the team
+export type PromptId =
+  | 'rq_generation'
+  | 'rq_analysis'
+  | 'rq_synthesis'
+  | 'copilot'
+  | 's0-form'
+  | 'step2'
+  | 'step4'
+  | 'step9'
+  | 'generic_guidance'
+
+type PromptVariables = Record<string, string | undefined>
+
+interface PromptDefinition {
+  id: PromptId
+  aliases?: string[]
+  template?: string
+  modes?: Partial<Record<PromptMode, string>>
+}
+
+const PROMPT_REGISTRY: Record<PromptId, PromptDefinition> = {
+  rq_generation: {
+    id: 'rq_generation',
+    aliases: ['step0'],
+    template: `You are a research question design specialist trained in IBL epistemology and scientific inquiry.
+
+Generate exactly 4 research questions for the topic below.
+
+Requirements:
+- Each question must be scientifically testable or literature-resolvable
+- Each question must be specific enough for a 3-6 week project
+- Vary the epistemic type across the set when possible
+- Keep the wording level-appropriate
+
+Topic: [TOPIC]
+Level: [LEVEL]
+
+Respond with valid JSON only using this shape:
+{
+  "questions": [
+    {
+      "question": "Full research question text",
+      "type": "empirical | causal | comparative | mechanistic | normative",
+      "rationale": "Why this question is well-formed and researchable",
+      "databases": ["Database 1", "Database 2"],
+      "ibl_score": 4
+    }
+  ]
+}`,
+  },
+  rq_analysis: {
+    id: 'rq_analysis',
+    aliases: ['step1', 'step1a'],
+    modes: {
+      standard: `You are an epistemologist and IBL research coach.
+
+Compare the selected research questions and identify the strongest option.
+
+Selected research questions:
+[SELECTED_RQS]
+
+Evaluate:
+1. Epistemic type
+2. Scope
+3. Testability with literature
+4. Precision of terms
+5. Hidden assumptions or bias
+6. IBL appropriateness
+
+Respond with valid JSON only:
+{
+  "comparisons": [
+    {
+      "question": "Question text",
+      "strengths": ["Strength 1"],
+      "weaknesses": ["Weakness 1"],
+      "score": 4
+    }
+  ],
+  "recommended_question": "Best current option",
+  "recommendation_reason": "Short reason"
+}`,
+      quick: `You are an epistemologist and IBL research coach.
+
+Compare the selected research questions quickly and directly.
+
+Selected research questions:
+[SELECTED_RQS]
+
+Respond with valid JSON only:
+{
+  "comparisons": [
+    {
+      "question": "Question text",
+      "strengths": ["Top strength"],
+      "weaknesses": ["Top weakness"],
+      "score": 4
+    }
+  ],
+  "recommended_question": "Best current option",
+  "recommendation_reason": "Short reason"
+}`,
+      advanced: `You are an expert in the philosophy of science supporting comparative research-question analysis.
+
+Perform a deep comparative analysis of the selected research questions.
+
+Selected research questions:
+[SELECTED_RQS]
+
+For each question assess:
+1. Epistemic type
+2. Scope
+3. Testability with literature
+4. Precision of key terms
+5. Hidden assumptions or bias
+6. Feasibility for a 3-6 week inquiry
+7. IBL appropriateness score
+
+Respond with valid JSON only:
+{
+  "comparisons": [
+    {
+      "question": "Question text",
+      "epistemic_type": "type",
+      "strengths": ["Strength 1"],
+      "weaknesses": ["Weakness 1"],
+      "risks": ["Risk 1"],
+      "score": 4
+    }
+  ],
+  "recommended_question": "Best current option",
+  "recommendation_reason": "Short reason"
+}`,
+    },
+  },
+  rq_synthesis: {
+    id: 'rq_synthesis',
+    aliases: ['step1b'],
+    template: `You are a research design specialist.
+
+Synthesize one final research question from the selected candidates and analysis.
+
+Selected research questions:
+[SELECTED_RQS]
+
+Comparative analysis:
+[CONTENT]
+
+Respond with valid JSON only:
+{
+  "final_question": "One final research question",
+  "justification": "One sentence justification"
+}`,
+  },
+  copilot: {
+    id: 'copilot',
+    template: `You are a cognitive research guidance copilot.
+
+Guide the next research step without taking over the student's reasoning.
+
+Final research question:
+[FINAL_RQ]
+
+Current context:
+[CONTEXT]
+
+Respond with valid JSON only:
+{
+  "next_step": "Most useful next action",
+  "why": "Why this step matters now",
+  "actions": ["Action 1", "Action 2", "Action 3"],
+  "caution": "One thing to avoid"
+}`,
+  },
+  's0-form': {
+    id: 's0-form',
+    template: `You are beginning Stage 0 of an IBL research project.
+
+Help students establish an effective team by defining:
+1. Optimal team size and rationale
+2. Suggested role titles
+3. A team charter template
+4. An initial AI use agreement
 
 Research Topic: [TOPIC]
 Level: [LEVEL]`,
-
-  // Stage 1
-  'step0': `You are a scientific research advisor supporting Stage 1, Step 0 of an IBL framework.
-
-TASK: Generate 5 candidate research questions on the topic below.
-Requirements for each question:
-- Scientifically testable or literature-resolvable
-- Specific enough to be answered in a 3–6 week project
-- Varied in epistemic type (empirical, causal, comparative, mechanistic)
-- Appropriate for the level of study
-
-Topic: [TOPIC]
-
-For each question, provide:
-→ The question
-→ Epistemic type
-→ Why it is researchable
-→ Potential challenges
-
-Format response as JSON array:
-[
-  {
-    "question": "...",
-    "epistemic_type": "...",
-    "why_researchable": "...",
-    "challenges": "..."
-  }
-]`,
-
-  'step1': `You are an expert in the philosophy of science supporting Step 1 — Epistemological Analysis.
-
-TASK: Perform a full epistemological analysis of the following research question.
-
-Research Question: [RQ]
-
-Analyse:
-1. Epistemic type (empirical / causal / comparative / mechanistic / normative)
-2. Scope — too broad, too narrow, or appropriate?
-3. Testability — can it be answered with scientific literature?
-4. Precision — are all key terms defined?
-5. Potential bias or assumption embedded in the question
-6. Recommended refinement (improved version)
-7. Suitable scientific databases for this question`,
-
-  'step2': `You are a research librarian supporting Step 2 — Search String Construction.
-
-TASK: Build optimised search strings for the following research question.
+  },
+  step2: {
+    id: 'step2',
+    template: `You are a research librarian supporting search string construction.
 
 Research Question: [RQ]
 
 Provide:
 1. Core keywords and synonyms
-2. Boolean search string (AND/OR/NOT)
-3. Recommended MeSH / domain-specific terms
-4. 3 ready-to-use search strings for: Web of Science / PubMed / Google Scholar
-5. Filters to apply (date range, peer-reviewed, language)`,
-
-  'step4': `You are a scientific evidence analyst supporting Step 4 — Extract Evidence.
-
-TASK: Extract and structure evidence from the provided source.
+2. Boolean search string
+3. Recommended domain-specific terms
+4. Ready-to-use search strings for Web of Science, PubMed, and Google Scholar
+5. Filters to apply`,
+  },
+  step4: {
+    id: 'step4',
+    template: `You are a scientific evidence analyst.
 
 Research Question: [RQ]
 Source: [SOURCE]
@@ -77,43 +210,105 @@ Source: [SOURCE]
 Extract:
 1. Main hypothesis or claim
 2. Methodology used
-3. Key findings (bullet points)
-4. Statistical significance or effect size (if present)
-5. Limitations stated by authors
-6. Relevance score to the research question (1–5)
-7. Ready-to-use citation (APA 7th)`,
-
-  'step9': `You are a scientific communication specialist supporting Step 9 — Scientific Explanation.
-
-TASK: Guide the student to write a rigorous scientific explanation.
+3. Key findings
+4. Statistical significance or effect size, if present
+5. Limitations
+6. Relevance score to the research question
+7. Ready-to-use APA 7 citation`,
+  },
+  step9: {
+    id: 'step9',
+    template: `You are a scientific communication specialist.
 
 Research Question: [RQ]
 Evidence Summary: [EVIDENCE]
 Audience: [AUDIENCE]
 
-Structure the explanation with:
-1. Opening hook + research question framing
-2. Background context (1 paragraph)
-3. Evidence synthesis (findings from 3+ sources)
-4. Critical analysis (what the evidence does/doesn't prove)
-5. Limitations of current knowledge
+Structure a rigorous scientific explanation with:
+1. Opening hook and research question framing
+2. Background context
+3. Evidence synthesis
+4. Critical analysis
+5. Limitations
 6. Implications and future directions
-7. APA citations
+7. APA citations`,
+  },
+  generic_guidance: {
+    id: 'generic_guidance',
+    template: `You are the RELIA Wizard, a cognitive research guidance system.
 
-Apply: accuracy, precision, appropriate terminology, hedging language.`,
+Your role is to structure thinking for the user, not to replace the user's reasoning.
+Be clear, structured, and decision-oriented.
+
+Topic: [TOPIC]
+Research Question: [RQ]
+Context: [CONTEXT]`,
+  },
 }
 
-export function getPrompt(stepId: string, variables: Record<string, string>): string {
-  let prompt = PROMPTS[stepId as keyof typeof PROMPTS] || ''
+const PROMPT_ALIAS_MAP = Object.values(PROMPT_REGISTRY).reduce<Record<string, PromptId>>(
+  (aliases, definition) => {
+    aliases[definition.id] = definition.id
+    definition.aliases?.forEach((alias) => {
+      aliases[alias] = definition.id
+    })
+    return aliases
+  },
+  {}
+)
 
-  // Replace variables
-  Object.entries(variables).forEach(([key, value]) => {
-    const placeholder = `[${key.toUpperCase()}]`
-    prompt = prompt.replace(placeholder, value)
+function replaceVariables(template: string, variables: PromptVariables): string {
+  return template.replace(/\[([A-Z0-9_]+)\]/g, (_match, key: string) => {
+    return variables[key] ?? `[${key}]`
   })
+}
 
-  return prompt
+export function resolvePromptId(promptKey?: string): PromptId {
+  if (!promptKey) {
+    return 'generic_guidance'
+  }
+
+  return PROMPT_ALIAS_MAP[promptKey] ?? 'generic_guidance'
 }
-export const prompts = {
-  rq_analysis: 'Analyze research questions and provide feedback',
+
+export function getPrompt(
+  promptKey: string,
+  variables: PromptVariables = {},
+  options: { mode?: PromptMode } = {}
+): string {
+  const resolvedPromptId = resolvePromptId(promptKey)
+  const definition = PROMPT_REGISTRY[resolvedPromptId]
+  const mode = options.mode ?? 'standard'
+  const template =
+    definition.modes?.[mode] ??
+    definition.modes?.standard ??
+    definition.template ??
+    PROMPT_REGISTRY.generic_guidance.template ??
+    ''
+
+  return replaceVariables(template, variables)
 }
+
+export function buildDefaultUserMessage(
+  promptKey: string,
+  variables: PromptVariables = {},
+  options: { mode?: PromptMode } = {}
+): string {
+  const resolvedPromptId = resolvePromptId(promptKey)
+  const mode = options.mode ?? 'standard'
+
+  switch (resolvedPromptId) {
+    case 'rq_generation':
+      return `Generate research question candidates for the topic "${variables.TOPIC || ''}".`
+    case 'rq_analysis':
+      return `Compare the selected research questions using ${mode} mode.`
+    case 'rq_synthesis':
+      return 'Synthesize one final research question and justify it in one sentence.'
+    case 'copilot':
+      return 'Guide the next research step based on the final research question.'
+    default:
+      return 'Provide structured research guidance for the current step.'
+  }
+}
+
+export const prompts = PROMPT_REGISTRY
