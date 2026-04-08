@@ -1,71 +1,57 @@
-# RELIA Research Wizard 🧬
+# RELIA Research Wizard
 
-IBL Framework with ChatGPT 4.5 Mini + Database Logging
+IBL Framework with OpenAI + Prisma + Supabase.
 
-## 📋 Estrutura
+## Structure
 
 ```
-/app              → Next.js pages
-/api              → API routes (ChatGPT integration)
-/components       → React components (Stage 1 Research)
-/lib              → AI, DB, Prompts
-/types            → TypeScript types
-/store            → Zustand state (stage/step navigation)
-/prisma           → Database schema
+/app              -> Next.js app router
+/api              -> legacy API routes mirror
+/components       -> React components
+/lib              -> AI, DB and prompts
+/types            -> TypeScript types
+/store            -> Zustand state
+/prisma           -> Prisma schema
 ```
 
-## 🚀 Setup
+## Quick start (recommended)
 
-### 1. Install dependencies
+Run:
+
+```bat
+Appframework-start.bat
+```
+
+What it does:
+- closes old local Node servers on ports 3000 and 3011
+- prefers port 3011 (falls back if 3011 is busy by non-Node process)
+- installs dependencies only if needed
+- regenerates Prisma client
+- tries `prisma db push`
+- starts Next.js dev server
+
+## Manual start
 
 ```bash
 npm install
-```
-
-### 2. Environment
-
-`.env.local` já tem a chave OpenAI
-
-### 3. Database
-
-```bash
-npx prisma migrate dev --name init
-```
-
-Cria SQLite em `prisma/dev.db`
-
-### 4. Run
-
-```bash
+npm run prisma:generate
+npm run prisma:push
 npm run dev
 ```
 
-Abre http://localhost:3000
+Default URL: `http://localhost:3011`
 
-## 🔄 Fluxo (Stage 1, Step 0)
+## Environment
 
-1. Enter research topic
-2. Click "Generate Research Questions"
-3. ChatGPT gera 5 questões (gravadas na BD)
-4. Vê resultado estruturado
-5. Histórico está na BD
+Set `.env.local` with:
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `DATABASE_URL`
+- `DIRECT_URL`
+- `NEXT_PUBLIC_APP_URL=http://localhost:3011`
 
-## 📊 Database
+## Build
 
-**Projects** → um projeto por research topic
-**ProjectInteractions** → cada chamada ao ChatGPT + resposta + tokens
-
-## 🎯 Próximos passos
-
-- [ ] Step 1 (Epistemic Analysis)
-- [ ] Step 2 (Search Strings)
-- [ ] PDF Export
-- [ ] Full Stage 1 (10 steps)
-- [ ] Stages 0, 2, 3
-
-## 🔑 Decisões importantes
-
-- ✅ Usando ChatGPT 4.5 Mini
-- ✅ BD: SQLite + Prisma
-- ✅ Histórico: Sim
-- ✅ PDF Export: Sim (próximo)
+```bash
+npm run build
+```
