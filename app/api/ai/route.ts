@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { callChatGPT } from '@/lib/ai'
 import { buildDefaultUserMessage, getPrompt, resolvePromptId, type PromptMode } from '@/lib/prompts'
 import { saveInteraction } from '@/lib/db'
+import { getMissingRequiredFields, resolveWorkflowStepId } from '@/lib/workflow'
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
     const safeStepId = stepId || 'unknown-step'
     const safePromptKey = promptId || stepId || 'generic_guidance'
     const resolvedPromptId = resolvePromptId(safePromptKey)
+    const resolvedWorkflowStep = stepId ? resolveWorkflowStepId(safeStepId) : null
     const safeStepLabel = stepLabel || 'AI response'
     const safeMode: PromptMode =
       mode === 'quick' || mode === 'advanced' || mode === 'standard' ? mode : 'standard'
@@ -39,6 +41,35 @@ export async function POST(req: Request) {
       CONTEXT: context || '',
       FINAL_RQ: finalRQ || rq || '',
       SELECTED_RQS: Array.isArray(selectedRQs) ? selectedRQs.join('\n') : rq || '',
+    }
+    const missingFields = resolvedWorkflowStep
+      ? getMissingRequiredFields(resolvedWorkflowStep, {
+          topic,
+          level: body.level,
+          selectedQuestions: body.selectedQuestions || selectedRQs,
+          comparisonResult: body.comparisonResult,
+          finalResearchQuestion: body.finalResearchQuestion || finalRQ,
+          source: body.source,
+          evidenceRecords: body.evidenceRecords,
+          knowledgeStructure: body.knowledgeStructure,
+          explanationDraft: body.explanationDraft,
+          multimodalPlan: body.multimodalPlan,
+          reflection: body.reflection,
+          mode: safeMode,
+        })
+      : []
+
+    if (resolvedWorkflowStep && missingFields.length > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Missing required step inputs',
+          details: `Missing fields for ${resolvedWorkflowStep}: ${missingFields.join(', ')}`,
+          missingFields,
+          workflowStep: resolvedWorkflowStep,
+        },
+        { status: 400 }
+      )
     }
 
     console.log(`[API] Received request - Step: ${safeStepId}, Prompt: ${resolvedPromptId}, Topic: ${topic}`)

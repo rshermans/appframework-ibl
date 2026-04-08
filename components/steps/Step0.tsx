@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
+import type { CandidateResearchQuestion } from '@/types/research-workflow'
 
 interface Question {
   question: string
@@ -15,7 +16,7 @@ interface Question {
 }
 
 export default function Step0() {
-  const { projectId, topic, setCandidates, setInput, setOutput } = useWizardStore()
+  const { projectId, topic, setCandidates, setCandidateResearchQuestions, setInput, setOutput } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [localTopic, setLocalTopic] = useState(topic)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -62,12 +63,25 @@ export default function Step0() {
           : Array.isArray(parsed?.questions)
             ? parsed.questions
             : []
+        const structuredQuestions: CandidateResearchQuestion[] = nextQuestions.map(
+          (question: Question, index: number) => ({
+            id: `rq-${index + 1}`,
+            question: question.question,
+            epistemicType: question.type || question.epistemic_type || 'unknown',
+            rationale: question.rationale || question.why_researchable || '',
+            databases: Array.isArray(question.databases) ? question.databases : [],
+            iblScore: typeof question.ibl_score === 'number' ? question.ibl_score : 0,
+            challenges: question.challenges,
+          })
+        )
 
         setQuestions(nextQuestions)
         setCandidates(nextQuestions.map((question: Question) => question.question))
+        setCandidateResearchQuestions(structuredQuestions)
       } catch {
         setQuestions([])
         setCandidates([])
+        setCandidateResearchQuestions([])
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate')

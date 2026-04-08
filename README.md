@@ -8,6 +8,7 @@ IBL Framework with OpenAI + Prisma + Supabase.
 /app              -> Next.js app router and API routes
 /components       -> React components
 /lib              -> AI, DB and canonical prompt registry
+/docs             -> engineering architecture notes
 /types            -> TypeScript types
 /store            -> Zustand state
 /prisma           -> Prisma schema
@@ -56,6 +57,14 @@ The canonical prompt registry lives in `lib/prompts.ts`.
 - Domain prompt IDs: `rq_generation`, `rq_analysis`, `rq_synthesis`, `copilot`
 - Legacy step aliases such as `step0` and `step1` resolve to the canonical prompt IDs
 - UI should send structured inputs to `/api/ai`; prompt assembly happens on the server
+
+## Workflow architecture
+
+The engineerable workflow model lives in:
+
+- `types/research-workflow.ts` for domain contracts
+- `lib/workflow.ts` for step contracts and transition rules
+- `docs/system-architecture.md` for the high-level system model
 
 ## Build
 

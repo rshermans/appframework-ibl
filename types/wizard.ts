@@ -1,3 +1,10 @@
+import type {
+  CandidateResearchQuestion,
+  ComparisonResult,
+  FinalResearchQuestion,
+  WorkflowStepId,
+} from '@/types/research-workflow'
+
 // Stage & Step definitions
 export type Stage = 0 | 1 | 2 | 3
 
@@ -68,15 +75,19 @@ export interface WizardState {
   // Navigation
   stage: Stage
   step: string | number
+  workflowStep: WorkflowStepId
   
   // Current work
   currentInput: string
   currentOutput: string
   currentMode: string
   rqCandidates: string[]
+  candidateResearchQuestions: CandidateResearchQuestion[]
   selectedRQs: string[]
   analysis: string
   rqAnalysis: string
+  comparisonResult: ComparisonResult | null
+  finalResearchQuestion: FinalResearchQuestion | null
   
   // History
   interactions: InteractionRecord[]
@@ -85,12 +96,16 @@ export interface WizardState {
   setProject: (id: string, topic: string) => void
   setStage: (stage: Stage) => void
   setStep: (step: string | number) => void
+  setWorkflowStep: (step: WorkflowStepId) => void
   setInput: (input: string) => void
   setOutput: (output: string) => void
   setMode: (mode: string) => void
   setCandidates: (candidates: string[]) => void
+  setCandidateResearchQuestions: (candidates: CandidateResearchQuestion[]) => void
   toggleRQ: (rq: string) => void
   setAnalysis: (analysis: string) => void
+  setComparisonResult: (result: ComparisonResult | null) => void
+  setFinalResearchQuestion: (result: FinalResearchQuestion | null) => void
   addInteraction: (record: InteractionRecord) => void
 }
 

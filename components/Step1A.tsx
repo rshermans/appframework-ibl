@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
+import type { ComparisonResult } from '@/types/research-workflow'
 
 export default function Step1A() {
-  const { selectedRQs, setStep, setAnalysis } = useWizardStore()
+  const { selectedRQs, setComparisonResult, setStep, setAnalysis } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'quick' | 'advanced'>('quick')
   const [error, setError] = useState('')
@@ -27,6 +28,7 @@ export default function Step1A() {
           promptId: 'rq_analysis',
           stepId: 'step1',
           stepLabel: 'RQ Analysis',
+          selectedQuestions: selectedRQs,
           selectedRQs,
           mode,
         }),
@@ -40,6 +42,18 @@ export default function Step1A() {
       }
 
       setAnalysis(payload.output)
+      try {
+        const parsed = JSON.parse(payload.output)
+        const comparisonResult: ComparisonResult = {
+          mode,
+          comparisons: Array.isArray(parsed?.comparisons) ? parsed.comparisons : [],
+          recommendedQuestion: parsed?.recommended_question || '',
+          recommendationReason: parsed?.recommendation_reason || '',
+        }
+        setComparisonResult(comparisonResult)
+      } catch {
+        setComparisonResult(null)
+      }
       setStep(3)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to compare questions')
