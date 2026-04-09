@@ -5,6 +5,7 @@ export type PromptId =
   | 'rq_analysis'
   | 'rq_synthesis'
   | 'copilot'
+  | 'knowledge_structure'
   | 's0-form'
   | 'step2'
   | 'step4'
@@ -174,6 +175,27 @@ Respond with valid JSON only:
   "caution": "One thing to avoid"
 }`,
   },
+  knowledge_structure: {
+    id: 'knowledge_structure',
+    aliases: ['step6', 'step7', 'step8a', 'step8b'],
+    template: `You are a research synthesis architect.
+
+Research Question: [RQ]
+Evidence Records JSON:
+[EVIDENCE]
+
+Build a structured knowledge model from the evidence.
+
+Respond with valid JSON only:
+{
+  "topics": ["Topic 1", "Topic 2"],
+  "subtopics": ["Subtopic 1", "Subtopic 2"],
+  "concept_map_nodes": ["Node 1", "Node 2"],
+  "concept_map_edges": [
+    { "from": "Node 1", "to": "Node 2", "relation": "supports | contrasts | extends | depends_on" }
+  ]
+}`,
+  },
   's0-form': {
     id: 's0-form',
     template: `You are beginning Stage 0 of an IBL research project.
@@ -234,14 +256,26 @@ Research Question: [RQ]
 Evidence Summary: [EVIDENCE]
 Audience: [AUDIENCE]
 
-Structure a rigorous scientific explanation with:
-1. Opening hook and research question framing
-2. Background context
-3. Evidence synthesis
-4. Critical analysis
-5. Limitations
-6. Implications and future directions
-7. APA citations`,
+Respond with valid JSON only:
+{
+  "outline": [
+    "Opening hook and research question framing",
+    "Background context",
+    "Evidence synthesis",
+    "Critical analysis",
+    "Limitations",
+    "Implications and future directions"
+  ],
+  "argument_core": "Concise central argument supported by evidence",
+  "evidence_references": [
+    "Citation 1",
+    "Citation 2"
+  ],
+  "open_issues": [
+    "Issue 1",
+    "Issue 2"
+  ]
+}`,
   },
   generic_guidance: {
     id: 'generic_guidance',
@@ -320,6 +354,8 @@ export function buildDefaultUserMessage(
       return 'Design a search strategy from the final research question and return structured search outputs.'
     case 'step4':
       return 'Extract structured evidence from the provided source and return a valid JSON evidence record.'
+    case 'knowledge_structure':
+      return 'Organize the extracted evidence into topics, subtopics, and a concept map.'
     default:
       return 'Provide structured research guidance for the current step.'
   }

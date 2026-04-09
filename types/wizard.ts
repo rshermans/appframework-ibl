@@ -2,7 +2,10 @@ import type {
   CandidateResearchQuestion,
   ComparisonResult,
   EvidenceRecord,
+  ExplanationDraft,
   FinalResearchQuestion,
+  KnowledgeStructure,
+  SearchArticle,
   SearchDesign,
   WorkflowStepId,
 } from '@/types/research-workflow'
@@ -91,7 +94,10 @@ export interface WizardState {
   comparisonResult: ComparisonResult | null
   finalResearchQuestion: FinalResearchQuestion | null
   searchDesign: SearchDesign | null
+  searchArticles: SearchArticle[]
   evidenceRecords: EvidenceRecord[]
+  knowledgeStructure: KnowledgeStructure | null
+  explanationDraft: ExplanationDraft | null
   
   // History
   interactions: InteractionRecord[]
@@ -111,8 +117,11 @@ export interface WizardState {
   setComparisonResult: (result: ComparisonResult | null) => void
   setFinalResearchQuestion: (result: FinalResearchQuestion | null) => void
   setSearchDesign: (result: SearchDesign | null) => void
+  setSearchArticles: (articles: SearchArticle[]) => void
   addEvidenceRecord: (record: EvidenceRecord) => void
   setEvidenceRecords: (records: EvidenceRecord[]) => void
+  setKnowledgeStructure: (structure: KnowledgeStructure | null) => void
+  setExplanationDraft: (draft: ExplanationDraft | null) => void
   addInteraction: (record: InteractionRecord) => void
 }
 

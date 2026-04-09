@@ -5,11 +5,52 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { SearchDesign } from '@/types/research-workflow'
 
 export default function Step2Search() {
-  const { finalResearchQuestion, projectId, searchDesign, setSearchDesign, topic } = useWizardStore()
+  const {
+    finalResearchQuestion,
+    projectId,
+    searchDesign,
+    searchArticles,
+    setSearchArticles,
+    setSearchDesign,
+    setWorkflowStep,
+    topic,
+  } = useWizardStore()
   const [loading, setLoading] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [provider, setProvider] = useState<'semantic_scholar' | 'crossref'>('semantic_scholar')
   const [error, setError] = useState('')
 
   const isApproved = Boolean(finalResearchQuestion?.approvedByUser)
+
+  const runRetrieval = async (query: string) => {
+    setSearchLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query,
+          limit: 5,
+          provider,
+        }),
+      })
+      const payload = await response.json()
+      const data = payload?.data ?? payload
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.details || payload?.error || 'Failed to retrieve articles')
+      }
+
+      setSearchArticles(Array.isArray(data.articles) ? data.articles : [])
+    } catch (err) {
+      setSearchArticles([])
+      setError(err instanceof Error ? err.message : 'Failed to retrieve articles')
+    } finally {
+      setSearchLoading(false)
+    }
+  }
 
   const runSearchDesign = async () => {
     if (!finalResearchQuestion?.question) {
@@ -65,6 +106,7 @@ export default function Step2Search() {
       }
 
       setSearchDesign(nextSearchDesign)
+      await runRetrieval(nextSearchDesign.booleanQuery)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate search design')
     } finally {
@@ -189,6 +231,66 @@ export default function Step2Search() {
                 ))}
               </ul>
             </div>
+          </div>
+
+          <div className="space-y-3 rounded border border-slate-200 bg-white p-4">
+            <div className="text-sm font-semibold text-slate-800">Step 2.5 - Retrieve Articles</div>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-sm text-slate-700">
+                Provider:
+                <select
+                  value={provider}
+                  onChange={(event) =>
+                    setProvider(event.target.value as 'semantic_scholar' | 'crossref')
+                  }
+                  className="ml-2 rounded border border-slate-300 px-2 py-1 text-sm"
+                >
+                  <option value="semantic_scholar">Semantic Scholar</option>
+                  <option value="crossref">Crossref</option>
+                </select>
+              </label>
+              <button
+                onClick={() => runRetrieval(searchDesign.booleanQuery)}
+                disabled={searchLoading}
+                className="rounded bg-sky-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {searchLoading ? 'Retrieving...' : 'Retrieve Articles'}
+              </button>
+            </div>
+
+            {searchArticles.length > 0 ? (
+              <div className="space-y-3">
+                {searchArticles.map((article, index) => (
+                  <div key={article.id} className="rounded border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-xs uppercase tracking-wide text-slate-500">
+                      Article {index + 1} | {article.provider}
+                    </div>
+                    <div className="mt-1 font-semibold text-slate-900">{article.title}</div>
+                    <div className="mt-1 text-sm text-slate-600">
+                      {(article.authors || []).slice(0, 3).join(', ') || 'Unknown authors'}
+                      {article.year ? ` | ${article.year}` : ''}
+                    </div>
+                    <div className="mt-2 text-sm text-slate-700">
+                      {article.abstract || 'No abstract provided by the provider.'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-600">
+                No articles retrieved yet. Run retrieval to ground Step 3 in real sources.
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => setWorkflowStep('step3_evidence_extraction')}
+              disabled={searchArticles.length === 0}
+              className="rounded bg-slate-900 px-4 py-3 text-white hover:bg-slate-800 disabled:opacity-50"
+            >
+              Continue to Step 3
+            </button>
           </div>
         </div>
       )}

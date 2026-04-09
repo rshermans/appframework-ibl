@@ -54,6 +54,7 @@ export const LEGACY_WORKFLOW_STEP_ALIASES: Record<string, WorkflowStepId> = {
   '1': 'step1_select',
   '2': 'step1a_compare',
   '3': 'step1b_synthesize',
+  'step1-select': 'step1_select',
   step0: 'step0_generate',
   step1: 'step1a_compare',
   step1a: 'step1a_compare',
@@ -85,7 +86,7 @@ export const WORKFLOW_TO_LEGACY_STEP: Record<WorkflowStepId, string> = {
   step1b_synthesize: 'step1b',
   step2_search_design: 'step2',
   step3_evidence_extraction: 'step3',
-  step4_knowledge_structure: 'step4',
+  step4_knowledge_structure: 'step6',
   step5_explanation: 'step9',
   step6_multimodal: 'step10',
   step7_reflection: 's3-reflect',
@@ -177,14 +178,15 @@ export const WORKFLOW_STEP_CONTRACTS: Record<WorkflowStepId, WorkflowStepContrac
     label: 'Design Search Strategy',
     stage: 'research_preparation',
     promptId: 'step2',
-    description: 'Translate the final question into a reusable search design.',
+    description: 'Translate the final question into a reusable search design and retrieve candidate articles.',
     inputSchema: [
       field('finalResearchQuestion', 'object', true, 'store', 'Locked research question and justification.'),
     ],
     outputSchema: [
       field('searchDesign', 'object', true, 'ai', 'Keywords, boolean query, databases, and filters.'),
+      field('searchArticles', 'object[]', false, 'system', 'Retrieved article candidates from search providers.'),
     ],
-    storeWrites: ['searchDesign'],
+    storeWrites: ['searchDesign', 'searchArticles'],
     nextSteps: ['step3_evidence_extraction'],
     humanDecisionRequired: true,
     defaultMode: 'standard',
@@ -198,6 +200,7 @@ export const WORKFLOW_STEP_CONTRACTS: Record<WorkflowStepId, WorkflowStepContrac
     inputSchema: [
       field('finalResearchQuestion', 'object', true, 'store', 'Final research question.'),
       field('searchDesign', 'object', true, 'store', 'Search design created from the final question.'),
+      field('searchArticles', 'object[]', false, 'store', 'Retrieved article candidates to analyse.'),
       field('source', 'string', true, 'user', 'Source content or abstract to analyse.'),
     ],
     outputSchema: [
@@ -212,6 +215,7 @@ export const WORKFLOW_STEP_CONTRACTS: Record<WorkflowStepId, WorkflowStepContrac
     id: 'step4_knowledge_structure',
     label: 'Structure Knowledge',
     stage: 'knowledge_building',
+    promptId: 'knowledge_structure',
     description: 'Organise extracted evidence into topics, subtopics, and conceptual relations.',
     inputSchema: [
       field('evidenceRecords', 'object[]', true, 'store', 'Evidence already extracted from sources.'),
@@ -348,6 +352,7 @@ export const EMPTY_WORKFLOW_STATE: ProjectWorkflowState = {
   comparisonResult: null,
   finalResearchQuestion: null,
   searchDesign: null,
+  searchArticles: [],
   evidenceRecords: [],
   knowledgeStructure: null,
   explanationDraft: null,

@@ -49,6 +49,7 @@ Set `.env.local` with:
 - `DATABASE_URL`
 - `DIRECT_URL`
 - `NEXT_PUBLIC_APP_URL=http://localhost:3011`
+- `SEMANTIC_SCHOLAR_API_KEY` (optional, recommended for `/api/search`)
 
 ## Prompt architecture
 
@@ -65,6 +66,11 @@ The engineerable workflow model lives in:
 - `types/research-workflow.ts` for domain contracts
 - `lib/workflow.ts` for step contracts and transition rules
 - `docs/system-architecture.md` for the high-level system model
+
+## Retrieval layer
+
+- `/app/api/search/route.ts` exposes the retrieval API used in Step 2.5
+- `lib/search.ts` normalizes provider responses into a common article schema
 
 ## Build
 

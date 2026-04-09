@@ -74,6 +74,17 @@ export interface SearchStringSet {
   query: string
 }
 
+export interface SearchArticle {
+  id: string
+  provider: 'semantic_scholar' | 'crossref' | 'core'
+  title: string
+  abstract: string
+  year?: number
+  authors: string[]
+  doi?: string
+  url?: string
+}
+
 export interface SearchDesign {
   keywords: string[]
   synonyms: string[]
@@ -130,6 +141,7 @@ export interface ProjectWorkflowState {
   comparisonResult: ComparisonResult | null
   finalResearchQuestion: FinalResearchQuestion | null
   searchDesign: SearchDesign | null
+  searchArticles: SearchArticle[]
   evidenceRecords: EvidenceRecord[]
   knowledgeStructure: KnowledgeStructure | null
   explanationDraft: ExplanationDraft | null

@@ -6,6 +6,9 @@ import StepSelect from './StepSelect'
 import Step1A from './Step1A'
 import Step1B from './Step1B'
 import Step2Search from './Step2Search'
+import Step3Evidence from './Step3Evidence'
+import Step4Structure from './Step4Structure'
+import Step5Explanation from './Step5Explanation'
 import Step0 from './steps/Step0'
 
 const ACTIVE_WORKFLOW_STEPS = [
@@ -14,6 +17,9 @@ const ACTIVE_WORKFLOW_STEPS = [
   'step1a_compare',
   'step1b_synthesize',
   'step2_search_design',
+  'step3_evidence_extraction',
+  'step4_knowledge_structure',
+  'step5_explanation',
 ] as const
 
 const STEP_BADGES: Record<(typeof ACTIVE_WORKFLOW_STEPS)[number], string> = {
@@ -22,6 +28,9 @@ const STEP_BADGES: Record<(typeof ACTIVE_WORKFLOW_STEPS)[number], string> = {
   step1a_compare: 'Step 1A',
   step1b_synthesize: 'Step 1B',
   step2_search_design: 'Step 2',
+  step3_evidence_extraction: 'Step 3',
+  step4_knowledge_structure: 'Step 4',
+  step5_explanation: 'Step 5',
 }
 
 function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
@@ -36,13 +45,28 @@ function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
       return <Step1B />
     case 'step2_search_design':
       return <Step2Search />
+    case 'step3_evidence_extraction':
+      return <Step3Evidence />
+    case 'step4_knowledge_structure':
+      return <Step4Structure />
+    case 'step5_explanation':
+      return <Step5Explanation />
     default:
       return <Step0 />
   }
 }
 
 export default function Stage1Research() {
-  const { finalResearchQuestion, stage, workflowStep, setWorkflowStep } = useWizardStore()
+  const {
+    evidenceRecords,
+    knowledgeStructure,
+    finalResearchQuestion,
+    searchArticles,
+    searchDesign,
+    stage,
+    workflowStep,
+    setWorkflowStep,
+  } = useWizardStore()
 
   if (stage !== 1) return null
 
@@ -58,27 +82,33 @@ export default function Stage1Research() {
         </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-8">
         {ACTIVE_WORKFLOW_STEPS.map((stepId) => {
           const step = getStepContract(stepId)
           const isActive = activeStep === stepId
           const isStep2Locked =
             stepId === 'step2_search_design' && !finalResearchQuestion?.approvedByUser
+          const isStep3Locked =
+            stepId === 'step3_evidence_extraction' && (!searchDesign || searchArticles.length === 0)
+          const isStep4Locked = stepId === 'step4_knowledge_structure' && evidenceRecords.length === 0
+          const isStep5Locked =
+            stepId === 'step5_explanation' && (!knowledgeStructure || evidenceRecords.length === 0)
+          const isLocked = isStep2Locked || isStep3Locked || isStep4Locked || isStep5Locked
 
           return (
             <button
               key={stepId}
               onClick={() => {
-                if (!isStep2Locked) {
+                if (!isLocked) {
                   setWorkflowStep(stepId)
                 }
               }}
-              disabled={isStep2Locked}
+              disabled={isLocked}
               className={`rounded-xl border p-4 text-left transition ${
                 isActive
                   ? 'border-slate-900 bg-slate-900 text-white'
                   : 'border-slate-200 bg-white text-slate-900 hover:border-slate-400'
-              } ${isStep2Locked ? 'cursor-not-allowed opacity-50' : ''}`}
+              } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               <div
                 className={`text-xs uppercase tracking-wide ${
@@ -91,7 +121,13 @@ export default function Stage1Research() {
               <div className={`mt-2 text-sm ${isActive ? 'text-slate-200' : 'text-slate-600'}`}>
                 {isStep2Locked
                   ? 'Locked until the final research question is approved.'
-                  : step.description}
+                  : isStep3Locked
+                    ? 'Locked until search design retrieves at least one article.'
+                  : isStep4Locked
+                      ? 'Locked until at least one evidence record is extracted.'
+                    : isStep5Locked
+                      ? 'Locked until knowledge structure exists.'
+                    : step.description}
               </div>
             </button>
           )

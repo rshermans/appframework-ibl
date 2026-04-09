@@ -19,7 +19,10 @@ export const useWizardStore = create<WizardState>((set) => ({
   comparisonResult: null,
   finalResearchQuestion: null,
   searchDesign: null,
+  searchArticles: [],
   evidenceRecords: [],
+  knowledgeStructure: null,
+  explanationDraft: null,
   interactions: [],
 
   setProject: (id: string, topic: string) =>
@@ -73,6 +76,9 @@ export const useWizardStore = create<WizardState>((set) => ({
   setSearchDesign: (searchDesign) =>
     set({ searchDesign }),
 
+  setSearchArticles: (searchArticles) =>
+    set({ searchArticles }),
+
   addEvidenceRecord: (record) =>
     set((state) => ({
       evidenceRecords: [...state.evidenceRecords, record],
@@ -80,6 +86,12 @@ export const useWizardStore = create<WizardState>((set) => ({
 
   setEvidenceRecords: (evidenceRecords) =>
     set({ evidenceRecords }),
+
+  setKnowledgeStructure: (knowledgeStructure) =>
+    set({ knowledgeStructure }),
+
+  setExplanationDraft: (explanationDraft) =>
+    set({ explanationDraft }),
 
   addInteraction: (record: InteractionRecord) =>
     set((state) => ({
