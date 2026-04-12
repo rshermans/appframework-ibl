@@ -67,6 +67,7 @@ vercel
 ### 2. Configurar Variáveis de Ambiente
 
 No dashboard do Vercel:
+
 1. Vá a: Project → Settings → Environment Variables
 2. Adicione todas as variáveis de `.env.local`
 3. Configure para cada ambiente (Production, Preview, Development)
@@ -261,17 +262,21 @@ Antes de cada release:
 # Version X.Y.Z - YYYY-MM-DD
 
 ## ✨ Features
+
 - Feature 1
 - Feature 2
 
 ## 🐛 Bug Fixes
+
 - Fix 1
 - Fix 2
 
 ## 📚 Documentation
+
 - Doc update 1
 
 ## 🚀 Performance
+
 - Perf improvement 1
 ```
 

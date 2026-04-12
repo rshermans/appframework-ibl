@@ -2,11 +2,12 @@
 
 ## Reportar Vulnerabilidades de Segurança
 
-Se descobrir uma vulnerabilidade de segurança, **não abra uma issue pública**. 
+Se descobrir uma vulnerabilidade de segurança, **não abra uma issue pública**.
 
 Em vez disso, envie um email para: **security@appframework.dev**
 
 Inclua:
+
 - Descrição da vulnerabilidade
 - Impacto potencial
 - Passos para reproduzir (se possível)
@@ -19,11 +20,13 @@ Inclua:
 ### Variáveis de Ambiente
 
 ✅ **Faça:**
+
 - Use `.env.local` para configuração local
 - Nunca commita `.env.local`
 - Armazene secrets em plataformas seguras (Vercel, Railway, etc)
 
 ❌ **Não faça:**
+
 - Hardcode API keys no código
 - Commitar secrets
 - Partilhar credenciais em Slack/Email
@@ -32,7 +35,7 @@ Inclua:
 
 - Implementar autenticação forte (OAuth, JWT, Sessions)
 - Password hashing com bcrypt ou Argon2
--2FA quando possível
+  -2FA quando possível
 - Sessions com timeouts configurados
 
 ### Dados Sensíveis
@@ -176,6 +179,7 @@ Se uma vulnerabilidade for descoberta após go-live:
 ## 🔄 Versioning e Updates
 
 Seguimos [Semantic Versioning](https://semver.org/):
+
 - **MAJOR** - Breaking changes
 - **MINOR** - Novas features
 - **PATCH** - Bug fixes
