@@ -5,6 +5,7 @@ publish = ".next"
 
 [build.environment]
 NODE_ENV = "production"
+SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_APP_URL,OPENAI_MODEL"
 
 [[redirects]]
 from = "/*"
