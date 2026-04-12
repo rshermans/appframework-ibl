@@ -11,6 +11,7 @@ export default function Step1A() {
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'quick' | 'advanced'>('quick')
   const [error, setError] = useState('')
+  const isPortuguese = locale === 'pt-PT'
 
   const runAnalysis = async () => {
     if (selectedRQs.length < 2) {
@@ -106,6 +107,19 @@ export default function Step1A() {
           {' '}
           {t('steps.step1A.advanced')}
         </label>
+      </div>
+
+      <div className="mb-4 rounded border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-900">
+        <div className="font-semibold">{isPortuguese ? 'Modo selecionado' : 'Selected mode'}: {mode}</div>
+        <div className="mt-1">
+          {mode === 'quick'
+            ? isPortuguese
+              ? 'Quick: mais rapido, menos profundidade analitica, bom para iteracoes iniciais.'
+              : 'Quick: faster and lighter analysis, useful for early iterations.'
+            : isPortuguese
+              ? 'Advanced: comparacao profunda, mais detalhe epistemico e riscos de cada pergunta.'
+              : 'Advanced: deeper comparison with stronger epistemic analysis and risk breakdown.'}
+        </div>
       </div>
 
       <button

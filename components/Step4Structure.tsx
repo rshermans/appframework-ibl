@@ -18,8 +18,10 @@ export default function Step4Structure() {
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [refineInstructions, setRefineInstructions] = useState('')
 
   const canRun = evidenceRecords.length > 0
+  const isPortuguese = locale === 'pt-PT'
 
   const buildKnowledgeStructure = async () => {
     if (!finalResearchQuestion?.question) {
@@ -36,6 +38,7 @@ export default function Step4Structure() {
 
     try {
       const evidenceJson = JSON.stringify(evidenceRecords, null, 2)
+      const hasRefine = Boolean(refineInstructions.trim())
       const response = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,7 +52,9 @@ export default function Step4Structure() {
           rq: finalResearchQuestion.question,
           evidence: evidenceJson,
           evidenceRecords,
-          content: evidenceJson,
+          content: hasRefine
+            ? `${evidenceJson}\n${isPortuguese ? 'Instrucoes complementares' : 'Complementary instructions'}: ${refineInstructions.trim()}`
+            : evidenceJson,
           locale,
         }),
       })
@@ -74,6 +79,16 @@ export default function Step4Structure() {
                 relation: edge.relation || '',
               }))
               .filter((edge: { from: string; to: string; relation: string }) => edge.from && edge.to)
+          : [],
+        mindMapMarkdown:
+          typeof parsed?.mind_map_markdown === 'string' ? parsed.mind_map_markdown : '',
+        glossary: Array.isArray(parsed?.glossary)
+          ? parsed.glossary
+              .map((entry: { term?: string; definition?: string }) => ({
+                term: entry.term || '',
+                definition: entry.definition || '',
+              }))
+              .filter((entry: { term: string; definition: string }) => entry.term && entry.definition)
           : [],
       }
 
@@ -103,6 +118,23 @@ export default function Step4Structure() {
         </div>
       </div>
 
+      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+        <div className="mb-2 text-sm font-semibold text-indigo-900">
+          {isPortuguese ? 'Refazer estrutura com instrucoes adicionais' : 'Redo structure with additional instructions'}
+        </div>
+        <textarea
+          value={refineInstructions}
+          onChange={(event) => setRefineInstructions(event.target.value)}
+          rows={3}
+          placeholder={
+            isPortuguese
+              ? 'Ex.: destacar relacoes causais e criar glossario focado em termos tecnicos'
+              : 'e.g. emphasize causal links and build a glossary focused on technical terms'
+          }
+          className="w-full rounded border border-indigo-200 bg-white px-3 py-2 text-sm"
+        />
+      </div>
+
       {!canRun && (
         <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           {t('steps.step4.locked')}
@@ -120,7 +152,11 @@ export default function Step4Structure() {
         disabled={!canRun || loading}
         className="rounded bg-slate-900 px-4 py-3 text-white disabled:opacity-50"
       >
-        {loading ? t('steps.step4.generating') : t('steps.step4.generateButton')}
+        {loading
+          ? t('steps.step4.generating')
+          : isPortuguese
+            ? 'Gerar ou refazer estrutura de conhecimento'
+            : 'Generate or redo knowledge structure'}
       </button>
 
       {knowledgeStructure && (
@@ -186,6 +222,32 @@ export default function Step4Structure() {
             </ul>
           </div>
 
+          {knowledgeStructure.mindMapMarkdown && (
+            <div>
+              <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+                {isPortuguese ? 'Mind map (texto)' : 'Mind map (text)'}
+              </div>
+              <pre className="overflow-x-auto rounded border border-indigo-200 bg-white p-3 text-sm text-slate-900">
+                {knowledgeStructure.mindMapMarkdown}
+              </pre>
+            </div>
+          )}
+
+          {Array.isArray(knowledgeStructure.glossary) && knowledgeStructure.glossary.length > 0 && (
+            <div>
+              <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+                {isPortuguese ? 'Glossario' : 'Glossary'}
+              </div>
+              <ul className="space-y-2">
+                {knowledgeStructure.glossary.map((entry) => (
+                  <li key={`${entry.term}-${entry.definition}`} className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900">
+                    <span className="font-semibold">{entry.term}:</span> {entry.definition}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="flex justify-end">
             <button
               onClick={() => setWorkflowStep('step5_explanation')}
@@ -199,3 +261,4 @@ export default function Step4Structure() {
     </div>
   )
 }
+

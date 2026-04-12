@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+
+type Provider = 'semantic_scholar' | 'crossref' | 'openaire'
 
 function buildSourcePayload(article: SearchArticle): string {
   return [
@@ -28,6 +30,7 @@ export default function Step3Evidence() {
     projectId,
     searchArticles,
     searchDesign,
+    setSearchArticles,
     setWorkflowStep,
     topic,
   } = useWizardStore()
@@ -35,8 +38,33 @@ export default function Step3Evidence() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null)
+  const [analyzedSourceIds, setAnalyzedSourceIds] = useState<Set<string>>(new Set())
+  const [relatedLoading, setRelatedLoading] = useState(false)
+  const [relatedPage, setRelatedPage] = useState(2)
+  const [hasMoreRelated, setHasMoreRelated] = useState(true)
+  const [relatedProvider, setRelatedProvider] = useState<Provider>('semantic_scholar')
+  const [relatedFeedback, setRelatedFeedback] = useState('')
 
   const canRun = Boolean(finalResearchQuestion?.approvedByUser && searchDesign)
+  const isPortuguese = locale === 'pt-PT'
+
+  useEffect(() => {
+    const firstProvider = searchArticles.find((article) =>
+      article.provider === 'semantic_scholar' ||
+      article.provider === 'crossref' ||
+      article.provider === 'openaire'
+    )?.provider
+
+    if (firstProvider === 'semantic_scholar' || firstProvider === 'crossref' || firstProvider === 'openaire') {
+      setRelatedProvider(firstProvider)
+    }
+  }, [searchArticles])
+
+  useEffect(() => {
+    setRelatedPage(2)
+    setHasMoreRelated(true)
+    setRelatedFeedback('')
+  }, [searchDesign?.booleanQuery])
 
   const extractFromSource = async (source: string, sourceId: string) => {
     if (!finalResearchQuestion?.question) {
@@ -105,6 +133,12 @@ export default function Step3Evidence() {
       addEvidenceRecord(nextEvidenceRecord)
       if (sourceId === 'manual') {
         setSourceText('')
+      } else {
+        setAnalyzedSourceIds((current) => {
+          const next = new Set(current)
+          next.add(sourceId)
+          return next
+        })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('api.genericFailure'))
@@ -116,6 +150,64 @@ export default function Step3Evidence() {
 
   const runManualExtraction = async () => {
     await extractFromSource(sourceText, 'manual')
+  }
+
+  const fetchRelatedArticles = async () => {
+    if (!searchDesign?.booleanQuery) {
+      setError(t('steps.step3.noRetrievedArticles'))
+      return
+    }
+
+    setRelatedLoading(true)
+    setRelatedFeedback('')
+    setError('')
+
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: searchDesign.booleanQuery,
+          provider: relatedProvider,
+          page: relatedPage,
+          limit: 5,
+          locale,
+        }),
+      })
+
+      const payload = await response.json()
+      const data = payload?.data ?? payload
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.details || payload?.error || t('api.searchFailure'))
+      }
+
+      const incoming = Array.isArray(data.articles) ? data.articles : []
+      const existingIds = new Set(searchArticles.map((article) => article.id))
+      const deduped = incoming.filter((article: SearchArticle) => !existingIds.has(article.id))
+
+      if (deduped.length > 0) {
+        setSearchArticles([...searchArticles, ...deduped])
+        setRelatedFeedback(
+          isPortuguese
+            ? `${deduped.length} novo(s) artigo(s) relacionado(s) adicionado(s).`
+            : `${deduped.length} new related article(s) added.`
+        )
+      } else {
+        setRelatedFeedback(
+          isPortuguese
+            ? 'Nao surgiram novos artigos nesta pagina.'
+            : 'No new articles were found on this page.'
+        )
+      }
+
+      setHasMoreRelated(Boolean(data.hasNextPage))
+      setRelatedPage((current) => current + 1)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('api.searchFailure'))
+    } finally {
+      setRelatedLoading(false)
+    }
   }
 
   return (
@@ -157,10 +249,25 @@ export default function Step3Evidence() {
             {searchArticles.map((article, index) => {
               const sourceId = `article-${article.id}`
               const isCurrent = activeSourceId === sourceId
+              const isAnalyzed = analyzedSourceIds.has(sourceId)
               return (
-                <div key={article.id} className="rounded border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">
-                    {t('steps.step3.evidenceLabel')} {index + 1} | {article.provider}
+                <div
+                  key={article.id}
+                  className={`rounded border p-4 transition ${
+                    isAnalyzed
+                      ? 'border-emerald-300 bg-emerald-50'
+                      : 'border-slate-200 bg-slate-50'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-wide text-slate-500">
+                    <div>
+                      {t('steps.step3.evidenceLabel')} {index + 1} | {article.provider}
+                    </div>
+                    {isAnalyzed && (
+                      <div className="rounded-full bg-emerald-600 px-2 py-1 text-[10px] font-semibold text-white">
+                        {isPortuguese ? 'Analisado' : 'Analysed'}
+                      </div>
+                    )}
                   </div>
                   <div className="mt-1 font-semibold text-slate-900">{article.title}</div>
                   <div className="mt-1 text-sm text-slate-600">
@@ -176,7 +283,13 @@ export default function Step3Evidence() {
                       disabled={!canRun || loading}
                       className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                     >
-                      {isCurrent && loading ? t('steps.step3.analyzing') : t('steps.step3.analyzeButton')}
+                      {isCurrent && loading
+                        ? t('steps.step3.analyzing')
+                        : isAnalyzed
+                          ? isPortuguese
+                            ? 'Reanalisar este artigo'
+                            : 'Reanalyse this article'
+                          : t('steps.step3.analyzeButton')}
                     </button>
                   </div>
                 </div>
@@ -190,6 +303,46 @@ export default function Step3Evidence() {
         <div className="text-sm font-semibold uppercase tracking-wide text-slate-600">
           {t('steps.step3.manualTitle')}
         </div>
+        <div className="rounded border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-800">
+          {isPortuguese
+            ? 'Se precisares de mais fontes, usa "Trazer novo artigo relacionado" para adicionar novos artigos antes da analise manual.'
+            : 'If you need more sources, use "Fetch new related article" to add fresh papers before manual analysis.'}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-sm text-slate-700">
+            {isPortuguese ? 'Fonte relacionada' : 'Related source'}:
+            <select
+              value={relatedProvider}
+              onChange={(event) => setRelatedProvider(event.target.value as Provider)}
+              className="ml-2 rounded border border-slate-300 px-2 py-1 text-sm"
+            >
+              <option value="semantic_scholar">Semantic Scholar</option>
+              <option value="crossref">Crossref</option>
+              <option value="openaire">OpenAIRE Graph</option>
+            </select>
+          </label>
+          <button
+            onClick={fetchRelatedArticles}
+            disabled={!canRun || relatedLoading || !hasMoreRelated}
+            className="rounded bg-indigo-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {relatedLoading
+              ? isPortuguese
+                ? 'A procurar...'
+                : 'Searching...'
+              : isPortuguese
+                ? 'Trazer novo artigo relacionado'
+                : 'Fetch new related article'}
+          </button>
+        </div>
+
+        {relatedFeedback && (
+          <div className="rounded border border-emerald-200 bg-emerald-50 p-2 text-sm text-emerald-700">
+            {relatedFeedback}
+          </div>
+        )}
+
         <textarea
           value={sourceText}
           onChange={(event) => setSourceText(event.target.value)}

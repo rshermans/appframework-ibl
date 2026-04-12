@@ -9,7 +9,8 @@ export async function POST(req: Request) {
     const body = await req.json()
     const query = String(body?.query || '').trim()
     const provider = (body?.provider || 'semantic_scholar') as SearchProvider
-    const limit = Number(body?.limit || 5)
+    const limit = Number(body?.limit || body?.pageSize || 5)
+    const page = Number(body?.page || 1)
     locale = normalizeLocale(body?.locale)
 
     if (!query) {
@@ -23,15 +24,24 @@ export async function POST(req: Request) {
       )
     }
 
-    const result = await searchScientificArticles({ query, limit, provider })
+    const result = await searchScientificArticles({ query, limit, page, provider })
 
     return NextResponse.json({
       ok: true,
       data: {
         query,
         provider: result.provider,
+        page: result.pagination.page,
+        pageSize: result.pagination.pageSize,
+        totalResults: result.pagination.totalResults,
+        hasNextPage: result.pagination.hasNextPage,
+        pagination: result.pagination,
         articles: result.articles,
       },
+      page: result.pagination.page,
+      pageSize: result.pagination.pageSize,
+      totalResults: result.pagination.totalResults,
+      hasNextPage: result.pagination.hasNextPage,
       articles: result.articles,
     })
   } catch (error) {

@@ -49,7 +49,7 @@ Set `.env.local` with:
 - `DATABASE_URL`
 - `DIRECT_URL`
 - `NEXT_PUBLIC_APP_URL=http://localhost:3011`
-- `SEMANTIC_SCHOLAR_API_KEY` (optional, recommended for `/api/search`)
+- `SEMANTIC_SCHOLAR_API_KEY` or `S2_API_KEY` (optional, recommended for `/api/search`)
 
 ## Prompt architecture
 
@@ -71,6 +71,7 @@ The engineerable workflow model lives in:
 
 - `/app/api/search/route.ts` exposes the retrieval API used in Step 2.5
 - `lib/search.ts` normalizes provider responses into a common article schema
+- `Semantic Scholar` requests are serialized with a `1100ms` minimum spacing to respect the `1 request/second` limit
 
 ## Build
 

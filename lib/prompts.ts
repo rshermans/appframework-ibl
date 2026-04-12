@@ -195,6 +195,10 @@ Respond with valid JSON only:
   "concept_map_nodes": ["Node 1", "Node 2"],
   "concept_map_edges": [
     { "from": "Node 1", "to": "Node 2", "relation": "supports | contrasts | extends | depends_on" }
+  ],
+  "mind_map_markdown": "- Topic\\n  - Subtopic\\n    - Concept",
+  "glossary": [
+    { "term": "Term 1", "definition": "Short definition based on the evidence" }
   ]
 }`,
   },
