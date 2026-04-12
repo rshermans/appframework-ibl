@@ -1,6 +1,7 @@
 ## 📝 Descrição
 
 <!-- Describe your changes clearly -->
+
 Breve descrição do que foi mudado e por quê.
 
 ## 🎯 Tipo de Mudança

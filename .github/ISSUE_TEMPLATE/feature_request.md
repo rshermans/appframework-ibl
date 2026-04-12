@@ -3,8 +3,7 @@ name: ✨ Feature Request
 about: Propor uma nova feature ou melhoria
 title: "[FEATURE] "
 labels: enhancement
-assignees: ''
-
+assignees: ""
 ---
 
 ## 📌 É uma feature relacionada com um problema?

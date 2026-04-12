@@ -3,8 +3,7 @@ name: 🐛 Bug Report
 about: Reportar um bug encontrado
 title: "[BUG] "
 labels: bug
-assignees: ''
-
+assignees: ""
 ---
 
 ## 🐛 Descrição do Bug
