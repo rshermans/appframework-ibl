@@ -1,11 +1,10 @@
 [build]
-command = "npm install --legacy-peer-deps && npm run build"
+command = "npm install && npm run build"
 functions = "api"
-publish = ".next/static"
+publish = ".next"
 
 [build.environment]
 NODE_ENV = "production"
-NPM_FLAGS = "--legacy-peer-deps"
 
 [[redirects]]
 from = "/*"
