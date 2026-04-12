@@ -76,13 +76,20 @@ export interface SearchStringSet {
 
 export interface SearchArticle {
   id: string
-  provider: 'semantic_scholar' | 'crossref' | 'core'
+  provider: 'semantic_scholar' | 'crossref' | 'openaire' | 'core'
   title: string
   abstract: string
   year?: number
   authors: string[]
   doi?: string
   url?: string
+}
+
+export interface SearchPagination {
+  page: number
+  pageSize: number
+  totalResults?: number
+  hasNextPage: boolean
 }
 
 export interface SearchDesign {
@@ -111,6 +118,8 @@ export interface KnowledgeStructure {
   subtopics: string[]
   conceptMapNodes: string[]
   conceptMapEdges: Array<{ from: string; to: string; relation: string }>
+  mindMapMarkdown?: string
+  glossary?: Array<{ term: string; definition: string }>
 }
 
 export interface ExplanationDraft {

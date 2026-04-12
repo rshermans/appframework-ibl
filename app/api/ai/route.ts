@@ -3,8 +3,11 @@ import { callChatGPT } from '@/lib/ai'
 import { buildDefaultUserMessage, getPrompt, resolvePromptId, type PromptMode } from '@/lib/prompts'
 import { saveInteraction } from '@/lib/db'
 import { getMissingRequiredFields, resolveWorkflowStepId } from '@/lib/workflow'
+import { getMessage, normalizeLocale, type Locale } from '@/lib/i18n'
 
 export async function POST(req: Request) {
+  let safeLocale: Locale = 'pt-PT'
+
   try {
     const body = await req.json()
     const {
@@ -19,6 +22,7 @@ export async function POST(req: Request) {
       finalRQ,
       context,
       content,
+      locale,
       mode = 'standard',
     } = body
 
@@ -28,6 +32,7 @@ export async function POST(req: Request) {
     const resolvedPromptId = resolvePromptId(safePromptKey)
     const resolvedWorkflowStep = stepId ? resolveWorkflowStepId(safeStepId) : null
     const safeStepLabel = stepLabel || 'AI response'
+    safeLocale = normalizeLocale(locale)
     const safeMode: PromptMode =
       mode === 'quick' || mode === 'advanced' || mode === 'standard' ? mode : 'standard'
     const finalResearchQuestion = body.finalResearchQuestion
@@ -69,8 +74,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'Missing required step inputs',
-          details: `Missing fields for ${resolvedWorkflowStep}: ${missingFields.join(', ')}`,
+          error: getMessage(safeLocale, 'api.missingRequiredInputs'),
+          details: `${getMessage(safeLocale, 'api.missingRequiredInputs')}: ${missingFields.join(', ')}`,
           missingFields,
           workflowStep: resolvedWorkflowStep,
         },
@@ -85,8 +90,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'Final research question must be approved',
-          details: 'Step 2 requires an approved final research question before search design can run.',
+          error: getMessage(safeLocale, 'api.finalQuestionRequired'),
+          details: getMessage(safeLocale, 'api.finalQuestionRequired'),
           workflowStep: resolvedWorkflowStep,
         },
         { status: 400 }
@@ -100,8 +105,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'Search design is required',
-          details: 'Step 3 requires an existing search design before evidence extraction can run.',
+          error: getMessage(safeLocale, 'api.searchDesignRequired'),
+          details: getMessage(safeLocale, 'api.searchDesignRequired'),
           workflowStep: resolvedWorkflowStep,
         },
         { status: 400 }
@@ -110,11 +115,11 @@ export async function POST(req: Request) {
 
     console.log(`[API] Received request - Step: ${safeStepId}, Prompt: ${resolvedPromptId}, Topic: ${topic}`)
 
-    const systemPrompt = getPrompt(safePromptKey, promptVariables, { mode: safeMode })
+    const systemPrompt = getPrompt(safePromptKey, promptVariables, { mode: safeMode, locale: safeLocale })
     console.log(`[API] Generated system prompt for prompt: ${resolvedPromptId}`)
 
     const userMessage =
-      content || buildDefaultUserMessage(safePromptKey, promptVariables, { mode: safeMode })
+      content || buildDefaultUserMessage(safePromptKey, promptVariables, { mode: safeMode, locale: safeLocale })
     console.log(`[API] Calling ChatGPT with user message length: ${userMessage.length}`)
 
     const { content: aiOutput, tokens } = await callChatGPT(systemPrompt, userMessage)
@@ -170,7 +175,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         ok: false,
-        error: 'Failed to process request',
+        error: getMessage(safeLocale, 'api.genericFailure'),
         details: errorMsg,
       },
       { status: 500 }

@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { KnowledgeStructure } from '@/types/research-workflow'
+import { useI18n } from '@/components/I18nProvider'
 
 export default function Step4Structure() {
+  const { locale, t } = useI18n()
   const {
     evidenceRecords,
     finalResearchQuestion,
@@ -21,11 +23,11 @@ export default function Step4Structure() {
 
   const buildKnowledgeStructure = async () => {
     if (!finalResearchQuestion?.question) {
-      setError('A final research question is required before structuring knowledge.')
+      setError(t('steps.step4.locked'))
       return
     }
     if (!canRun) {
-      setError('At least one evidence record is required before Step 4.')
+      setError(t('steps.step4.locked'))
       return
     }
 
@@ -42,12 +44,13 @@ export default function Step4Structure() {
           stage: 1,
           promptId: 'knowledge_structure',
           stepId: 'step4_knowledge_structure',
-          stepLabel: 'Knowledge Structure',
+          stepLabel: t('workflow.step4_knowledge_structure.label'),
           topic,
           rq: finalResearchQuestion.question,
           evidence: evidenceJson,
           evidenceRecords,
           content: evidenceJson,
+          locale,
         }),
       })
 
@@ -55,7 +58,7 @@ export default function Step4Structure() {
       const data = payload?.data ?? payload
 
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.details || payload?.error || 'Failed to build knowledge structure')
+        throw new Error(payload?.details || payload?.error || t('api.genericFailure'))
       }
 
       const parsed = JSON.parse(data.output)
@@ -75,12 +78,12 @@ export default function Step4Structure() {
       }
 
       if (nextStructure.topics.length === 0 || nextStructure.conceptMapNodes.length === 0) {
-        throw new Error('AI response did not return a valid knowledge structure')
+        throw new Error(t('api.genericFailure'))
       }
 
       setKnowledgeStructure(nextStructure)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to build knowledge structure')
+      setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
     }
@@ -89,23 +92,20 @@ export default function Step4Structure() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">Step 4 - Knowledge Structure</h2>
-        <p className="text-sm text-gray-600">
-          Convert extracted evidence into a structured model of topics, subtopics, and concept
-          relationships.
-        </p>
+        <h2 className="mb-2 text-xl font-semibold">{t('steps.step4.title')}</h2>
+        <p className="text-sm text-gray-600">{t('steps.step4.intro')}</p>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-slate-700">Evidence input</div>
+        <div className="mb-2 text-sm font-semibold text-slate-700">{t('steps.step4.evidenceInput')}</div>
         <div className="text-sm text-slate-800">
-          {evidenceRecords.length} evidence record{evidenceRecords.length === 1 ? '' : 's'} available.
+          {t('steps.step4.availableEvidence', { count: evidenceRecords.length })}
         </div>
       </div>
 
       {!canRun && (
         <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          Step 4 is locked until at least one evidence record is extracted in Step 3.
+          {t('steps.step4.locked')}
         </div>
       )}
 
@@ -120,14 +120,14 @@ export default function Step4Structure() {
         disabled={!canRun || loading}
         className="rounded bg-slate-900 px-4 py-3 text-white disabled:opacity-50"
       >
-        {loading ? 'Structuring knowledge...' : 'Generate Knowledge Structure'}
+        {loading ? t('steps.step4.generating') : t('steps.step4.generateButton')}
       </button>
 
       {knowledgeStructure && (
         <div className="space-y-5 rounded-xl border border-indigo-200 bg-indigo-50 p-5">
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
-              Topics
+              {t('steps.step4.topics')}
             </div>
             <div className="flex flex-wrap gap-2">
               {knowledgeStructure.topics.map((topicItem) => (
@@ -143,7 +143,7 @@ export default function Step4Structure() {
 
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
-              Subtopics
+              {t('steps.step4.subtopics')}
             </div>
             <ul className="space-y-2">
               {knowledgeStructure.subtopics.map((subtopic) => (
@@ -156,7 +156,7 @@ export default function Step4Structure() {
 
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
-              Concept Nodes
+              {t('steps.step4.conceptNodes')}
             </div>
             <div className="flex flex-wrap gap-2">
               {knowledgeStructure.conceptMapNodes.map((node) => (
@@ -172,7 +172,7 @@ export default function Step4Structure() {
 
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
-              Concept Edges
+              {t('steps.step4.conceptEdges')}
             </div>
             <ul className="space-y-2">
               {knowledgeStructure.conceptMapEdges.map((edge, index) => (
@@ -191,7 +191,7 @@ export default function Step4Structure() {
               onClick={() => setWorkflowStep('step5_explanation')}
               className="rounded bg-slate-900 px-4 py-3 text-white hover:bg-slate-800"
             >
-              Continue to Step 5
+              {t('steps.step4.continueButton')}
             </button>
           </div>
         </div>

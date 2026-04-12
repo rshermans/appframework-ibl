@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { CandidateResearchQuestion } from '@/types/research-workflow'
+import { useI18n } from '@/components/I18nProvider'
 
 interface Question {
   question: string
@@ -16,6 +17,7 @@ interface Question {
 }
 
 export default function Step0() {
+  const { locale, t } = useI18n()
   const {
     projectId,
     topic,
@@ -32,7 +34,7 @@ export default function Step0() {
 
   const runGeneration = async () => {
     if (!localTopic.trim()) {
-      setError('Please enter a topic')
+      setError(t('steps.step0.invalidTopic'))
       return
     }
 
@@ -48,9 +50,10 @@ export default function Step0() {
           stage: 1,
           promptId: 'rq_generation',
           stepId: 'step0',
-          stepLabel: 'Candidate Questions',
+          stepLabel: t('workflow.step0_generate.label'),
           topic: localTopic,
           level: 'higher-education',
+          locale,
         }),
       })
 
@@ -92,7 +95,7 @@ export default function Step0() {
         setCandidateResearchQuestions([])
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate')
+      setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
     }
@@ -101,18 +104,18 @@ export default function Step0() {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-semibold mb-2">Research Topic</label>
+        <label className="mb-2 block text-sm font-semibold">{t('steps.step0.topicLabel')}</label>
         <input
           type="text"
           value={localTopic}
           onChange={(e) => setLocalTopic(e.target.value)}
-          placeholder="e.g., 'Gene expression in neural development'"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder={t('steps.step0.topicPlaceholder')}
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
         />
       </div>
 
       {error && (
-        <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+        <div className="rounded-lg bg-red-100 p-3 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -120,37 +123,45 @@ export default function Step0() {
       <button
         onClick={runGeneration}
         disabled={loading}
-        className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+        className="w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
       >
-        {loading ? 'Generating...' : 'Generate Research Questions'}
+        {loading ? t('steps.step0.generating') : t('steps.step0.generate')}
       </button>
 
       {questions.length > 0 && (
         <div className="space-y-4 mt-6">
-          <h3 className="font-semibold text-lg">Candidate Research Questions</h3>
+          <h3 className="text-lg font-semibold">{t('steps.step0.candidateTitle')}</h3>
+          <p className="text-sm text-slate-600">{t('steps.step0.candidateIntro')}</p>
           {questions.map((q, idx) => (
-            <div key={idx} className="p-4 border border-gray-200 rounded-lg hover:border-blue-400 transition">
-              <div className="font-semibold text-blue-700 mb-2">Q{idx + 1}: {q.question}</div>
+            <div key={idx} className="rounded-lg border border-gray-200 p-4 transition hover:border-slate-400">
+              <div className="mb-2 font-semibold text-slate-900">
+                Q{idx + 1}: {q.question}
+              </div>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="font-semibold">Type:</span> {q.type || q.epistemic_type || 'Not provided'}
+                  <span className="font-semibold">{t('steps.step0.typeLabel')}:</span>{' '}
+                  {q.type || q.epistemic_type || t('common.noData')}
                 </div>
                 <div>
-                  <span className="font-semibold">Researchable?</span> {q.rationale || q.why_researchable || 'Not provided'}
+                  <span className="font-semibold">{t('steps.step0.researchableLabel')}</span>{' '}
+                  {q.rationale || q.why_researchable || t('common.noData')}
                 </div>
                 {q.challenges && (
                   <div>
-                    <span className="font-semibold">Challenges:</span> {q.challenges}
+                    <span className="font-semibold">{t('steps.step0.challengesLabel')}:</span>{' '}
+                    {q.challenges}
                   </div>
                 )}
                 {Array.isArray(q.databases) && q.databases.length > 0 && (
                   <div>
-                    <span className="font-semibold">Databases:</span> {q.databases.join(', ')}
+                    <span className="font-semibold">{t('steps.step0.databasesLabel')}:</span>{' '}
+                    {q.databases.join(', ')}
                   </div>
                 )}
                 {typeof q.ibl_score === 'number' && (
                   <div>
-                    <span className="font-semibold">IBL score:</span> {q.ibl_score}/5
+                    <span className="font-semibold">{t('steps.step0.scoreLabel')}:</span>{' '}
+                    {q.ibl_score}/5
                   </div>
                 )}
               </div>
@@ -161,7 +172,7 @@ export default function Step0() {
             onClick={() => setWorkflowStep('step1_select')}
             className="w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
           >
-            Continue to Selection
+            {t('steps.step0.continueButton')}
           </button>
         </div>
       )}

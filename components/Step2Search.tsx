@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { SearchDesign } from '@/types/research-workflow'
+import { useI18n } from '@/components/I18nProvider'
 
 export default function Step2Search() {
+  const { locale, t } = useI18n()
   const {
     finalResearchQuestion,
     projectId,
@@ -34,19 +36,20 @@ export default function Step2Search() {
           query,
           limit: 5,
           provider,
+          locale,
         }),
       })
       const payload = await response.json()
       const data = payload?.data ?? payload
 
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.details || payload?.error || 'Failed to retrieve articles')
+        throw new Error(payload?.details || payload?.error || t('api.searchFailure'))
       }
 
       setSearchArticles(Array.isArray(data.articles) ? data.articles : [])
     } catch (err) {
       setSearchArticles([])
-      setError(err instanceof Error ? err.message : 'Failed to retrieve articles')
+      setError(err instanceof Error ? err.message : t('api.searchFailure'))
     } finally {
       setSearchLoading(false)
     }
@@ -54,12 +57,12 @@ export default function Step2Search() {
 
   const runSearchDesign = async () => {
     if (!finalResearchQuestion?.question) {
-      setError('A final research question is required before designing the search strategy.')
+      setError(t('steps.step2.locked'))
       return
     }
 
     if (!finalResearchQuestion.approvedByUser) {
-      setError('Approve the final research question before moving to search design.')
+      setError(t('steps.step2.locked'))
       return
     }
 
@@ -75,10 +78,11 @@ export default function Step2Search() {
           stage: 1,
           promptId: 'step2',
           stepId: 'step2',
-          stepLabel: 'Search Design',
+          stepLabel: t('workflow.step2_search_design.label'),
           topic,
           rq: finalResearchQuestion.question,
           finalResearchQuestion,
+          locale,
         }),
       })
 
@@ -86,7 +90,7 @@ export default function Step2Search() {
       const payload = json?.data ?? json
 
       if (!res.ok || !json?.ok) {
-        throw new Error(json?.details || json?.error || 'Failed to generate search design')
+        throw new Error(json?.details || json?.error || t('api.genericFailure'))
       }
 
       const parsed = JSON.parse(payload.output)
@@ -102,13 +106,13 @@ export default function Step2Search() {
       }
 
       if (!nextSearchDesign.booleanQuery || nextSearchDesign.searchStrings.length === 0) {
-        throw new Error('AI response did not include a valid search design payload')
+        throw new Error(t('api.genericFailure'))
       }
 
       setSearchDesign(nextSearchDesign)
       await runRetrieval(nextSearchDesign.booleanQuery)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate search design')
+      setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
     }
@@ -117,26 +121,25 @@ export default function Step2Search() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">Step 2 - Search Design</h2>
-        <p className="text-sm text-gray-600">
-          Turn the approved final research question into keywords, boolean strings, databases, and
-          filters.
-        </p>
+        <h2 className="mb-2 text-xl font-semibold">{t('steps.step2.title')}</h2>
+        <p className="text-sm text-gray-600">{t('steps.step2.intro')}</p>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-slate-700">Current final research question</div>
+        <div className="mb-2 text-sm font-semibold text-slate-700">
+          {t('steps.step2.currentQuestion')}
+        </div>
         <div className="font-medium text-slate-900">
-          {finalResearchQuestion?.question || 'No final research question available'}
+          {finalResearchQuestion?.question || t('common.noData')}
         </div>
         <div className="mt-3 text-sm text-slate-600">
-          Status: {isApproved ? 'Approved by user' : 'Pending user approval'}
+          {isApproved ? t('steps.step2.statusApproved') : t('steps.step2.statusPending')}
         </div>
       </div>
 
       {!isApproved && (
         <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          Search design is locked until the final research question is explicitly approved in Step 1B.
+          {t('steps.step2.locked')}
         </div>
       )}
 
@@ -151,14 +154,14 @@ export default function Step2Search() {
         disabled={loading || !isApproved}
         className="rounded bg-slate-900 px-4 py-3 text-white disabled:opacity-50"
       >
-        {loading ? 'Designing search strategy...' : 'Generate Search Design'}
+        {loading ? t('steps.step2.generating') : t('steps.step2.generateButton')}
       </button>
 
       {searchDesign && (
         <div className="space-y-5 rounded-xl border border-sky-200 bg-sky-50 p-5">
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
-              Keywords
+              {t('steps.step2.keywords')}
             </div>
             <div className="flex flex-wrap gap-2">
               {searchDesign.keywords.map((keyword) => (
@@ -171,7 +174,7 @@ export default function Step2Search() {
 
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
-              Synonyms
+              {t('steps.step2.synonyms')}
             </div>
             <div className="flex flex-wrap gap-2">
               {searchDesign.synonyms.map((synonym) => (
@@ -184,7 +187,7 @@ export default function Step2Search() {
 
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
-              Boolean Query
+              {t('steps.step2.booleanQuery')}
             </div>
             <div className="rounded border bg-white p-4 font-mono text-sm text-slate-900">
               {searchDesign.booleanQuery}
@@ -193,7 +196,7 @@ export default function Step2Search() {
 
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
-              Ready-to-use Search Strings
+              {t('steps.step2.searchStrings')}
             </div>
             <div className="space-y-3">
               {searchDesign.searchStrings.map((item) => (
@@ -208,7 +211,7 @@ export default function Step2Search() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
-                Recommended Databases
+                {t('steps.step2.recommendedDatabases')}
               </div>
               <ul className="space-y-2 text-sm text-slate-800">
                 {searchDesign.recommendedDatabases.map((database) => (
@@ -221,7 +224,7 @@ export default function Step2Search() {
 
             <div>
               <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
-                Filters
+                {t('steps.step2.filters')}
               </div>
               <ul className="space-y-2 text-sm text-slate-800">
                 {searchDesign.filters.map((filter) => (
@@ -234,10 +237,10 @@ export default function Step2Search() {
           </div>
 
           <div className="space-y-3 rounded border border-slate-200 bg-white p-4">
-            <div className="text-sm font-semibold text-slate-800">Step 2.5 - Retrieve Articles</div>
+            <div className="text-sm font-semibold text-slate-800">{t('steps.step2.retrievalTitle')}</div>
             <div className="flex flex-wrap items-center gap-3">
               <label className="text-sm text-slate-700">
-                Provider:
+                {t('steps.step2.providerLabel')}:
                 <select
                   value={provider}
                   onChange={(event) =>
@@ -254,7 +257,7 @@ export default function Step2Search() {
                 disabled={searchLoading}
                 className="rounded bg-sky-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
-                {searchLoading ? 'Retrieving...' : 'Retrieve Articles'}
+                {searchLoading ? t('steps.step2.retrieving') : t('steps.step2.retrieveButton')}
               </button>
             </div>
 
@@ -263,22 +266,22 @@ export default function Step2Search() {
                 {searchArticles.map((article, index) => (
                   <div key={article.id} className="rounded border border-slate-200 bg-slate-50 p-3">
                     <div className="text-xs uppercase tracking-wide text-slate-500">
-                      Article {index + 1} | {article.provider}
+                      {t('steps.step2.articleLabel')} {index + 1} | {article.provider}
                     </div>
                     <div className="mt-1 font-semibold text-slate-900">{article.title}</div>
                     <div className="mt-1 text-sm text-slate-600">
-                      {(article.authors || []).slice(0, 3).join(', ') || 'Unknown authors'}
+                      {(article.authors || []).slice(0, 3).join(', ') || t('common.unknownAuthors')}
                       {article.year ? ` | ${article.year}` : ''}
                     </div>
                     <div className="mt-2 text-sm text-slate-700">
-                      {article.abstract || 'No abstract provided by the provider.'}
+                      {article.abstract || t('common.noAbstract')}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-sm text-slate-600">
-                No articles retrieved yet. Run retrieval to ground Step 3 in real sources.
+                {t('steps.step2.noArticles')}
               </div>
             )}
           </div>
@@ -289,7 +292,7 @@ export default function Step2Search() {
               disabled={searchArticles.length === 0}
               className="rounded bg-slate-900 px-4 py-3 text-white hover:bg-slate-800 disabled:opacity-50"
             >
-              Continue to Step 3
+              {t('steps.step2.continueButton')}
             </button>
           </div>
         </div>

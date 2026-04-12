@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IBL · AI Research Lab — ARQUS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;0,700;1,300;1,500&family=Figtree:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --navy: #0b1221;
+  --navy2: #111d35;
+  --navy3: #172040;
+  --navy4: #1e2d52;
+  --gold: #BC9753;
+  --gold-light: #d4b37a;
+  --gold-pale: #2a2010;
+  --teal: #4ecdc4;
+  --green: #52d9a4;
+  --red: #e05c6c;
+  --text: #ddd8cc;
+  --text-dim: #8a8c98;
+  --text-bright: #f0ead8;
+  --border: #1e2d52;
+  --border-gold: #3a2e18;
+  --radius: 8px;
+  --mono: 'JetBrains Mono', monospace;
+  --serif: 'Cormorant Garamond', serif;
+  --sans: 'Figtree', sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+body {
+  font-family: var(--sans);
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  position: fixed; top:0; left:0; right:0; z-index:100;
+  background: rgba(11,18,33,0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 24px; height: 58px;
+}
+.topbar-logo {
+  font-family: var(--serif); font-size: 1.4rem; font-weight:700;
+  color: var(--gold); letter-spacing: 0.04em; white-space: nowrap;
+}
+.topbar-logo span { color: var(--text-dim); font-weight:300; font-style:italic; }
+.topbar-progress {
+  display:flex; align-items:center; gap:6px; flex:1; justify-content:center;
+}
+.stage-dot {
+  width:28px; height:28px; border-radius:50%; border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.7rem; font-weight:700; font-family:var(--mono);
+  color: var(--text-dim); cursor:pointer; transition:all .2s;
+  position:relative;
+}
+.stage-dot.active { border-color: var(--gold); color:var(--gold); background:var(--gold-pale);}
+.stage-dot.done { border-color:var(--green); color:var(--green); background: rgba(82,217,164,.1);}
+.stage-dot:not(:last-child)::after {
+  content:''; position:absolute; left:calc(100% + 2px); top:50%; transform:translateY(-50%);
+  width:16px; height:1px; background:var(--border);
+}
+.stage-dot.done::after { background:var(--green); }
+.stage-label {
+  font-size:0.65rem; font-family:var(--mono); letter-spacing:.06em;
+  color:var(--text-dim); text-transform:uppercase;
+}
+.topbar-badge {
+  background: var(--gold-pale); border:1px solid var(--border-gold);
+  color:var(--gold); padding:4px 12px; border-radius:20px;
+  font-size:0.7rem; font-family:var(--mono); letter-spacing:.06em; text-transform:uppercase;
+  white-space:nowrap;
+}
+
+/* ─── LAYOUT ─── */
+.layout { display:flex; margin-top:58px; min-height:calc(100vh - 58px); }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width:240px; min-width:240px; position:fixed; top:58px; left:0; bottom:0;
+  background: var(--navy2); border-right:1px solid var(--border);
+  overflow-y:auto; padding:16px 0;
+}
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);}
+.sidebar-section { padding:8px 16px 4px; }
+.sidebar-section-title {
+  font-size:0.62rem; font-family:var(--mono); text-transform:uppercase;
+  letter-spacing:.1em; color:var(--gold); opacity:.7; padding:12px 0 4px;
+  border-top:1px solid var(--border); margin-top:8px;
+}
+.sidebar-section-title:first-child{border-top:none;margin-top:0;}
+.nav-item {
+  display:block; padding:6px 12px; border-radius:6px; font-size:0.82rem;
+  color:var(--text-dim); text-decoration:none; cursor:pointer;
+  transition:all .15s; border:none; background:none; width:100%; text-align:left;
+}
+.nav-item:hover { background:var(--navy3); color:var(--text); }
+.nav-item.active { background:var(--gold-pale); color:var(--gold); border-left:2px solid var(--gold); }
+.nav-item .step-num {
+  font-family:var(--mono); font-size:0.7rem; color:var(--gold); margin-right:6px; opacity:.7;
+}
+.nav-item.done { color: var(--green); opacity:.7; }
+.nav-item.done::before { content:'✓ '; font-size:.75rem; }
+
+/* ─── MAIN ─── */
+.main {
+  margin-left:240px; flex:1; padding:32px 40px;
+  max-width: 900px;
+}
+
+/* ─── MODULE CARD ─── */
+.module-card {
+  background:var(--navy2); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden; margin-bottom:24px;
+  transition: box-shadow .2s;
+}
+.module-card:hover { box-shadow: 0 4px 24px rgba(188,151,83,.08); }
+.module-header {
+  padding:16px 20px; background:var(--navy3);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:12px;
+}
+.module-stage-badge {
+  font-family:var(--mono); font-size:.65rem; letter-spacing:.1em; text-transform:uppercase;
+  background:var(--gold-pale); border:1px solid var(--border-gold);
+  color:var(--gold); padding:3px 10px; border-radius:20px; white-space:nowrap;
+}
+.module-title {
+  font-family:var(--serif); font-size:1.3rem; font-weight:700; color:var(--text-bright);
+}
+.module-subtitle { font-size:0.82rem; color:var(--text-dim); }
+.module-body { padding:20px; }
+
+/* ─── AI ACTION PANEL ─── */
+.ai-panel {
+  background: linear-gradient(135deg, rgba(17,29,53,1) 0%, rgba(15,24,40,1) 100%);
+  border:1px solid var(--border-gold); border-radius:10px; overflow:hidden;
+  margin-top:16px;
+}
+.ai-panel-header {
+  background:var(--gold-pale); padding:10px 16px;
+  display:flex; align-items:center; gap:8px;
+  border-bottom:1px solid var(--border-gold);
+}
+.ai-icon { font-size:1rem; }
+.ai-panel-title { font-size:.75rem; font-family:var(--mono); color:var(--gold); letter-spacing:.08em; text-transform:uppercase; }
+.ai-panel-body { padding:16px; }
+.ai-input {
+  width:100%; background:var(--navy); border:1px solid var(--border);
+  border-radius:6px; color:var(--text); font-family:var(--sans); font-size:.88rem;
+  padding:10px 14px; resize:vertical; min-height:80px;
+  transition:border-color .2s;
+}
+.ai-input:focus { outline:none; border-color:var(--gold); }
+.ai-input::placeholder { color:var(--text-dim); opacity:.6; }
+.ai-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.btn {
+  font-family:var(--sans); font-size:.82rem; font-weight:600;
+  padding:8px 18px; border-radius:6px; border:none; cursor:pointer;
+  transition:all .2s; display:flex; align-items:center; gap:6px;
+}
+.btn-gold {
+  background:var(--gold); color:#0b1221;
+}
+.btn-gold:hover { background:var(--gold-light); transform:translateY(-1px); }
+.btn-ghost {
+  background:transparent; color:var(--text-dim); border:1px solid var(--border);
+}
+.btn-ghost:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-pale); }
+.btn-teal { background:rgba(78,205,196,.15); color:var(--teal); border:1px solid rgba(78,205,196,.3); }
+.btn-teal:hover { background:rgba(78,205,196,.25); }
+.btn:disabled { opacity:.4; cursor:not-allowed; transform:none !important; }
+
+/* ─── AI RESPONSE ─── */
+.ai-response {
+  background:var(--navy); border:1px solid var(--border);
+  border-radius:6px; padding:14px; margin-top:12px;
+  font-size:.87rem; line-height:1.7; color:var(--text);
+  display:none; position:relative; min-height:60px;
+}
+.ai-response.visible { display:block; }
+.ai-response pre {
+  font-family:var(--mono); font-size:.8rem; background:rgba(0,0,0,.3);
+  border:1px solid var(--border); border-radius:4px; padding:10px;
+  overflow-x:auto; white-space:pre-wrap; margin: 8px 0;
+}
+.ai-response h3, .ai-response h4 { color:var(--gold); margin:12px 0 6px; font-family:var(--serif); }
+.ai-response ul, .ai-response ol { padding-left:20px; margin:6px 0; }
+.ai-response li { margin:4px 0; }
+.ai-response strong { color:var(--gold-light); }
+.ai-response em { color:var(--teal); font-style:normal; }
+.ai-loading {
+  display:flex; align-items:center; gap:10px; color:var(--gold); font-size:.82rem;
+  font-family:var(--mono);
+}
+.loader { display:flex; gap:4px; }
+.loader span {
+  width:6px; height:6px; border-radius:50%; background:var(--gold);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.loader span:nth-child(2){animation-delay:.2s;}
+.loader span:nth-child(3){animation-delay:.4s;}
+@keyframes pulse {0%,80%,100%{opacity:.3;transform:scale(.8);}40%{opacity:1;transform:scale(1);}}
+
+.copy-response-btn {
+  position:absolute; top:8px; right:8px; font-size:.7rem; font-family:var(--mono);
+  background:var(--navy3); border:1px solid var(--border); color:var(--text-dim);
+  padding:3px 8px; border-radius:4px; cursor:pointer; display:none;
+}
+.ai-response.visible .copy-response-btn { display:block; }
+.copy-response-btn:hover { color:var(--gold); border-color:var(--gold); }
+
+/* ─── JOURNAL PANEL ─── */
+.journal-fab {
+  position:fixed; bottom:24px; right:24px; z-index:200;
+  background:var(--gold); color:#0b1221; border:none; border-radius:12px;
+  padding:12px 20px; font-weight:700; font-size:.85rem; cursor:pointer;
+  box-shadow:0 4px 20px rgba(188,151,83,.4); display:flex; align-items:center; gap:8px;
+  transition:all .2s;
+}
+.journal-fab:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(188,151,83,.5); }
+
+.journal-panel {
+  position:fixed; bottom:80px; right:24px; z-index:200; width:380px;
+  background:var(--navy2); border:1px solid var(--border-gold);
+  border-radius:14px; overflow:hidden; box-shadow:0 12px 48px rgba(0,0,0,.5);
+  display:none; max-height:70vh;
+}
+.journal-panel.open { display:flex; flex-direction:column; }
+.journal-header {
+  padding:14px 18px; background:var(--gold-pale); border-bottom:1px solid var(--border-gold);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.journal-header h3 { font-family:var(--serif); color:var(--gold); font-size:1.1rem; }
+.journal-close { background:none; border:none; color:var(--text-dim); font-size:1.2rem; cursor:pointer; }
+.journal-body { padding:16px; overflow-y:auto; flex:1; }
+.journal-body::-webkit-scrollbar{width:4px;}
+.journal-body::-webkit-scrollbar-thumb{background:var(--border);}
+.journal-entry {
+  background:var(--navy3); border:1px solid var(--border); border-radius:8px;
+  padding:12px; margin-bottom:10px; font-size:.82rem;
+}
+.journal-entry-label {
+  font-family:var(--mono); font-size:.68rem; color:var(--gold); text-transform:uppercase;
+  letter-spacing:.07em; margin-bottom:6px;
+}
+.journal-entry-text { color:var(--text); line-height:1.6; white-space:pre-wrap; }
+.journal-empty { color:var(--text-dim); font-size:.85rem; text-align:center; padding:20px; }
+.journal-clear { background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:6px; padding:6px 12px; font-size:.78rem; cursor:pointer; width:100%; margin-top:8px; }
+.journal-clear:hover { border-color:var(--red); color:var(--red); }
+
+/* ─── RUBRIC ASSESSOR ─── */
+.rubric-assessor {
+  position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+  z-index:200; width:600px; max-width:95vw;
+  background:var(--navy2); border:1px solid var(--border-gold);
+  border-radius:14px; overflow:hidden; box-shadow:0 12px 48px rgba(0,0,0,.6);
+  display:none; max-height:80vh; flex-direction:column;
+}
+.rubric-assessor.open { display:flex; }
+
+/* ─── SECTION HERO ─── */
+.stage-hero {
+  background:linear-gradient(135deg, var(--navy3) 0%, var(--navy4) 100%);
+  border:1px solid var(--border); border-radius:12px; padding:28px 28px 24px;
+  margin-bottom:24px; position:relative; overflow:hidden;
+}
+.stage-hero::before {
+  content:''; position:absolute; top:-30px; right:-30px;
+  width:120px; height:120px; border-radius:50%;
+  background:radial-gradient(circle, rgba(188,151,83,.15) 0%, transparent 70%);
+}
+.stage-hero-tag {
+  font-family:var(--mono); font-size:.65rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--gold); opacity:.8; margin-bottom:8px;
+}
+.stage-hero h1 {
+  font-family:var(--serif); font-size:2rem; font-weight:700; color:var(--text-bright);
+  line-height:1.2; margin-bottom:8px;
+}
+.stage-hero p { color:var(--text-dim); font-size:.9rem; line-height:1.7; max-width:560px; }
+.stage-hero-meta {
+  display:flex; gap:16px; margin-top:14px; flex-wrap:wrap;
+}
+.meta-chip {
+  background:rgba(0,0,0,.3); border:1px solid var(--border);
+  border-radius:20px; padding:4px 12px;
+  font-size:.72rem; font-family:var(--mono); color:var(--text-dim);
+}
+
+/* ─── STEP INDICATOR ─── */
+.step-line {
+  display:flex; align-items:center; gap:10px; margin-bottom:6px;
+}
+.step-indicator {
+  width:32px; height:32px; border-radius:50%; background:var(--gold-pale);
+  border:2px solid var(--gold); display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:.75rem; color:var(--gold); font-weight:700; flex-shrink:0;
+}
+.step-name { font-family:var(--serif); font-size:1.2rem; font-weight:700; color:var(--text-bright); }
+
+/* ─── TABS ─── */
+.tab-row { display:flex; gap:4px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:4px; }
+.tab-btn {
+  background:none; border:none; color:var(--text-dim); padding:6px 16px; cursor:pointer;
+  font-size:.82rem; font-family:var(--sans); border-radius:6px 6px 0 0; transition:all .15s;
+  font-weight:500;
+}
+.tab-btn:hover { color:var(--text); background:var(--navy3); }
+.tab-btn.active { color:var(--gold); border-bottom:2px solid var(--gold); background:var(--gold-pale); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ─── SELECT ─── */
+.ai-select {
+  background:var(--navy); border:1px solid var(--border); color:var(--text);
+  border-radius:6px; padding:8px 12px; font-size:.85rem; font-family:var(--sans);
+  width:100%; margin-bottom:10px;
+}
+.ai-select:focus { outline:none; border-color:var(--gold); }
+
+/* ─── INFO BOX ─── */
+.info-box {
+  background:rgba(78,205,196,.05); border:1px solid rgba(78,205,196,.2);
+  border-radius:8px; padding:14px 16px; font-size:.85rem; line-height:1.7;
+  color:var(--text-dim); margin-bottom:16px;
+}
+.info-box strong { color:var(--teal); }
+
+/* ─── DIVIDER ─── */
+hr.gold { border:none; border-top:1px solid var(--border-gold); margin:28px 0; }
+
+/* ─── INLINE CHIPS ─── */
+.chip {
+  display:inline-block; background:rgba(188,151,83,.15); border:1px solid rgba(188,151,83,.3);
+  color:var(--gold); padding:2px 10px; border-radius:12px;
+  font-size:.75rem; font-family:var(--mono); margin:2px;
+}
+
+/* ─── Scrollbar ─── */
+.main::-webkit-scrollbar{width:5px;}
+.main::-webkit-scrollbar-thumb{background:var(--border); border-radius:4px;}
+
+/* ─── RUBRIC TABLE ─── */
+.rubric-grid { width:100%; border-collapse:collapse; font-size:.82rem; }
+.rubric-grid th {
+  background:var(--gold-pale); color:var(--gold); padding:8px 12px;
+  text-align:left; font-family:var(--mono); font-size:.72rem; letter-spacing:.06em;
+  border:1px solid var(--border-gold); text-transform:uppercase;
+}
+.rubric-grid td { padding:8px 12px; border:1px solid var(--border); vertical-align:top; color:var(--text); }
+.rubric-grid tr:nth-child(even) td { background:rgba(255,255,255,.02); }
+.score-cell { text-align:center; font-family:var(--mono); font-weight:700; }
+.score-1 { color:var(--red); }
+.score-2 { color:#e0a55c; }
+.score-3 { color:var(--gold); }
+.score-4 { color:var(--green); }
+
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .main{margin-left:0; padding:20px 16px;}
+  .stage-hero h1{font-size:1.5rem;}
+  .topbar-progress{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="topbar-logo">IBL<span> · AI Research Lab</span></div>
+  <div class="topbar-progress">
+    <div class="stage-dot active" onclick="scrollTo('stage0')" title="Stage 0 — Team Setup">S0</div>
+    <div class="stage-dot" onclick="scrollTo('stage1')" title="Stage 1 — Ask & Research">S1</div>
+    <div class="stage-dot" onclick="scrollTo('stage2')" title="Stage 2 — Explain & Create">S2</div>
+    <div class="stage-dot" onclick="scrollTo('stage3')" title="Stage 3 — Reflect & Improve">S3</div>
+    <div class="stage-dot" onclick="scrollTo('rubrics')" title="Assessment Lab">R</div>
+  </div>
+  <div class="topbar-badge">✦ ARQUS Innovation Fund</div>
+</header>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <button class="nav-item" onclick="scrollTo('intro')">Framework Overview</button>
+    <button class="nav-item" onclick="scrollTo('stage0')">Stage 0 — Team Setup</button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Stage 1 · Ask & Research</div>
+    <button class="nav-item" onclick="scrollTo('step0')"><span class="step-num">0</span>Candidate Questions</button>
+    <button class="nav-item" onclick="scrollTo('step1a')" style="border-left:3px solid var(--gold);"><span class="step-num" style="background:var(--gold);color:#0a0f1e;">1A</span>Final RQ Synthesis ✦</button>
+    <button class="nav-item" onclick="scrollTo('step1b')"><span class="step-num">1B</span>Epistemological Analysis</button>
+    <button class="nav-item" onclick="scrollTo('step2')"><span class="step-num">2</span>Search Strings</button>
+    <button class="nav-item" onclick="scrollTo('step3')"><span class="step-num">3</span>Database Search</button>
+    <button class="nav-item" onclick="scrollTo('step4')"><span class="step-num">4</span>Evidence Extractor</button>
+    <button class="nav-item" onclick="scrollTo('step5')"><span class="step-num">5</span>Source Selector</button>
+    <button class="nav-item" onclick="scrollTo('step6')"><span class="step-num">6</span>Topics & Subtopics</button>
+    <button class="nav-item" onclick="scrollTo('step7')"><span class="step-num">7</span>Mind Map</button>
+    <button class="nav-item" onclick="scrollTo('step8')"><span class="step-num">8</span>Glossary Builder</button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Stage 2 · Explain & Create</div>
+    <button class="nav-item" onclick="scrollTo('step9')"><span class="step-num">9</span>Scientific Explanation</button>
+    <button class="nav-item" onclick="scrollTo('step10')"><span class="step-num">10</span>Multimodal Outputs</button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Stage 3 · Reflect</div>
+    <button class="nav-item" onclick="scrollTo('stage3')">Peer Review & Reflection</button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Assessment</div>
+    <button class="nav-item" onclick="scrollTo('rubrics')">🧪 Auto-Rubric Assessor</button>
+  </div>
+</aside>
+
+<!-- ─── MAIN ─── -->
+<main class="main">
+
+  <!-- INTRO HERO -->
+  <section id="intro" style="margin-bottom:36px;">
+    <div class="stage-hero">
+      <div class="stage-hero-tag">ARQUS Alliance · IBL + AI Methodology</div>
+      <h1>Scientific Research Lab<br><em style="color:var(--gold);font-style:italic;">Powered by AI</em></h1>
+      <p>This is the <strong style="color:var(--text-bright)">X10 automated version</strong> of the IBL framework. Every stage has a live Claude AI co-pilot embedded directly here — no copy-pasting, no switching tabs. Research, analyse, create and assess in one unified environment.</p>
+      <div class="stage-hero-meta">
+        <span class="meta-chip">⚡ 4 Stages</span>
+        <span class="meta-chip">📐 12 Steps</span>
+        <span class="meta-chip">🧪 8 Rubrics</span>
+        <span class="meta-chip">🤖 10 AI Modules</span>
+        <span class="meta-chip">📓 Research Journal</span>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong>How to use this Lab:</strong> Work through each Stage in order. At every step, click <strong style="color:var(--gold)">⚡ Activate AI</strong> to get Claude's structured support — analysis, suggestions, extractions, or scaffolding — directly in the panel. Outputs are automatically saved to your <strong>Research Journal</strong> (bottom right). The <strong>Auto-Rubric Assessor</strong> at the bottom lets you evaluate any work against the 8 official rubrics.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════ -->
+  <!-- STAGE 0 -->
+  <!-- ══════════════════════════════ -->
+  <section id="stage0">
+    <div class="stage-hero">
+      <div class="stage-hero-tag">Stage 0</div>
+      <h1>Team Setup &amp; Role Distribution</h1>
+      <p>Form your group, define roles, establish working agreements, and distribute tasks before beginning inquiry.</p>
+      <div class="stage-hero-meta">
+        <span class="meta-chip">👥 Group Activity</span>
+        <span class="meta-chip">⏱ 1 Session</span>
+      </div>
+    </div>
+
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-stage-badge">Stage 0</span>
+        <div>
+          <div class="module-title">🤖 AI Role Distributor</div>
+          <div class="module-subtitle">Generate a fair, structured role plan for your team</div>
+        </div>
+      </div>
+      <div class="module-body">
+        <p style="font-size:.88rem;color:var(--text-dim);margin-bottom:12px;">Tell the AI about your team and research topic — it will suggest roles, responsibilities, a communication protocol, and a working agreement template.</p>
+
+        <div style="margin-bottom:14px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.2);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:.75rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">⚙️ Task Allocation Mode</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--text-dim);">
+              <input type="radio" name="s0-mode" value="equal distribution (each member has distinct, equal responsibilities)" checked style="accent-color:var(--gold);width:auto;background:transparent;border:none;padding:0;"> Equal tasks per person
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--text-dim);">
+              <input type="radio" name="s0-mode" value="clustered by expertise (each member leads an area, others contribute)" style="accent-color:var(--gold);width:auto;background:transparent;border:none;padding:0;"> Clustered by expertise
+            </label>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--text-dim);">
+              <input type="radio" name="s0-context" value="working in-person (face-to-face collaboration)" checked style="accent-color:var(--gold);width:auto;background:transparent;border:none;padding:0;"> In-person team
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--text-dim);">
+              <input type="radio" name="s0-context" value="working online/remote (asynchronous collaboration via digital tools)" style="accent-color:var(--gold);width:auto;background:transparent;border:none;padding:0;"> Remote/online team
+            </label>
+          </div>
+        </div>
+
+        <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+          <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Team Setup</summary>
+          <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+            AI-generated role assignments are proposals, not mandates. Final task distribution must be decided collaboratively by the team — consider individual strengths, availability, and preferences. Never allow AI to override a team member's preference without group discussion. Document your agreed distribution in writing before moving to Stage 1.
+          </div>
+        </details>
+
+        <div class="ai-panel">
+          <div class="ai-panel-header">
+            <span class="ai-icon">⚡</span>
+            <span class="ai-panel-title">AI Module — Team Setup</span>
+          </div>
+          <div class="ai-panel-body">
+            <textarea class="ai-input" id="s0-input" rows="3" placeholder="Example: We are 4 students researching microplastics. Two are strong writers, one is good at design, one is technical. We have 3 weeks."></textarea>
+            <div class="ai-actions">
+              <button class="btn btn-gold" onclick="runS0AI()">⚡ Generate Team Plan</button>
+              <button class="btn btn-ghost" onclick="clearResponse('s0')">Clear</button>
+            </div>
+            <div class="ai-response" id="s0-response">
+              <button class="copy-response-btn" onclick="copyResponse('s0')">copy</button>
+              <div class="ai-response-content" id="s0-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="gold">
+
+  <!-- ══════════════════════════════ -->
+  <!-- STAGE 1 -->
+  <!-- ══════════════════════════════ -->
+  <section id="stage1">
+    <div class="stage-hero">
+      <div class="stage-hero-tag">Stage 1</div>
+      <h1>Ask &amp; Research</h1>
+      <p>Formulate a rigorous research question, build search strategies, locate and extract evidence from academic sources, and organise knowledge into a structured map.</p>
+      <div class="stage-hero-meta">
+        <span class="meta-chip">🔬 9 Steps</span>
+        <span class="meta-chip">⏱ 1–2 Weeks</span>
+        <span class="meta-chip">📚 Academic Sources</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 0 -->
+  <div class="module-card" id="step0">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 0</span>
+      <div>
+        <div class="step-line">
+          <div class="step-indicator">0</div>
+          <div class="step-name">Candidate Research Questions</div>
+        </div>
+        <div class="module-subtitle">Generate and explore multiple candidate research questions before selecting one</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <div class="info-box">
+        <strong>Goal:</strong> Before committing to one research question, generate 4–6 candidates across different epistemological angles. Evaluate each against feasibility, scope, and academic interest.
+      </div>
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Candidate Questions</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          AI-generated questions are starting points, not conclusions. Evaluate each candidate yourself before selecting — ask: <em>Is this genuinely researchable? Is the scope achievable? Does it reflect my team's actual interest?</em> The selection decision must remain fully human.
+        </div>
+      </details>
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Question Generator</span>
+        </div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step0-input" placeholder="Enter your broad topic of interest (e.g. 'effects of social media on adolescent mental health', 'CRISPR gene editing', 'climate migration')"></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step0','You are a scientific research methodology expert. For the topic below, generate exactly 6 diverse candidate research questions for an IBL project. For each question: (1) state the question clearly, (2) identify the epistemological type (empirical, conceptual, causal, comparative, evaluative), (3) rate feasibility for students 1-5, (4) suggest one key methodology. Format as a numbered list. Topic: ')">⚡ Generate Questions</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step0','Candidate Research Questions')">💾 Save to Journal</button>
+          </div>
+          <div class="ai-response" id="step0-response"><button class="copy-response-btn" onclick="copyResponse('step0')">copy</button><div id="step0-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1A — NEW: Final Research Question Synthesis -->
+  <div class="module-card" id="step1a" style="border:2px solid var(--gold);position:relative;overflow:visible;">
+    <div style="position:absolute;top:-12px;left:20px;background:var(--gold);color:#0a0f1e;font-size:11px;font-weight:800;padding:3px 14px;border-radius:12px;letter-spacing:.06em;text-transform:uppercase;">NEW STEP · Required</div>
+    <div class="module-header">
+      <span class="module-stage-badge" style="background:var(--gold);color:#0a0f1e;">Step 1A</span>
+      <div>
+        <div class="step-line">
+          <div class="step-indicator" style="background:var(--gold);color:#0a0f1e;">1A</div>
+          <div class="step-name">Final Research Question Synthesis</div>
+        </div>
+        <div class="module-subtitle">Compare all candidate RQs and construct one rigorous, theoretically coherent final question</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <div class="info-box" style="border-left-color:var(--gold);">
+        <strong>When to use:</strong> After generating candidate questions in Step 0. Before beginning epistemological analysis (Step 1B). This step ensures your final RQ is not merely <em>chosen</em> but actively <em>constructed</em> through systematic comparison of all candidates.
+      </div>
+
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Final RQ Synthesis</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          The AI helps you <em>compare</em> and <em>synthesise</em> — but it cannot understand your team's disciplinary context, available resources, or genuine scientific curiosity. Before running this step: each team member should independently rank the candidates and share their reasoning. The AI output is a structured argument, not a verdict. Final selection belongs to the team.
+        </div>
+      </details>
+
+      <div class="info-box" style="background:rgba(59,130,246,.07);border-left:4px solid #3B82F6;margin-bottom:14px;">
+        <strong style="color:#93C5FD;">📋 Evaluation Framework:</strong> The AI will compare your candidates against 8 dimensions: (1) alignment with core phenomenon, (2) inclusion of key variables, (3) representation of mechanisms, (4) epistemological quality, (5) scientific rigour, (6) individual strengths/weaknesses, (7) synthesis of strongest elements, (8) final validation criteria.
+      </div>
+
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Final RQ Constructor</span></div>
+        <div class="ai-panel-body">
+          <label style="font-size:.8rem;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Paste all candidate research questions from Step 0</label>
+          <textarea class="ai-input" id="step1a-input" rows="7" placeholder="Paste your 4–6 candidate research questions here (one per line or numbered). Include the broad topic context if helpful.&#10;&#10;Example:&#10;1. How does Wnt signalling regulate positional memory in zebrafish fin regeneration?&#10;2. What role do Hox genes play in the restoration of fin morphology after amputation?&#10;3. How do mechanical forces interact with molecular gradients during fin regeneration?"></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step1a', `You are a research methodology expert specialising in IBL scientific inquiry. Your task is to analyse a set of candidate research questions and construct ONE optimal final Research Question.
+
+Compare ALL provided candidate Research Questions according to these 8 dimensions:
+1. ALIGNMENT WITH CORE PHENOMENON — Does the question clearly focus on the central process or concept?
+2. KEY VARIABLES & COMPONENTS — Does it include relevant elements (positional memory, signalling pathways, gene expression, structures, systems, or interacting factors)?
+3. MECHANISMS & RELATIONSHIPS — Does it express causal, developmental, regulatory, functional, or relational mechanisms?
+4. EPISTEMOLOGICAL QUALITY — Is scope and conceptual boundaries clear? Ambiguity avoided? Redundancy avoided? Logically structured?
+5. SCIENTIFIC RIGOUR — Are components measurable or analysable? Compatible with available evidence? Consistent with validated frameworks?
+6. STRENGTHS & WEAKNESSES — Identify advantages and limitations of each candidate.
+7. SYNTHESIS BRIEF — Identify the strongest elements across all candidates.
+8. FINAL VALIDATION — The constructed RQ must: reflect causal or regulatory relationships, suit advanced academic investigation, directly address molecular/biological/linguistic/social/disciplinary processes under study.
+
+Output structure:
+— COMPARATIVE ANALYSIS TABLE (one row per candidate, one column per dimension 1–5, scored 1–3)
+— STRENGTHS & WEAKNESSES for each candidate (2–3 sentences)
+— SYNTHESIS REASONING (what to keep, what to merge, what to discard)
+— FINAL CONSTRUCTED RESEARCH QUESTION (one sentence, precise, academically rigorous)
+— JUSTIFICATION for why this final RQ is superior to all candidates
+
+Candidate Research Questions: `)">⚡ Synthesise Final Research Question</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step1a','Final Research Question')">💾 Save to Journal</button>
+          </div>
+          <div class="ai-response" id="step1a-response"><button class="copy-response-btn" onclick="copyResponse('step1a')">copy</button><div id="step1a-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1B (formerly Step 1) -->
+  <div class="module-card" id="step1b">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 1B</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">1B</div><div class="step-name">Epistemological Analysis</div></div>
+        <div class="module-subtitle">Deep-analyse your <em>final</em> research question from Step 1A</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Epistemological Analysis</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          Use the AI's analysis to <em>test</em> your question, not to replace your own thinking. If the AI suggests a refined version of your RQ, discuss it as a team before accepting it. Never adopt AI-suggested scope changes without understanding <em>why</em> they improve the question.
+        </div>
+      </details>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Epistemological Analyser</span></div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step1b-input" placeholder="Paste your final research question from Step 1A here..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step1b','You are an expert in research methodology and epistemology. Perform a complete epistemological analysis of this research question. Include: (1) Type of knowledge claim, (2) Key variables and concepts, (3) Scope and boundaries, (4) Implicit assumptions, (5) Most appropriate research methodology, (6) Potential limitations, (7) Ethical considerations, (8) Suggested refinement of the question if needed. Research question: ')">⚡ Analyse Question</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step1b','Epistemological Analysis')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step1b-response"><button class="copy-response-btn" onclick="copyResponse('step1b')">copy</button><div id="step1b-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="module-card" id="step2">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 2</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">2</div><div class="step-name">Search String Builder</div></div>
+        <div class="module-subtitle">Generate Boolean search strings for academic databases</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Search Strings</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          Boolean strings generated by AI may be too complex for some databases or produce zero results. Always <strong>test each string manually</strong> before trusting it. Simplify any string that returns fewer than 5 or more than 500 results. The search strategy is yours to own — AI provides drafts, not finished tools.
+        </div>
+      </details>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Search Strategy</span></div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step2-input" placeholder="Paste your final research question (from Step 1A) and key concepts..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step2','You are a research librarian expert. Generate 5 high-quality Boolean search strings for academic databases (Web of Science, Scopus, PubMed, ERIC, Google Scholar) for this research topic. For each string: (1) write the full Boolean string with AND/OR/NOT operators and quotation marks, (2) specify which database it is optimised for, (3) explain the logic. Also provide a SIMPLIFIED version of each string (max 3 terms) for beginners. Suggest 10 key MeSH terms or subject headings. Topic/Question: ')">⚡ Build Search Strings</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step2','Search Strings')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step2-response"><button class="copy-response-btn" onclick="copyResponse('step2')">copy</button><div id="step2-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <div class="module-body">
+      <div class="info-box" style="border-left-color:#FF6B6B;background:rgba(255,107,107,.06);">
+        <strong style="color:#FF6B6B;">⛔ Automatic Exclusions:</strong> The following source types are <strong>not accepted</strong> in this framework and must be rejected regardless of relevance: Wikipedia · Studocu · SlideShare · Course Hero · personal blogs · grey literature without institutional authorship. Always verify journal credibility before extracting evidence.
+      </div>
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Source Evaluation</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          AI evaluates sources based on the information you provide. Always supply DOIs where available — the AI cannot independently verify journal impact factors or retraction status. If a source has no DOI and no ISSN, treat it with extreme caution. Cross-check at least 2 sources using <strong>Scimago</strong> or <strong>Sherpa Romeo</strong>.
+        </div>
+      </details>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Source Evaluator</span></div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step3-input" placeholder="Paste a list of sources you found (titles, journals, years, DOIs if available)..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step3','You are a research librarian. Evaluate this list of academic sources for an IBL project. For each source: (1) assess relevance (High/Medium/Low), (2) check recency, (3) assess journal credibility, (4) flag any potential issues (predatory journal, missing DOI, etc.), (5) suggest if it should be included. Then give an overall verdict on the source pool quality. Sources: ')">⚡ Evaluate Sources</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step3','Source Evaluation')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step3-response"><button class="copy-response-btn" onclick="copyResponse('step3')">copy</button><div id="step3-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="module-card" id="step4">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 4</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">4</div><div class="step-name">Evidence Extractor</div></div>
+        <div class="module-subtitle">Automatically extract and structure evidence from abstracts or papers</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Evidence Extraction</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          AI extracts from what you provide — it cannot access the full paper. If you only paste an abstract, the extraction will be limited to what the abstract states. Never assume the AI found something the text does not say. Always cross-check extracted findings against the original paper. If there is a discrepancy, the paper wins.
+        </div>
+      </details>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Evidence Extraction</span></div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step4-input" rows="6" placeholder="Paste the abstract or key excerpts from one or more academic papers here..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step4','You are a scientific researcher. Extract and structure all evidence from this academic text. For each piece of evidence: (1) State the key finding or claim, (2) Identify the methodology used, (3) Note sample size or data scope if mentioned, (4) Assess evidence strength (Strong/Moderate/Weak), (5) Quote the most important sentence verbatim, (6) Explain relevance to IBL inquiry. Present as a structured evidence table. Text: ')">⚡ Extract Evidence</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step4','Extracted Evidence')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step4-response"><button class="copy-response-btn" onclick="copyResponse('step4')">copy</button><div id="step4-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="module-card" id="step5">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 5</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">5</div><div class="step-name">Source Selection &amp; CRAAP Analysis</div></div>
+        <div class="module-subtitle">Apply the CRAAP test and select your 5 best sources</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Source Selection</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          A source that scores well on the CRAAP test is still <em>your responsibility</em>. CRAAP evaluates credibility — you must additionally assess <strong>relevance to your specific RQ</strong>. A highly credible source in the wrong topic area should not be included just because it is well-rated. Final source selection is a human judgment, not an algorithmic output.
+        </div>
+      </details>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — CRAAP Tester</span></div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step5-input" placeholder="Paste details of a source (title, author, year, journal, abstract, DOI)..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step5','Apply the CRAAP test to evaluate this academic source for a student IBL research project. Assess each criterion: Currency (when published, how recent), Relevance (how relevant to student inquiry), Authority (author credentials, journal quality), Accuracy (evidence quality, peer-reviewed?), Purpose (why published, any bias?). Score each 1-5 and provide a Total Score /25 with a final recommendation: INCLUDE / INCLUDE WITH CAUTION / EXCLUDE. Source details: ')">⚡ Run CRAAP Test</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step5','CRAAP Analysis')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step5-response"><button class="copy-response-btn" onclick="copyResponse('step5')">copy</button><div id="step5-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="module-card" id="step6">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 6</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">6</div><div class="step-name">Topic &amp; Subtopic Mapper</div></div>
+        <div class="module-subtitle">Organise your evidence into a coherent thematic structure</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Topics &amp; Subtopics</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          The topic map should reflect <em>your evidence</em>, not a generic overview of the field. Before accepting an AI-generated structure, ask: <strong>Does each subtopic correspond to at least one source I actually read?</strong> If a subtopic appears with no source anchor, either find a source or remove it. AI may default to textbook categories — push beyond them.
+        </div>
+      </details>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Topic Organiser</span></div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step6-input" placeholder="Paste your research question + key findings from your sources..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step6','You are a research synthesis expert. Analyse the provided research question and evidence, then generate a hierarchical topic map. Structure: (1) Main Topic, (2) 4-5 Major Subtopics, (3) Under each subtopic: 3-4 key concepts or findings, (4) Identify connections between subtopics, (5) Flag any gaps in the evidence. Present this as a clear hierarchical outline that could be used to structure a scientific explanation. Content: ')">⚡ Map Topics</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step6','Topic Map')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step6-response"><button class="copy-response-btn" onclick="copyResponse('step6')">copy</button><div id="step6-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 7 -->
+  <div class="module-card" id="step7">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 7</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">7</div><div class="step-name">Mind Map Generator</div></div>
+        <div class="module-subtitle">Generate a structured mind map outline and Mermaid diagram code</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Mind Maps</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          Mind maps generated by AI may include connections that <em>sound plausible but are not supported by your evidence</em>. Before finalising your map, check every node and connection: <strong>Can I point to a specific source that supports this relationship?</strong> Delete any node without a literature anchor. The structure of knowledge must reflect your sources, not AI's general patterns.
+        </div>
+      </details>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Mind Map</span></div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step7-input" placeholder="Paste your topic map from Step 6 or your main research concepts..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step7','Generate a detailed mind map for this research topic. First, provide a text-based hierarchical mind map with clear indentation levels. Then, provide valid Mermaid.js mindmap syntax code (starting with: mindmap) that can be rendered. Make it comprehensive with 3-4 levels of depth. Finally, suggest 3 visual grouping strategies (colour coding, clustering, directional flow). Topic/concepts: ')">⚡ Generate Mind Map</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step7','Mind Map')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step7-response"><button class="copy-response-btn" onclick="copyResponse('step7')">copy</button><div id="step7-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 8 -->
+  <div class="module-card" id="step8">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 8</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">8</div><div class="step-name">Scientific Glossary Builder</div></div>
+        <div class="module-subtitle">Automatically build a rigorous glossary from your research terms</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Glossary</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          Include only terms that genuinely appear in your research sources. Remove any AI-added jargon that is not relevant to your topic. Each definition should be traced back to your sources — if you cannot link a term to at least one paper you read, question whether it belongs in your glossary. Quantity is not the goal; precision is.
+        </div>
+      </details>
+      <div style="margin-bottom:12px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:12px 14px;font-size:.82rem;color:var(--text-dim);">
+        💡 <strong style="color:#93C5FD;">Simplified mode available:</strong> If technical definitions feel too advanced, use the <em>Simple + Advanced</em> option — each entry will have both a plain-language explanation and a formal academic definition.
+      </div>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Glossary Generator</span></div>
+        <div class="ai-panel-body">
+          <textarea class="ai-input" id="step8-input" placeholder="List your key scientific/technical terms (one per line, or comma-separated)..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAI('step8','You are a scientific lexicographer. For each term provided, create a rigorous glossary entry with: (1) Term in bold, (2) Precise scientific definition (2-3 sentences, academically accurate), (3) Etymological root if relevant, (4) Related terms / synonyms, (5) Contextual example in a research sentence, (6) Source category (Biology / Chemistry / Social Science / etc.). Format as a clean numbered glossary. Terms: ')">⚡ Build Glossary</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step8','Scientific Glossary')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step8-response"><button class="copy-response-btn" onclick="copyResponse('step8')">copy</button><div id="step8-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="gold">
+
+  <!-- ══════════════════════════════ -->
+  <!-- STAGE 2 -->
+  <!-- ══════════════════════════════ -->
+  <section id="stage2">
+    <div class="stage-hero">
+      <div class="stage-hero-tag">Stage 2</div>
+      <h1>Explain &amp; Create</h1>
+      <p>Transform your research findings into a rigorous scientific explanation and a range of multimodal communication outputs.</p>
+      <div class="stage-hero-meta">
+        <span class="meta-chip">✍️ Step 9 — Explanation</span>
+        <span class="meta-chip">🎨 Step 10 — Multimodal</span>
+        <span class="meta-chip">🎤 Presentations</span>
+      </div>
+    </div>
+    <div style="background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:14px 18px;font-size:.82rem;color:var(--text-dim);line-height:1.65;margin-bottom:20px;">
+      🛡️ <strong style="color:var(--gold);">Stage 2 Ethical Reminder:</strong> Ensure all explanations and visuals are faithful to the scientific evidence you gathered in Stage 1. Adjust AI-scaffolded content that is oversimplified, overly technical, or inconsistent with your sources. The explanations you produce are <em>yours</em> — they must reflect your own synthesis, not a repackaging of AI text.
+    </div>
+  </section>
+
+  <!-- STEP 9 -->
+  <div class="module-card" id="step9">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 9</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">9</div><div class="step-name">Scientific Explanation Scaffolder</div></div>
+        <div class="module-subtitle">Build a structured, evidence-based scientific explanation</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <div class="tab-row">
+        <button class="tab-btn active" onclick="switchTab('s9','scaffold')">Scaffold</button>
+        <button class="tab-btn" onclick="switchTab('s9','review')">AI Review</button>
+        <button class="tab-btn" onclick="switchTab('s9','improve')">AI Improve</button>
+      </div>
+      <div id="s9-scaffold" class="tab-content active">
+        <div class="ai-panel">
+          <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">Generate Explanation Scaffold</span></div>
+          <div class="ai-panel-body">
+            <textarea class="ai-input" id="step9-scaffold-input" placeholder="Paste: (1) your research question, (2) your main findings / evidence summary..."></textarea>
+            <div class="ai-actions">
+              <button class="btn btn-gold" onclick="runAI('step9','You are a science communication expert. Generate a full scaffold for a rigorous scientific explanation. Structure: HOOK (1 engaging sentence), CONTEXT (background 2-3 sentences), RESEARCH QUESTION (stated precisely), METHODOLOGY (how evidence was gathered), MAIN FINDINGS (3-4 key findings with evidence), SCIENTIFIC MECHANISM (explain the underlying process), LIMITATIONS (2-3 honest limitations), IMPLICATIONS (real-world significance), CONCLUSION (strong closing). For each section, provide: (a) a model sentence to guide the student, (b) a prompt question to help them write their own. Based on: ')">⚡ Generate Scaffold</button>
+              <button class="btn btn-teal" onclick="saveToJournal('step9','Explanation Scaffold')">💾 Save</button>
+            </div>
+            <div class="ai-response" id="step9-response"><button class="copy-response-btn" onclick="copyResponse('step9')">copy</button><div id="step9-content"></div></div>
+          </div>
+        </div>
+      </div>
+      <div id="s9-review" class="tab-content">
+        <div class="ai-panel">
+          <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">Review Student Explanation</span></div>
+          <div class="ai-panel-body">
+            <textarea class="ai-input" id="step9-review-input" placeholder="Paste your written scientific explanation here..."></textarea>
+            <div class="ai-actions">
+              <button class="btn btn-gold" onclick="runAI('step9-review','You are a science teacher reviewing a student IBL scientific explanation. Provide structured formative feedback: (1) STRENGTHS — 3 specific strengths with quotes, (2) AREAS TO DEVELOP — 3 specific improvements with examples, (3) SCIENTIFIC ACCURACY — flag any errors or imprecisions, (4) STRUCTURE — does it follow proper explanation structure?, (5) EVIDENCE USE — is evidence cited and integrated well?, (6) OVERALL SCORE estimate against IBL rubric 1-4 scale. Be constructive and specific. Student explanation: ')">⚡ Review My Explanation</button>
+            </div>
+            <div class="ai-response" id="step9-review-response"><button class="copy-response-btn" onclick="copyResponse('step9-review')">copy</button><div id="step9-review-content"></div></div>
+          </div>
+        </div>
+      </div>
+      <div id="s9-improve" class="tab-content">
+        <div class="ai-panel">
+          <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">Targeted Improvement</span></div>
+          <div class="ai-panel-body">
+            <select class="ai-select" id="step9-improve-aspect">
+              <option value="">Choose what to improve...</option>
+              <option value="the introduction / hook">Introduction / Hook</option>
+              <option value="the evidence integration and citations">Evidence Integration</option>
+              <option value="the scientific accuracy and terminology">Scientific Terminology</option>
+              <option value="the conclusion and implications">Conclusion & Implications</option>
+              <option value="the limitations section">Limitations Section</option>
+              <option value="the overall academic register and tone">Academic Register & Tone</option>
+            </select>
+            <textarea class="ai-input" id="step9-improve-input" placeholder="Paste the specific section you want to improve..."></textarea>
+            <div class="ai-actions">
+              <button class="btn btn-gold" onclick="runAIImprove()">⚡ Improve This Section</button>
+            </div>
+            <div class="ai-response" id="step9-improve-response"><button class="copy-response-btn" onclick="copyResponse('step9-improve')">copy</button><div id="step9-improve-content"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 10 -->
+  <div class="module-card" id="step10">
+    <div class="module-header">
+      <span class="module-stage-badge">Step 10</span>
+      <div>
+        <div class="step-line"><div class="step-indicator">10</div><div class="step-name">Multimodal Output Generator</div></div>
+        <div class="module-subtitle">Generate structured scaffolds for any output format — each with a distinct visual and communicative identity</div>
+      </div>
+    </div>
+    <div class="module-body">
+      <details style="margin-bottom:12px;background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:2px;">
+        <summary style="cursor:pointer;padding:9px 14px;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.04em;">🛡️ ETHICAL TIP — Multimodal Outputs</summary>
+        <div style="padding:10px 16px 14px;font-size:.82rem;color:var(--text-dim);line-height:1.65;">
+          Visuals and scripts scaffolded by AI must be verified against your evidence before production. <strong>AI-generated images or diagrams may misrepresent biological or scientific structures</strong> — always compare against peer-reviewed figures or authoritative atlases. Your output communicates science: any inaccuracy becomes misinformation for your audience.
+        </div>
+      </details>
+      <div class="info-box" style="background:rgba(16,185,129,.06);border-left:4px solid #10B981;margin-bottom:14px;">
+        <strong style="color:#6EE7B7;">🎨 Format Differentiation Guide:</strong>
+        <span style="font-size:.82rem;"> Each format has a distinct identity — <strong>10A Poster</strong> = spatial density + visual hierarchy · <strong>10B Podcast</strong> = narrative arc + voice register · <strong>10C Videocast</strong> = scripted pacing + visual sequencing · <strong>10D Game</strong> = mechanic loop + learning objective · <strong>10E Oral</strong> = live delivery + audience interaction. Choose the format that best matches your message, not your comfort zone.</span>
+      </div>
+      <div class="ai-panel">
+        <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Multimodal Scaffolder</span></div>
+        <div class="ai-panel-body">
+          <select class="ai-select" id="step10-format">
+            <option value="">Choose output format...</option>
+            <option value="scientific poster / infographic (A1 format)">10A — Scientific Poster / Infographic</option>
+            <option value="5-minute science podcast episode">10B — Science Podcast</option>
+            <option value="3-minute videocast / explainer video">10C — Videocast / Explainer Video</option>
+            <option value="educational science game or simulation">10D — Interactive Science Game</option>
+            <option value="3-5 minute oral scientific presentation with slides">10E — Oral Presentation</option>
+          </select>
+          <textarea class="ai-input" id="step10-input" placeholder="Paste your research question + main findings (from your Scientific Explanation)..."></textarea>
+          <div class="ai-actions">
+            <button class="btn btn-gold" onclick="runAIMultimodal()">⚡ Generate Output Scaffold</button>
+            <button class="btn btn-teal" onclick="saveToJournal('step10','Multimodal Scaffold')">💾 Save</button>
+          </div>
+          <div class="ai-response" id="step10-response"><button class="copy-response-btn" onclick="copyResponse('step10')">copy</button><div id="step10-content"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="gold">
+
+  <!-- ══════════════════════════════ -->
+  <!-- STAGE 3 -->
+  <!-- ══════════════════════════════ -->
+  <section id="stage3">
+    <div class="stage-hero">
+      <div class="stage-hero-tag">Stage 3</div>
+      <h1>Reflect &amp; Improve</h1>
+      <p>Conduct peer review, reflect on the inquiry process, and plan meaningful extensions of your research.</p>
+      <div class="stage-hero-meta">
+        <span class="meta-chip">🔁 Peer Review</span>
+        <span class="meta-chip">🧠 Metacognition</span>
+        <span class="meta-chip">🚀 Extension</span>
+      </div>
+    </div>
+    <div style="background:rgba(188,151,83,.06);border:1px solid rgba(188,151,83,.25);border-radius:8px;padding:14px 18px;font-size:.82rem;color:var(--text-dim);line-height:1.65;margin-bottom:20px;">
+      🛡️ <strong style="color:var(--gold);">Stage 3 Ethical Reminder:</strong> Question both the AI's outputs <em>and your own decisions</em>. Reflection is a human act — AI can prompt the questions, but the honest answers must come from you. Consider what should permanently stay human-led in your next project. Growth requires intellectual honesty, not just completion.
+    </div>
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-stage-badge">Stage 3</span>
+        <div>
+          <div class="module-title">🤖 Peer Review &amp; Reflection AI</div>
+          <div class="module-subtitle">Generate peer feedback, self-assessment prompts, and extension paths</div>
+        </div>
+      </div>
+      <div class="module-body">
+        <div class="tab-row">
+          <button class="tab-btn active" onclick="switchTab('s3','peer')">Peer Review</button>
+          <button class="tab-btn" onclick="switchTab('s3','reflect')">Self-Reflection</button>
+          <button class="tab-btn" onclick="switchTab('s3','extend')">Extend Inquiry</button>
+        </div>
+        <div id="s3-peer" class="tab-content active">
+          <div class="ai-panel">
+            <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">Peer Review Generator</span></div>
+            <div class="ai-panel-body">
+              <textarea class="ai-input" id="s3-peer-input" placeholder="Paste the output you want peer-reviewed (poster description, podcast script, presentation outline...)"></textarea>
+              <div class="ai-actions">
+                <button class="btn btn-gold" onclick="runAI('s3-peer','You are a constructive peer reviewer for a student IBL scientific project. Provide structured peer feedback using the format: WHAT WORKS WELL (3 specific positives), CONSTRUCTIVE SUGGESTIONS (3 actionable improvements with examples), SCIENTIFIC ACCURACY CHECK (flag any issues), COMMUNICATION EFFECTIVENESS (is the message clear for the target audience?), ONE KEY QUESTION to push the team further. Be encouraging and specific. Output to review: ')">⚡ Generate Peer Feedback</button>
+              </div>
+              <div class="ai-response" id="s3-peer-response"><button class="copy-response-btn" onclick="copyResponse('s3-peer')">copy</button><div id="s3-peer-content"></div></div>
+            </div>
+          </div>
+        </div>
+        <div id="s3-reflect" class="tab-content">
+          <div class="ai-panel">
+            <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">Metacognitive Reflection Prompts</span></div>
+            <div class="ai-panel-body">
+              <textarea class="ai-input" id="s3-reflect-input" placeholder="Briefly describe your project: topic, what you did, biggest challenge, what surprised you..."></textarea>
+              <div class="ai-actions">
+                <button class="btn btn-gold" onclick="runAI('s3-reflect','Generate a personalised metacognitive reflection guide for a student who completed an IBL research project. Based on their description, create: (1) 5 deep reflection questions about their LEARNING PROCESS, (2) 3 questions about their USE OF AI (was it ethical? effective? what would they do differently?), (3) 3 questions about COLLABORATION and team dynamics, (4) A personal learning statement template they can complete, (5) A "lessons learned" framework for future projects. Project description: ')">⚡ Generate Reflection Guide</button>
+              </div>
+              <div class="ai-response" id="s3-reflect-response"><button class="copy-response-btn" onclick="copyResponse('s3-reflect')">copy</button><div id="s3-reflect-content"></div></div>
+            </div>
+          </div>
+        </div>
+        <div id="s3-extend" class="tab-content">
+          <div class="ai-panel">
+            <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">Inquiry Extension Planner</span></div>
+            <div class="ai-panel-body">
+              <textarea class="ai-input" id="s3-extend-input" placeholder="Paste your research question + main conclusions + 2-3 limitations..."></textarea>
+              <div class="ai-actions">
+                <button class="btn btn-gold" onclick="runAI('s3-extend','You are a research supervisor helping students plan the next stage of their inquiry. Based on the research summary, generate: (1) 3 EXTENSION RESEARCH QUESTIONS that logically follow from the findings, (2) 2 METHODOLOGICAL IMPROVEMENTS for a future study, (3) CROSS-DISCIPLINARY CONNECTIONS (how does this link to other fields?), (4) REAL-WORLD APPLICATION IDEAS (how could these findings be used?), (5) A PUBLICATION PATHWAY — what type of student journal or competition could this be submitted to? Research summary: ')">⚡ Plan Extensions</button>
+              </div>
+              <div class="ai-response" id="s3-extend-response"><button class="copy-response-btn" onclick="copyResponse('s3-extend')">copy</button><div id="s3-extend-content"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="gold">
+
+  <!-- ══════════════════════════════ -->
+  <!-- RUBRIC ASSESSOR -->
+  <!-- ══════════════════════════════ -->
+  <section id="rubrics">
+    <div class="stage-hero">
+      <div class="stage-hero-tag">Assessment Lab</div>
+      <h1>Auto-Rubric Assessor</h1>
+      <p>Paste any student work and let AI evaluate it against the official IBL rubrics. Get instant, structured formative feedback aligned to scoring criteria.</p>
+    </div>
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-stage-badge">Assessment</span>
+        <div>
+          <div class="module-title">🧪 8-Rubric AI Evaluator</div>
+          <div class="module-subtitle">Evaluates work against all official IBL rubrics with criterion-by-criterion scoring</div>
+        </div>
+      </div>
+      <div class="module-body">
+        <div class="ai-panel">
+          <div class="ai-panel-header"><span class="ai-icon">⚡</span><span class="ai-panel-title">AI Module — Rubric Assessment</span></div>
+          <div class="ai-panel-body">
+            <select class="ai-select" id="rubric-select">
+              <option value="">Select which rubric to apply...</option>
+              <option value="Rubric 1 — Scientific Explanation (criteria: Conceptual Accuracy, Evidence Use, Scientific Structure, Language, Depth of Analysis, Source Integration)">Rubric 1 — Scientific Explanation</option>
+              <option value="Rubric 2 — Research Process (criteria: Question Quality, Search Strategy, Source Selection, Evidence Extraction, Organisation, AI Use Transparency)">Rubric 2 — Research Process</option>
+              <option value="Rubric 3 — Poster/Infographic (criteria: Visual Design, Scientific Accuracy, Information Density, Audience Adaptation, Clarity, Multimodal Integration)">Rubric 3 — Poster / Infographic</option>
+              <option value="Rubric 4 — Podcast (criteria: Narrative Structure, Scientific Accuracy, Engagement, Audio Quality, Source Integration, Target Audience)">Rubric 4 — Podcast</option>
+              <option value="Rubric 5 — Science Game (criteria: Scientific Accuracy, Game Mechanics, Educational Value, User Experience, Audience, Creativity)">Rubric 5 — Science Game</option>
+              <option value="Rubric 6 — Oral Presentation (criteria: Structure, Scientific Clarity, Delivery, Multimodal Use, Audience Adaptation, Overall Impact)">Rubric 6 — Oral Presentation</option>
+              <option value="Rubric 7 — Group Collaboration (criteria: Task Distribution, Communication, Engagement, Collective Decision-Making, Problem-Solving, AI Use)">Rubric 7 — Group Collaboration</option>
+              <option value="Rubric 8 — Ethical AI Use (criteria: Transparency, Respect for Boundaries, Validation of AI Output, Human Reasoning, Prompt Quality, Citation Integrity)">Rubric 8 — Ethical AI Use</option>
+            </select>
+            <textarea class="ai-input" id="rubric-input" rows="6" placeholder="Paste the student work to be assessed here (text, description of output, or notes about their process)..."></textarea>
+            <div class="ai-actions">
+              <button class="btn btn-gold" onclick="runRubricAssessment()">⚡ Run Rubric Assessment</button>
+              <button class="btn btn-teal" onclick="saveToJournal('rubric','Rubric Assessment')">💾 Save to Journal</button>
+            </div>
+            <div class="ai-response" id="rubric-response"><button class="copy-response-btn" onclick="copyResponse('rubric')">copy</button><div id="rubric-content"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:20px;">
+          <h3 style="font-family:var(--serif);color:var(--gold);font-size:1.1rem;margin-bottom:10px;">📋 Quick Rubric Reference</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem;">
+              <div style="color:var(--gold);font-family:var(--mono);font-size:.68rem;text-transform:uppercase;margin-bottom:6px;">Scoring Scale</div>
+              <div><span class="score-1">1 — Beginning</span> · Minimal evidence of skill</div>
+              <div><span class="score-2">2 — Developing</span> · Some elements present</div>
+              <div><span class="score-3">3 — Good</span> · Competent, clear demonstration</div>
+              <div><span class="score-4">4 — Excellent</span> · Exemplary, thorough, precise</div>
+            </div>
+            <div style="background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem;">
+              <div style="color:var(--gold);font-family:var(--mono);font-size:.68rem;text-transform:uppercase;margin-bottom:6px;">8 Official Rubrics</div>
+              <div>R1 Scientific Explanation · R2 Research Process</div>
+              <div>R3 Poster · R4 Podcast · R5 Game</div>
+              <div>R6 Oral Presentation</div>
+              <div>R7 Collaboration · R8 Ethical AI</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div style="height:100px;"></div>
+</main>
+
+<!-- ─── JOURNAL FAB ─── -->
+<button class="journal-fab" onclick="toggleJournal()">
+  📓 Research Journal <span id="journal-count" style="background:rgba(0,0,0,.3);border-radius:10px;padding:1px 7px;font-size:.75rem;">0</span>
+</button>
+
+<!-- ─── JOURNAL PANEL ─── -->
+<div class="journal-panel" id="journal-panel">
+  <div class="journal-header">
+    <h3>📓 Research Journal</h3>
+    <button class="journal-close" onclick="toggleJournal()">✕</button>
+  </div>
+  <div class="journal-body" id="journal-body">
+    <div class="journal-empty">No entries yet. Click 💾 Save after generating AI outputs.</div>
+  </div>
+  <div style="padding:12px;">
+    <button class="journal-clear" onclick="clearJournal()">🗑 Clear Journal</button>
+  </div>
+</div>
+
+<script>
+// ─── JOURNAL STATE ───
+let journal = [];
+let journalOpen = false;
+
+function toggleJournal() {
+  journalOpen = !journalOpen;
+  document.getElementById('journal-panel').classList.toggle('open', journalOpen);
+}
+
+function saveToJournal(moduleId, label) {
+  const contentEl = document.getElementById(moduleId + '-content');
+  if (!contentEl || !contentEl.textContent.trim()) {
+    alert('Run the AI first, then save!');
+    return;
+  }
+  journal.push({ label, text: contentEl.textContent, time: new Date().toLocaleTimeString() });
+  renderJournal();
+}
+
+function renderJournal() {
+  const body = document.getElementById('journal-body');
+  document.getElementById('journal-count').textContent = journal.length;
+  if (!journal.length) {
+    body.innerHTML = '<div class="journal-empty">No entries yet.</div>';
+    return;
+  }
+  body.innerHTML = journal.map((e, i) => `
+    <div class="journal-entry">
+      <div class="journal-entry-label">${e.label} · ${e.time}</div>
+      <div class="journal-entry-text">${e.text.slice(0,400)}${e.text.length > 400 ? '…' : ''}</div>
+    </div>
+  `).join('');
+}
+
+function clearJournal() {
+  if (confirm('Clear all journal entries?')) { journal = []; renderJournal(); }
+}
+
+// ─── TAB SWITCHING ───
+function switchTab(prefix, name) {
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+    el.classList.remove('active');
+  });
+  document.querySelectorAll(`.tab-btn`).forEach(btn => btn.classList.remove('active'));
+  const target = document.getElementById(`${prefix}-${name}`);
+  if (target) target.classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── SCROLL ───
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Update sidebar active
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+}
+
+// ─── COPY ───
+function copyResponse(id) {
+  const el = document.getElementById(id + '-content');
+  if (el) {
+    navigator.clipboard.writeText(el.textContent).then(() => {
+      const btn = document.querySelector(`#${id}-response .copy-response-btn`);
+      if (btn) { btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 1500); }
+    });
+  }
+}
+
+function clearResponse(id) {
+  const r = document.getElementById(id + '-response');
+  if (r) { r.classList.remove('visible'); }
+  const c = document.getElementById(id + '-content');
+  if (c) c.innerHTML = '';
+}
+
+// ─── LOADING HTML ───
+function loadingHtml() {
+  return `<div class="ai-loading"><div class="loader"><span></span><span></span><span></span></div> Claude is thinking…</div>`;
+}
+
+// ─── MAIN AI CALL ───
+async function callClaude(systemPrompt, userContent, contentId, responseId) {
+  const responseEl = document.getElementById(responseId);
+  const contentEl = document.getElementById(contentId);
+  responseEl.classList.add('visible');
+  contentEl.innerHTML = loadingHtml();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `You are an expert AI co-pilot embedded in the ARQUS IBL (Inquiry-Based Learning) Research Lab. 
+You help students and teachers with scientific inquiry projects. 
+Always respond in clear, structured markdown with headers (##), bold key terms, and bullet points where appropriate.
+Be academically rigorous but accessible. Never do the work FOR the student — scaffold, guide, and model.
+Responses should be thorough but focused (under 600 words unless extracting evidence).`,
+        messages: [{ role: 'user', content: systemPrompt + userContent }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || '').join('\n') || 'No response received.';
+    contentEl.innerHTML = markdownToHtml(text);
+  } catch (err) {
+    contentEl.innerHTML = `<span style="color:var(--red)">⚠ Error: ${err.message}. Please check your connection and try again.</span>`;
+  }
+}
+
+// ─── SIMPLE MARKDOWN RENDERER ───
+function markdownToHtml(text) {
+  return text
+    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code style="background:rgba(0,0,0,.4);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:.85em;">$1</code>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li><strong>$1.</strong> $2</li>')
+    .replace(/(<li>[\s\S]+?<\/li>)/g, '<ul>$1</ul>')
+    .replace(/<\/ul>\s*<ul>/g, '')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hup])/gm, '')
+    .trim();
+}
+
+// ─── MODULE-SPECIFIC AI CALLS ───
+function runAI(moduleId, promptPrefix) {
+  const inputEl = document.getElementById(moduleId + '-input');
+  const input = inputEl ? inputEl.value.trim() : '';
+  if (!input) { alert('Please enter some content first.'); return; }
+  callClaude(promptPrefix, input, moduleId + '-content', moduleId + '-response');
+}
+
+function runAIImprove() {
+  const aspect = document.getElementById('step9-improve-aspect').value;
+  const input = document.getElementById('step9-improve-input').value.trim();
+  if (!aspect || !input) { alert('Select an aspect and paste the section to improve.'); return; }
+  callClaude(
+    `You are an expert science writing coach. Improve specifically ${aspect} of this student's scientific explanation. 
+    Provide: (1) DIAGNOSIS — what specifically needs improvement and why, (2) IMPROVED VERSION — rewrite the section (make it noticeably better but keep the student's ideas), (3) WHAT CHANGED — bullet list of changes made, (4) SELF-EDIT CHECKLIST — 5 questions the student can use to self-check this section next time.\n\nSection to improve: `,
+    input, 'step9-improve-content', 'step9-improve-response'
+  );
+}
+
+function runAIMultimodal() {
+  const format = document.getElementById('step10-format').value;
+  const input = document.getElementById('step10-input').value.trim();
+  if (!format || !input) { alert('Select a format and paste your research content.'); return; }
+  callClaude(
+    `You are an expert in science communication and multimodal design. Generate a complete production scaffold for a ${format}. 
+    Include: (1) STRUCTURE — full section-by-section breakdown with time/space allocations, (2) CONTENT GUIDE — what goes in each section, how to use the research evidence, (3) DESIGN PRINCIPLES — 5 specific design/production tips for this format, (4) AUDIENCE STRATEGY — how to adapt for a non-specialist audience, (5) ASSESSMENT ALIGNMENT — how each section maps to the relevant rubric criteria, (6) PRODUCTION CHECKLIST — 8-point quality check before submission.
+    Research content: `,
+    input, 'step10-content', 'step10-response'
+  );
+}
+
+function runRubricAssessment() {
+  const rubric = document.getElementById('rubric-select').value;
+  const work = document.getElementById('rubric-input').value.trim();
+  if (!rubric || !work) { alert('Select a rubric and paste the work to assess.'); return; }
+  callClaude(
+    `You are an expert IBL assessor. Apply the ${rubric} to assess this student work.
+    For EACH criterion in the rubric:
+    1. Assign a score: 1 (Beginning), 2 (Developing), 3 (Good), or 4 (Excellent)
+    2. Write 2-3 sentences of specific evidence-based justification for the score
+    3. Give ONE targeted suggestion for improvement
+    Then provide: TOTAL SCORE (/24 or appropriate max), OVERALL GRADE BAND, TOP 2 STRENGTHS, TOP 2 PRIORITIES TO IMPROVE.
+    Be fair, specific, and constructive. Reference the actual work content in your feedback.
+    Student work: `,
+    work, 'rubric-content', 'rubric-response'
+  );
+}
+
+// Stage progress dots
+document.addEventListener('scroll', () => {
+  const stages = ['stage0','stage1','step9','stage3'];
+  stages.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const dot = document.querySelectorAll('.stage-dot')[i];
+      if (dot && rect.top <= 120 && rect.bottom > 0) {
+        document.querySelectorAll('.stage-dot').forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>

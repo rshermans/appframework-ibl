@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { ExplanationDraft } from '@/types/research-workflow'
+import { useI18n } from '@/components/I18nProvider'
 
 export default function Step5Explanation() {
+  const { locale, t } = useI18n()
   const {
     evidenceRecords,
     explanationDraft,
@@ -26,11 +28,11 @@ export default function Step5Explanation() {
 
   const buildExplanationDraft = async () => {
     if (!finalResearchQuestion?.question) {
-      setError('A final research question is required before building the explanation.')
+      setError(t('steps.step5.locked'))
       return
     }
     if (!knowledgeStructure || evidenceRecords.length === 0) {
-      setError('Step 5 requires knowledge structure and evidence records.')
+      setError(t('steps.step5.locked'))
       return
     }
 
@@ -47,7 +49,7 @@ export default function Step5Explanation() {
           stage: 2,
           promptId: 'step9',
           stepId: 'step5_explanation',
-          stepLabel: 'Scientific Explanation',
+          stepLabel: t('workflow.step5_explanation.label'),
           topic,
           rq: finalResearchQuestion.question,
           finalResearchQuestion,
@@ -55,6 +57,7 @@ export default function Step5Explanation() {
           knowledgeStructure,
           evidence: evidenceJson,
           audience,
+          locale,
         }),
       })
 
@@ -62,7 +65,7 @@ export default function Step5Explanation() {
       const data = payload?.data ?? payload
 
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.details || payload?.error || 'Failed to generate explanation draft')
+        throw new Error(payload?.details || payload?.error || t('api.genericFailure'))
       }
 
       const parsed = JSON.parse(data.output)
@@ -76,12 +79,12 @@ export default function Step5Explanation() {
       }
 
       if (nextDraft.outline.length === 0 || !nextDraft.argumentCore) {
-        throw new Error('AI response did not include a valid explanation draft')
+        throw new Error(t('api.genericFailure'))
       }
 
       setExplanationDraft(nextDraft)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to build explanation draft')
+      setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
     }
@@ -90,16 +93,13 @@ export default function Step5Explanation() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">Step 5 - Scientific Explanation</h2>
-        <p className="text-sm text-gray-600">
-          Build a rigorous explanation draft from the structured evidence and knowledge map.
-        </p>
+        <h2 className="mb-2 text-xl font-semibold">{t('steps.step5.title')}</h2>
+        <p className="text-sm text-gray-600">{t('steps.step5.intro')}</p>
       </div>
 
       {!canRun && (
         <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          Step 5 is locked until the final question is approved and both evidence and knowledge
-          structure are available.
+          {t('steps.step5.locked')}
         </div>
       )}
 
@@ -110,14 +110,14 @@ export default function Step5Explanation() {
       )}
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-slate-700">Audience</div>
+        <div className="mb-2 text-sm font-semibold text-slate-700">{t('common.audience')}</div>
         <select
           value={audience}
           onChange={(event) => setAudience(event.target.value as 'expert' | 'general')}
           className="rounded border border-slate-300 bg-white px-3 py-2 text-sm"
         >
-          <option value="expert">Expert</option>
-          <option value="general">General</option>
+          <option value="expert">{t('steps.step5.expert')}</option>
+          <option value="general">{t('steps.step5.general')}</option>
         </select>
       </div>
 
@@ -126,14 +126,14 @@ export default function Step5Explanation() {
         disabled={!canRun || loading}
         className="rounded bg-slate-900 px-4 py-3 text-white disabled:opacity-50"
       >
-        {loading ? 'Building explanation draft...' : 'Generate Explanation Draft'}
+        {loading ? t('steps.step5.generating') : t('steps.step5.generateButton')}
       </button>
 
       {explanationDraft && (
         <div className="space-y-5 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
-              Outline
+              {t('steps.step5.outline')}
             </div>
             <ol className="space-y-2">
               {explanationDraft.outline.map((item, index) => (
@@ -146,7 +146,7 @@ export default function Step5Explanation() {
 
           <div>
             <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
-              Argument Core
+              {t('steps.step5.argumentCore')}
             </div>
             <div className="rounded border bg-white p-4 text-sm text-slate-900">
               {explanationDraft.argumentCore}
@@ -156,7 +156,7 @@ export default function Step5Explanation() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
-                Evidence References
+                {t('steps.step5.evidenceReferences')}
               </div>
               <ul className="space-y-2">
                 {explanationDraft.evidenceReferences.map((reference) => (
@@ -169,7 +169,7 @@ export default function Step5Explanation() {
 
             <div>
               <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
-                Open Issues
+                {t('steps.step5.openIssues')}
               </div>
               <ul className="space-y-2">
                 {explanationDraft.openIssues.map((issue) => (

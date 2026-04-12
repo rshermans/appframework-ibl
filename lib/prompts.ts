@@ -1,3 +1,5 @@
+import { appendLocaleInstruction, type Locale, isPortugueseLocale } from '@/lib/i18n'
+
 export type PromptMode = 'standard' | 'quick' | 'advanced'
 
 export type PromptId =
@@ -318,7 +320,7 @@ export function resolvePromptId(promptKey?: string): PromptId {
 export function getPrompt(
   promptKey: string,
   variables: PromptVariables = {},
-  options: { mode?: PromptMode } = {}
+  options: { mode?: PromptMode; locale?: Locale } = {}
 ): string {
   const resolvedPromptId = resolvePromptId(promptKey)
   const definition = PROMPT_REGISTRY[resolvedPromptId]
@@ -330,34 +332,54 @@ export function getPrompt(
     PROMPT_REGISTRY.generic_guidance.template ??
     ''
 
-  return replaceVariables(template, variables)
+  return appendLocaleInstruction(
+    options.locale ?? 'pt-PT',
+    replaceVariables(template, variables)
+  )
 }
 
 export function buildDefaultUserMessage(
   promptKey: string,
   variables: PromptVariables = {},
-  options: { mode?: PromptMode } = {}
+  options: { mode?: PromptMode; locale?: Locale } = {}
 ): string {
   const resolvedPromptId = resolvePromptId(promptKey)
   const mode = options.mode ?? 'standard'
+  const portuguese = isPortugueseLocale(options.locale)
 
   switch (resolvedPromptId) {
     case 'rq_generation':
-      return `Generate research question candidates for the topic "${variables.TOPIC || ''}".`
+      return portuguese
+        ? `Gera candidatos a perguntas de investigação para o tópico "${variables.TOPIC || ''}".`
+        : `Generate research question candidates for the topic "${variables.TOPIC || ''}".`
     case 'rq_analysis':
-      return `Compare the selected research questions using ${mode} mode.`
+      return portuguese
+        ? `Compara as perguntas de investigação selecionadas usando o modo ${mode}.`
+        : `Compare the selected research questions using ${mode} mode.`
     case 'rq_synthesis':
-      return 'Synthesize one final research question and justify it in one sentence.'
+      return portuguese
+        ? 'Sintetiza uma pergunta final de investigação e justifica-a numa frase.'
+        : 'Synthesize one final research question and justify it in one sentence.'
     case 'copilot':
-      return 'Guide the next research step based on the final research question.'
+      return portuguese
+        ? 'Guia o próximo passo de investigação com base na pergunta final.'
+        : 'Guide the next research step based on the final research question.'
     case 'step2':
-      return 'Design a search strategy from the final research question and return structured search outputs.'
+      return portuguese
+        ? 'Desenha uma estratégia de pesquisa a partir da pergunta final e devolve saídas estruturadas de pesquisa.'
+        : 'Design a search strategy from the final research question and return structured search outputs.'
     case 'step4':
-      return 'Extract structured evidence from the provided source and return a valid JSON evidence record.'
+      return portuguese
+        ? 'Extrai evidência estruturada da fonte fornecida e devolve um registo de evidência em JSON válido.'
+        : 'Extract structured evidence from the provided source and return a valid JSON evidence record.'
     case 'knowledge_structure':
-      return 'Organize the extracted evidence into topics, subtopics, and a concept map.'
+      return portuguese
+        ? 'Organiza a evidência extraída em tópicos, subtópicos e um mapa conceptual.'
+        : 'Organize the extracted evidence into topics, subtopics, and a concept map.'
     default:
-      return 'Provide structured research guidance for the current step.'
+      return portuguese
+        ? 'Fornece orientação estruturada de investigação para a etapa atual.'
+        : 'Provide structured research guidance for the current step.'
   }
 }
 

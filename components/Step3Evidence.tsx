@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { EvidenceRecord, SearchArticle } from '@/types/research-workflow'
+import { useI18n } from '@/components/I18nProvider'
 
 function buildSourcePayload(article: SearchArticle): string {
   return [
@@ -19,6 +20,7 @@ function buildSourcePayload(article: SearchArticle): string {
 }
 
 export default function Step3Evidence() {
+  const { locale, t } = useI18n()
   const {
     addEvidenceRecord,
     evidenceRecords,
@@ -38,17 +40,17 @@ export default function Step3Evidence() {
 
   const extractFromSource = async (source: string, sourceId: string) => {
     if (!finalResearchQuestion?.question) {
-      setError('A final research question is required before extracting evidence.')
+      setError(t('steps.step3.locked'))
       return
     }
 
     if (!searchDesign) {
-      setError('Generate the search design before extracting evidence.')
+      setError(t('steps.step3.locked'))
       return
     }
 
     if (!source.trim()) {
-      setError('A source text is required for extraction.')
+      setError(t('steps.step3.sourceRequired'))
       return
     }
 
@@ -65,12 +67,13 @@ export default function Step3Evidence() {
           stage: 1,
           promptId: 'step4',
           stepId: 'step3',
-          stepLabel: 'Evidence Extraction',
+          stepLabel: t('workflow.step3_evidence_extraction.label'),
           topic,
           rq: finalResearchQuestion.question,
           finalResearchQuestion,
           searchDesign,
           source,
+          locale,
         }),
       })
 
@@ -78,7 +81,7 @@ export default function Step3Evidence() {
       const payload = json?.data ?? json
 
       if (!res.ok || !json?.ok) {
-        throw new Error(json?.details || json?.error || 'Failed to extract evidence')
+        throw new Error(json?.details || json?.error || t('api.genericFailure'))
       }
 
       const parsed = JSON.parse(payload.output)
@@ -96,7 +99,7 @@ export default function Step3Evidence() {
       }
 
       if (!nextEvidenceRecord.claim || nextEvidenceRecord.findings.length === 0) {
-        throw new Error('AI response did not include a valid evidence record')
+        throw new Error(t('api.genericFailure'))
       }
 
       addEvidenceRecord(nextEvidenceRecord)
@@ -104,7 +107,7 @@ export default function Step3Evidence() {
         setSourceText('')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to extract evidence')
+      setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
       setActiveSourceId(null)
@@ -118,23 +121,20 @@ export default function Step3Evidence() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">Step 3 - Evidence Extraction</h2>
-        <p className="text-sm text-gray-600">
-          Analyse retrieved scientific articles with one click, or paste custom text when needed.
-        </p>
+        <h2 className="mb-2 text-xl font-semibold">{t('steps.step3.title')}</h2>
+        <p className="text-sm text-gray-600">{t('steps.step3.intro')}</p>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-slate-700">Research anchor</div>
+        <div className="mb-2 text-sm font-semibold text-slate-700">{t('steps.step3.anchor')}</div>
         <div className="font-medium text-slate-900">
-          {finalResearchQuestion?.question || 'No final research question available'}
+          {finalResearchQuestion?.question || t('common.noData')}
         </div>
       </div>
 
       {!canRun && (
         <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          Evidence extraction is locked until the final research question is approved and a search
-          design exists.
+          {t('steps.step3.locked')}
         </div>
       )}
 
@@ -146,11 +146,11 @@ export default function Step3Evidence() {
 
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
         <div className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-          Retrieved Articles
+          {t('steps.step3.retrievedArticles')}
         </div>
         {searchArticles.length === 0 ? (
           <div className="text-sm text-slate-600">
-            No retrieved articles available. Go back to Step 2 and run article retrieval.
+            {t('steps.step3.noRetrievedArticles')}
           </div>
         ) : (
           <div className="space-y-3">
@@ -160,15 +160,15 @@ export default function Step3Evidence() {
               return (
                 <div key={article.id} className="rounded border border-slate-200 bg-slate-50 p-4">
                   <div className="text-xs uppercase tracking-wide text-slate-500">
-                    Article {index + 1} | {article.provider}
+                    {t('steps.step3.evidenceLabel')} {index + 1} | {article.provider}
                   </div>
                   <div className="mt-1 font-semibold text-slate-900">{article.title}</div>
                   <div className="mt-1 text-sm text-slate-600">
-                    {(article.authors || []).slice(0, 4).join(', ') || 'Unknown authors'}
+                    {(article.authors || []).slice(0, 4).join(', ') || t('common.unknownAuthors')}
                     {article.year ? ` | ${article.year}` : ''}
                   </div>
                   <div className="mt-2 text-sm text-slate-700">
-                    {article.abstract || 'No abstract available.'}
+                    {article.abstract || t('common.noAbstract')}
                   </div>
                   <div className="mt-3">
                     <button
@@ -176,7 +176,7 @@ export default function Step3Evidence() {
                       disabled={!canRun || loading}
                       className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                     >
-                      {isCurrent && loading ? 'Analysing...' : 'Analyse this article'}
+                      {isCurrent && loading ? t('steps.step3.analyzing') : t('steps.step3.analyzeButton')}
                     </button>
                   </div>
                 </div>
@@ -188,14 +188,14 @@ export default function Step3Evidence() {
 
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
         <div className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-          Manual Source Fallback
+          {t('steps.step3.manualTitle')}
         </div>
         <textarea
           value={sourceText}
           onChange={(event) => setSourceText(event.target.value)}
           rows={8}
           disabled={!canRun || loading}
-          placeholder="Paste a custom source abstract, excerpt, or notes."
+          placeholder={t('steps.step3.manualPlaceholder')}
           className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
         />
         <button
@@ -203,39 +203,40 @@ export default function Step3Evidence() {
           disabled={!canRun || loading || !sourceText.trim()}
           className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {activeSourceId === 'manual' && loading ? 'Analysing...' : 'Analyse Manual Source'}
+          {activeSourceId === 'manual' && loading ? t('steps.step3.analyzing') : t('steps.step3.analyzeManual')}
         </button>
       </div>
 
       {evidenceRecords.length > 0 && (
         <div className="space-y-4">
           <div className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-            Extracted Evidence Records
+            {t('steps.step3.evidenceTitle')}
           </div>
 
           {evidenceRecords.map((record, index) => (
             <div key={record.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-1 text-xs uppercase tracking-wide text-slate-500">
-                Evidence {index + 1}
+                {t('steps.step3.evidenceLabel')} {index + 1}
               </div>
               <div className="text-lg font-semibold text-slate-900">{record.title}</div>
               <div className="mt-2 text-sm text-slate-600">
-                Type: {record.sourceType} | Relevance: {record.relevanceScore}/5
+                {t('steps.step3.typeLabel')}: {record.sourceType} | {t('steps.step3.relevanceLabel')}:{' '}
+                {record.relevanceScore}/5
               </div>
 
               <div className="mt-4 space-y-4 text-sm text-slate-800">
                 <div>
-                  <div className="mb-1 font-semibold">Claim</div>
+                  <div className="mb-1 font-semibold">{t('steps.step3.claim')}</div>
                   <div>{record.claim}</div>
                 </div>
 
                 <div>
-                  <div className="mb-1 font-semibold">Methodology</div>
+                  <div className="mb-1 font-semibold">{t('steps.step3.methodology')}</div>
                   <div>{record.methodology}</div>
                 </div>
 
                 <div>
-                  <div className="mb-1 font-semibold">Findings</div>
+                  <div className="mb-1 font-semibold">{t('steps.step3.findings')}</div>
                   <ul className="space-y-1">
                     {record.findings.map((finding) => (
                       <li key={finding} className="rounded border bg-slate-50 px-3 py-2">
@@ -246,7 +247,7 @@ export default function Step3Evidence() {
                 </div>
 
                 <div>
-                  <div className="mb-1 font-semibold">Limitations</div>
+                  <div className="mb-1 font-semibold">{t('steps.step3.limitations')}</div>
                   <ul className="space-y-1">
                     {record.limitations.map((limitation) => (
                       <li key={limitation} className="rounded border bg-slate-50 px-3 py-2">
@@ -257,7 +258,7 @@ export default function Step3Evidence() {
                 </div>
 
                 <div>
-                  <div className="mb-1 font-semibold">Citation</div>
+                  <div className="mb-1 font-semibold">{t('steps.step3.citation')}</div>
                   <div className="rounded border bg-slate-50 p-3">{record.citation}</div>
                 </div>
               </div>
@@ -269,7 +270,7 @@ export default function Step3Evidence() {
               onClick={() => setWorkflowStep('step4_knowledge_structure')}
               className="rounded bg-slate-900 px-4 py-3 text-white hover:bg-slate-800"
             >
-              Continue to Step 4
+              {t('steps.step3.continueButton')}
             </button>
           </div>
         </div>

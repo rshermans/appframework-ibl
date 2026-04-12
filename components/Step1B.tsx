@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { FinalResearchQuestion } from '@/types/research-workflow'
+import { useI18n } from '@/components/I18nProvider'
 
 export default function Step1B() {
+  const { locale, t } = useI18n()
   const {
     comparisonResult,
     finalResearchQuestion,
@@ -19,7 +21,7 @@ export default function Step1B() {
 
   const runSynthesis = async () => {
     if (!comparisonResult || selectedRQs.length === 0) {
-      setError('Run the comparison step before synthesising the final research question.')
+      setError(t('steps.step1B.invalidState'))
       return
     }
 
@@ -35,11 +37,12 @@ export default function Step1B() {
           stage: 1,
           promptId: 'rq_synthesis',
           stepId: 'step1b',
-          stepLabel: 'RQ Synthesis',
+          stepLabel: t('workflow.step1b_synthesize.label'),
           topic,
           selectedQuestions: selectedRQs,
           comparisonResult,
           content: JSON.stringify(comparisonResult, null, 2),
+          locale,
         }),
       })
 
@@ -47,7 +50,7 @@ export default function Step1B() {
       const payload = json?.data ?? json
 
       if (!res.ok || !json?.ok) {
-        throw new Error(json?.details || json?.error || 'Failed to synthesise final question')
+        throw new Error(json?.details || json?.error || t('api.genericFailure'))
       }
 
       const parsed = JSON.parse(payload.output)
@@ -59,12 +62,12 @@ export default function Step1B() {
       }
 
       if (!nextFinalQuestion.question || !nextFinalQuestion.justification) {
-        throw new Error('AI response did not include a valid final question and justification')
+        throw new Error(t('api.genericFailure'))
       }
 
       setFinalResearchQuestion(nextFinalQuestion)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to synthesise final question')
+      setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
     }
@@ -73,31 +76,32 @@ export default function Step1B() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">Step 1B - Synthesize Final Research Question</h2>
-        <p className="text-sm text-gray-600">
-          This is the anchor point of the project. The AI proposes one final research question, but
-          the user still owns the decision.
-        </p>
+        <h2 className="mb-2 text-xl font-semibold">{t('steps.step1B.title')}</h2>
+        <p className="text-sm text-gray-600">{t('steps.step1B.intro')}</p>
       </div>
 
       {comparisonResult ? (
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <div className="mb-2 text-sm font-semibold text-slate-700">Recommended from comparison</div>
+          <div className="mb-2 text-sm font-semibold text-slate-700">
+            {t('steps.step1B.recommendedTitle')}
+          </div>
           <div className="font-medium text-slate-900">
-            {comparisonResult.recommendedQuestion || 'No recommendation available'}
+            {comparisonResult.recommendedQuestion || t('common.noData')}
           </div>
           <div className="mt-2 text-sm text-slate-600">
-            {comparisonResult.recommendationReason || 'No recommendation reason available'}
+            {comparisonResult.recommendationReason || t('common.noData')}
           </div>
         </div>
       ) : (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          No structured comparison result is available yet.
+          {t('steps.step1B.noComparison')}
         </div>
       )}
 
       <div className="rounded-lg border border-slate-200 p-4">
-        <div className="mb-3 text-sm font-semibold text-slate-700">Selected questions</div>
+        <div className="mb-3 text-sm font-semibold text-slate-700">
+          {t('steps.step1B.selectedTitle')}
+        </div>
         <div className="space-y-2">
           {selectedRQs.map((rq, index) => (
             <div key={rq} className="rounded border bg-white p-3 text-sm">
@@ -118,13 +122,13 @@ export default function Step1B() {
         disabled={loading || !comparisonResult}
         className="rounded bg-slate-900 px-4 py-3 text-white disabled:opacity-50"
       >
-        {loading ? 'Synthesising...' : 'Create Final Research Question'}
+        {loading ? t('steps.step1B.creating') : t('steps.step1B.createButton')}
       </button>
 
       {finalResearchQuestion && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
           <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
-            Final Research Question
+            {t('workflow.step1b_synthesize.label')}
           </div>
           <div className="text-lg font-semibold text-slate-900">{finalResearchQuestion.question}</div>
           <div className="mt-3 text-sm text-slate-700">{finalResearchQuestion.justification}</div>
@@ -138,22 +142,22 @@ export default function Step1B() {
               }
               className="rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
             >
-              Approve Final Question
+              {t('steps.step1B.approveButton')}
             </button>
             <div className="rounded border border-emerald-300 bg-white px-3 py-2 text-sm text-emerald-900">
-              Status: {finalResearchQuestion.approvedByUser ? 'Approved by user' : 'Pending user approval'}
+              {t('steps.step1B.statusLabel')}: {finalResearchQuestion.approvedByUser ? t('common.approved') : t('common.pendingApproval')}
             </div>
             {finalResearchQuestion.approvedByUser && (
               <button
                 onClick={() => setWorkflowStep('step2_search_design')}
                 className="rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
               >
-                Continue to Step 2
+                {t('steps.step1B.continueButton')}
               </button>
             )}
           </div>
           <div className="mt-4 rounded border border-emerald-300 bg-white p-3 text-sm text-emerald-900">
-            Step 2 can now use this question as the canonical anchor for search design.
+            {t('steps.step1B.anchorNote')}
           </div>
         </div>
       )}

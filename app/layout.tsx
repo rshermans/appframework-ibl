@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { I18nProvider } from '@/components/I18nProvider'
 
 export const metadata: Metadata = {
   title: 'RELIA Research Wizard',
-  description: 'IBL Framework with ChatGPT 4.5 Mini',
+  description: 'Fluxo de investigação orientado por IA',
 }
 
 export default function RootLayout({
@@ -12,9 +13,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="pt-PT">
       <body className="bg-gray-50 text-gray-900">
-        {children}
+        <I18nProvider>{children}</I18nProvider>
       </body>
     </html>
   )

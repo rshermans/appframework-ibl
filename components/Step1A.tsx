@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { ComparisonResult } from '@/types/research-workflow'
+import { useI18n } from '@/components/I18nProvider'
 
 export default function Step1A() {
+  const { locale, t } = useI18n()
   const { selectedRQs, setComparisonResult, setWorkflowStep, setAnalysis } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'quick' | 'advanced'>('quick')
@@ -12,7 +14,7 @@ export default function Step1A() {
 
   const runAnalysis = async () => {
     if (selectedRQs.length < 2) {
-      setError('Select at least two research questions before running the comparison.')
+      setError(t('steps.step1A.invalidSelection'))
       return
     }
 
@@ -27,10 +29,11 @@ export default function Step1A() {
           stage: 1,
           promptId: 'rq_analysis',
           stepId: 'step1',
-          stepLabel: 'RQ Analysis',
+          stepLabel: t('workflow.step1a_compare.label'),
           selectedQuestions: selectedRQs,
           selectedRQs,
           mode,
+          locale,
         }),
       })
 
@@ -38,7 +41,7 @@ export default function Step1A() {
       const payload = json?.data ?? json
 
       if (!res.ok || !json?.ok) {
-        throw new Error(json?.details || json?.error || 'Failed to compare questions')
+        throw new Error(json?.details || json?.error || t('api.genericFailure'))
       }
 
       setAnalysis(payload.output)
@@ -56,7 +59,7 @@ export default function Step1A() {
       }
       setWorkflowStep('step1b_synthesize')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to compare questions')
+      setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
     }
@@ -64,9 +67,10 @@ export default function Step1A() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Step 1A - Compare Research Questions</h2>
+      <h2 className="mb-4 text-xl font-semibold">{t('steps.step1A.title')}</h2>
 
       <div className="mb-4 space-y-2">
+        <div className="text-sm font-semibold text-slate-700">{t('steps.step1A.selectedTitle')}</div>
         {selectedRQs.map((rq, i) => (
           <div key={i} className="rounded border p-2">
             {rq}
@@ -88,7 +92,8 @@ export default function Step1A() {
             checked={mode === 'quick'}
             onChange={() => setMode('quick')}
           />
-          {' '}Quick
+          {' '}
+          {t('steps.step1A.quick')}
         </label>
 
         <label>
@@ -98,7 +103,8 @@ export default function Step1A() {
             checked={mode === 'advanced'}
             onChange={() => setMode('advanced')}
           />
-          {' '}Advanced
+          {' '}
+          {t('steps.step1A.advanced')}
         </label>
       </div>
 
@@ -107,7 +113,7 @@ export default function Step1A() {
         disabled={loading}
         className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
       >
-        {loading ? 'Analysing...' : 'Run Analysis'}
+        {loading ? t('steps.step1A.running') : t('steps.step1A.run')}
       </button>
     </div>
   )

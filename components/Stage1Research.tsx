@@ -2,6 +2,8 @@
 
 import { useWizardStore } from '@/store/wizardStore'
 import { getStepContract, resolveWorkflowStepId } from '@/lib/workflow'
+import { useI18n } from '@/components/I18nProvider'
+import LocaleSwitcher from '@/components/LocaleSwitcher'
 import StepSelect from './StepSelect'
 import Step1A from './Step1A'
 import Step1B from './Step1B'
@@ -57,6 +59,7 @@ function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
 }
 
 export default function Stage1Research() {
+  const { t } = useI18n()
   const {
     evidenceRecords,
     knowledgeStructure,
@@ -74,12 +77,12 @@ export default function Stage1Research() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="mb-2 text-2xl font-bold">Stage 1: Ask and Research</h2>
-        <p className="text-gray-600">
-          Generate, select, compare, synthesise, and operationalise a rigorous research question
-          before moving into evidence work.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="mb-2 text-2xl font-bold text-slate-900">{t('stage1.title')}</h2>
+          <p className="max-w-3xl text-slate-600">{t('stage1.intro')}</p>
+        </div>
+        <LocaleSwitcher compact />
       </div>
 
       <div className="grid gap-3 md:grid-cols-8">
@@ -115,19 +118,19 @@ export default function Stage1Research() {
                   isActive ? 'text-slate-300' : 'text-slate-500'
                 }`}
               >
-                {STEP_BADGES[stepId]}
+                {t(`workflow.${stepId}.badge`) || STEP_BADGES[stepId]}
               </div>
-              <div className="mt-1 font-semibold">{step.label}</div>
+              <div className="mt-1 font-semibold">{t(`workflow.${stepId}.label`) || step.label}</div>
               <div className={`mt-2 text-sm ${isActive ? 'text-slate-200' : 'text-slate-600'}`}>
                 {isStep2Locked
-                  ? 'Locked until the final research question is approved.'
+                  ? t('common.lockedStep2')
                   : isStep3Locked
-                    ? 'Locked until search design retrieves at least one article.'
+                    ? t('common.lockedStep3')
                   : isStep4Locked
-                      ? 'Locked until at least one evidence record is extracted.'
+                      ? t('common.lockedStep4')
                     : isStep5Locked
-                      ? 'Locked until knowledge structure exists.'
-                    : step.description}
+                      ? t('common.lockedStep5')
+                    : t(`workflow.${stepId}.description`) || step.description}
               </div>
             </button>
           )
