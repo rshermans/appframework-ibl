@@ -1,17 +1,50 @@
 {
-  "name": "relia-research-wizard",
-  "version": "0.1.0",
-  "private": true,
+  "name": "appframework-ibl",
+  "version": "1.0.0",
+  "private": false,
+  "description": "AppFramework IBL - Research Intelligence Platform with AI-powered Inquiry-Based Learning framework",
+  "author": {
+    "name": "AppFramework Contributors",
+    "url": "https://github.com/rshermans/appframework-ibl"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/rshermans/appframework-ibl",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rshermans/appframework-ibl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rshermans/appframework-ibl/issues",
+    "email": "support@appframework.dev"
+  },
+  "keywords": [
+    "inquiry-based-learning",
+    "ibl",
+    "research",
+    "ai",
+    "openai",
+    "next.js",
+    "typescript",
+    "react",
+    "prisma",
+    "supabase",
+    "education"
+  ],
   "scripts": {
     "dev": "next dev -p 3011",
     "build": "next build",
     "start": "next start -p 3011",
     "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:push": "prisma db push",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "prisma db seed",
+    "prisma:reset": "prisma migrate reset",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "next": "^14.0.0",
@@ -21,7 +54,12 @@
     "openai": "^4.28.0",
     "@prisma/client": "^5.7.0",
     "jspdf": "^2.5.1",
-    "html2canvas": "^1.4.1"
+    "html2canvas": "^1.4.1",
+    "i18next": "^14.0.0",
+    "next-i18next": "^14.0.0",
+    "react-i18next": "^14.0.0",
+    "clsx": "^2.0.0",
+    "class-variance-authority": "^0.7.0"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
@@ -31,6 +69,15 @@
     "prisma": "^5.7.0",
     "tailwindcss": "^3.3.0",
     "postcss": "^8.4.31",
-    "autoprefixer": "^10.4.16"
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.50.0",
+    "eslint-config-next": "^14.0.0",
+    "prettier": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }

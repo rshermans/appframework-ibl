@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📞 Discussões
+    url: https://github.com/rshermans/appframework-ibl/discussions
+    about: Para dúvidas, ideias e discussões gerais
+  - name: 📧 Email Support
+    url: mailto:support@appframework.dev
+    about: Para questões de suporte direto

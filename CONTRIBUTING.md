@@ -139,6 +139,7 @@ npm run prisma:generate
 ## 📤 Submeter Pull Request
 
 1. **Push sua branch:**
+
    ```bash
    git push origin feature/sua-feature
    ```
@@ -153,21 +154,26 @@ npm run prisma:generate
 
    ```markdown
    ## Descrição
+
    Descrição clara do que foi mudado e por quê.
 
    ## Tipo de Mudança
+
    - [ ] Bug fix (correção de bug)
    - [ ] Nova feature
    - [ ] Breaking change
    - [ ] Documentação
 
    ## Como Testar
+
    Instruções para testar as mudanças.
 
    ## Issues Relacionadas
+
    Closes #123
 
    ## Checklist
+
    - [ ] Meu código segue os padrões do projeto
    - [ ] Executei `npm run lint`
    - [ ] Executei testes locais

@@ -10,6 +10,7 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### 🎉 Lançamento Inicial
 
 #### ✨ Adicionado
+
 - Framework IBL completo com wizard interativo (5 etapas)
 - Integração OpenAI para geração de conteúdo e análise
 - Busca semântica avançada com embedding
@@ -26,6 +27,7 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - GitHub Actions para CI/CD (base)
 
 #### 🔧 Configuração
+
 - Setup Next.js 14 com App Router
 - TypeScript para type safety
 - Prisma com Supabase
@@ -35,6 +37,7 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Batch start script (Windows)
 
 #### 📚 Documentação
+
 - README com guia completo
 - System Architecture doc
 - Contributing guidelines
@@ -42,10 +45,12 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Inline code comments
 
 #### 🐛 Corrigido
+
 - Configuração inicial do ambiente
 - Sincronização de dados da BD
 
 #### 🚀 Performance
+
 - Otimização de bundles Next.js
 - Lazy loading de componentes
 - Caching inteligente API
@@ -55,17 +60,20 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## Roadmap Futuro
 
 ### v1.1.0 (Próximo)
+
 - [ ] Autenticação com GitHub/Google
 - [ ] Melhorias UI/UX
 - [ ] Testes automatizados
 - [ ] Dashboard analytics
 
 ### v1.2.0
+
 - [ ] Suporte Claude API
 - [ ] Suporte Google Gemini
 - [ ] Colaboração em tempo real (WebSocket)
 
 ### v2.0.0
+
 - [ ] Mobile app nativa (React Native)
 - [ ] Sistema de templates
 - [ ] API pública documentada
