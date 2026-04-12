@@ -95,6 +95,7 @@ export interface WizardState {
   finalResearchQuestion: FinalResearchQuestion | null
   searchDesign: SearchDesign | null
   searchArticles: SearchArticle[]
+  selectedSearchArticleIds: string[]
   evidenceRecords: EvidenceRecord[]
   knowledgeStructure: KnowledgeStructure | null
   explanationDraft: ExplanationDraft | null
@@ -118,6 +119,9 @@ export interface WizardState {
   setFinalResearchQuestion: (result: FinalResearchQuestion | null) => void
   setSearchDesign: (result: SearchDesign | null) => void
   setSearchArticles: (articles: SearchArticle[]) => void
+  setSelectedSearchArticleIds: (ids: string[]) => void
+  toggleSearchArticleSelection: (articleId: string) => void
+  clearSearchArticleSelection: () => void
   addEvidenceRecord: (record: EvidenceRecord) => void
   setEvidenceRecords: (records: EvidenceRecord[]) => void
   setKnowledgeStructure: (structure: KnowledgeStructure | null) => void

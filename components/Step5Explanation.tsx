@@ -2,8 +2,111 @@
 
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
-import type { ExplanationDraft } from '@/types/research-workflow'
+import type { ExplanationDraft, EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+
+interface ReviewedReference {
+  key: string
+  citation: string
+  articleUrl?: string
+  doiUrl?: string
+  provider?: SearchArticle['provider']
+}
+
+function formatArticleCitation(article: SearchArticle): string {
+  const authorLabel = article.authors.length > 0 ? article.authors.join(', ') : 'Unknown authors'
+  const yearLabel = article.year ? String(article.year) : 'n.d.'
+  const doiLabel = article.doi ? ` DOI: ${article.doi}` : ''
+  const urlLabel = article.url ? ` ${article.url}` : ''
+  return `${authorLabel} (${yearLabel}). ${article.title}.${doiLabel}${urlLabel}`.trim()
+}
+
+function normalizeUrl(value?: string): string | undefined {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed
+  }
+  return undefined
+}
+
+function normalizeDoi(value?: string): string | undefined {
+  if (!value) return undefined
+  const normalized = value
+    .trim()
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
+    .replace(/^doi:\s*/i, '')
+  return normalized || undefined
+}
+
+function doiToUrl(doi?: string): string | undefined {
+  const normalized = normalizeDoi(doi)
+  if (!normalized) return undefined
+  return `https://doi.org/${normalized}`
+}
+
+function extractFirstUrl(text?: string): string | undefined {
+  if (!text) return undefined
+  const match = text.match(/https?:\/\/[^\s)]+/i)
+  return normalizeUrl(match?.[0])
+}
+
+function extractDoi(text?: string): string | undefined {
+  if (!text) return undefined
+  const match = text.match(/\b10\.\d{4,9}\/[^\s"<>]+/i)
+  return normalizeDoi(match?.[0])
+}
+
+function isLikelyPdf(url: string): boolean {
+  return /\.pdf(\?|$)/i.test(url)
+}
+
+function buildReviewedReferences(
+  evidenceRecords: EvidenceRecord[],
+  searchArticles: SearchArticle[]
+): ReviewedReference[] {
+  const linkedArticles = new Map(searchArticles.map((article) => [article.id, article] as const))
+  const referencesByKey = new Map<string, ReviewedReference>()
+
+  evidenceRecords.forEach((record, index) => {
+    const sourceArticle = record.sourceArticleId ? linkedArticles.get(record.sourceArticleId) : undefined
+    const fallbackCitation =
+      record.citation?.trim() ||
+      (sourceArticle ? formatArticleCitation(sourceArticle) : record.sourceArticleTitle?.trim()) ||
+      `Source ${index + 1}`
+    const articleUrl = normalizeUrl(sourceArticle?.url) || extractFirstUrl(record.citation)
+    const doiUrl = doiToUrl(sourceArticle?.doi || extractDoi(record.citation))
+    const dedupeKey =
+      record.sourceArticleId ||
+      `${fallbackCitation}|${sourceArticle?.provider || ''}|${articleUrl || ''}|${doiUrl || ''}`
+
+    referencesByKey.set(dedupeKey, {
+      key: dedupeKey,
+      citation: fallbackCitation,
+      articleUrl,
+      doiUrl,
+      provider: sourceArticle?.provider || record.sourceProvider,
+    })
+  })
+
+  return Array.from(referencesByKey.values())
+}
+
+function buildCompleteBibliography(
+  evidenceRecords: EvidenceRecord[],
+  searchArticles: SearchArticle[]
+): string[] {
+  const references = buildReviewedReferences(evidenceRecords, searchArticles)
+  const entries = references.map((reference) => {
+    const links = [reference.articleUrl ? `URL: ${reference.articleUrl}` : '', reference.doiUrl ? `DOI: ${reference.doiUrl}` : '']
+      .filter(Boolean)
+      .join(' | ')
+    return links ? `${reference.citation} (${links})` : reference.citation
+  })
+
+  return Array.from(new Set(entries))
+}
 
 export default function Step5Explanation() {
   const { locale, t } = useI18n()
@@ -13,12 +116,15 @@ export default function Step5Explanation() {
     finalResearchQuestion,
     knowledgeStructure,
     projectId,
+    searchArticles,
     setExplanationDraft,
     topic,
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [audience, setAudience] = useState<'expert' | 'general'>('expert')
+  const isPortuguese = locale === 'pt-PT'
+  const reviewedReferences = buildReviewedReferences(evidenceRecords, searchArticles)
 
   const canRun = Boolean(
     finalResearchQuestion?.approvedByUser &&
@@ -41,6 +147,7 @@ export default function Step5Explanation() {
 
     try {
       const evidenceJson = JSON.stringify(evidenceRecords, null, 2)
+      const bibliographySeed = buildCompleteBibliography(evidenceRecords, searchArticles)
       const response = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,6 +163,7 @@ export default function Step5Explanation() {
           evidenceRecords,
           knowledgeStructure,
           evidence: evidenceJson,
+          bibliographySeed,
           audience,
           locale,
         }),
@@ -75,6 +183,10 @@ export default function Step5Explanation() {
         evidenceReferences: Array.isArray(parsed?.evidence_references)
           ? parsed.evidence_references
           : [],
+        bibliography:
+          Array.isArray(parsed?.bibliography) && parsed.bibliography.length > 0
+            ? parsed.bibliography
+            : bibliographySeed,
         openIssues: Array.isArray(parsed?.open_issues) ? parsed.open_issues : [],
       }
 
@@ -179,6 +291,74 @@ export default function Step5Explanation() {
                 ))}
               </ul>
             </div>
+          </div>
+
+          <div>
+            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+              {isPortuguese ? 'Bibliografia completa' : 'Complete bibliography'}
+            </div>
+            <ul className="space-y-2">
+              {explanationDraft.bibliography.map((entry) => (
+                <li key={entry} className="rounded border bg-white px-3 py-2 text-sm text-slate-900">
+                  {entry}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+              {isPortuguese ? 'Referências verificáveis (com links)' : 'Verifiable references (with links)'}
+            </div>
+            <ul className="space-y-2">
+              {reviewedReferences.map((reference) => (
+                <li key={reference.key} className="rounded border bg-white px-3 py-3 text-sm text-slate-900">
+                  <div>{reference.citation}</div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    {reference.provider && (
+                      <span className="rounded bg-slate-100 px-2 py-1 font-semibold text-slate-700">
+                        {reference.provider}
+                      </span>
+                    )}
+                    {reference.articleUrl && (
+                      <a
+                        href={reference.articleUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded bg-blue-100 px-2 py-1 font-semibold text-blue-800 hover:bg-blue-200"
+                      >
+                        {isPortuguese ? 'Abrir artigo' : 'Open article'}
+                      </a>
+                    )}
+                    {reference.articleUrl && isLikelyPdf(reference.articleUrl) && (
+                      <a
+                        href={reference.articleUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded bg-emerald-100 px-2 py-1 font-semibold text-emerald-800 hover:bg-emerald-200"
+                      >
+                        {isPortuguese ? 'Baixar PDF' : 'Download PDF'}
+                      </a>
+                    )}
+                    {reference.doiUrl && (
+                      <a
+                        href={reference.doiUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded bg-indigo-100 px-2 py-1 font-semibold text-indigo-800 hover:bg-indigo-200"
+                      >
+                        DOI
+                      </a>
+                    )}
+                    {!reference.articleUrl && !reference.doiUrl && (
+                      <span className="rounded bg-amber-100 px-2 py-1 font-semibold text-amber-800">
+                        {isPortuguese ? 'Sem link disponível nesta referência' : 'No link available for this reference'}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}

@@ -353,6 +353,7 @@ export const EMPTY_WORKFLOW_STATE: ProjectWorkflowState = {
   finalResearchQuestion: null,
   searchDesign: null,
   searchArticles: [],
+  selectedSearchArticleIds: [],
   evidenceRecords: [],
   knowledgeStructure: null,
   explanationDraft: null,

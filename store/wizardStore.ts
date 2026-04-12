@@ -20,6 +20,7 @@ export const useWizardStore = create<WizardState>((set) => ({
   finalResearchQuestion: null,
   searchDesign: null,
   searchArticles: [],
+  selectedSearchArticleIds: [],
   evidenceRecords: [],
   knowledgeStructure: null,
   explanationDraft: null,
@@ -77,7 +78,31 @@ export const useWizardStore = create<WizardState>((set) => ({
     set({ searchDesign }),
 
   setSearchArticles: (searchArticles) =>
-    set({ searchArticles }),
+    set((state) => ({
+      searchArticles,
+      selectedSearchArticleIds: state.selectedSearchArticleIds.filter((id) =>
+        searchArticles.some((article) => article.id === id)
+      ),
+    })),
+
+  setSelectedSearchArticleIds: (selectedSearchArticleIds) =>
+    set({ selectedSearchArticleIds }),
+
+  toggleSearchArticleSelection: (articleId) =>
+    set((state) => {
+      const exists = state.selectedSearchArticleIds.includes(articleId)
+      if (exists) {
+        return {
+          selectedSearchArticleIds: state.selectedSearchArticleIds.filter((id) => id !== articleId),
+        }
+      }
+      return {
+        selectedSearchArticleIds: [...state.selectedSearchArticleIds, articleId],
+      }
+    }),
+
+  clearSearchArticleSelection: () =>
+    set({ selectedSearchArticleIds: [] }),
 
   addEvidenceRecord: (record) =>
     set((state) => ({

@@ -262,6 +262,8 @@ Research Question: [RQ]
 Evidence Summary: [EVIDENCE]
 Audience: [AUDIENCE]
 
+Include every reviewed source in the bibliography list.
+
 Respond with valid JSON only:
 {
   "outline": [
@@ -276,6 +278,10 @@ Respond with valid JSON only:
   "evidence_references": [
     "Citation 1",
     "Citation 2"
+  ],
+  "bibliography": [
+    "Complete reference 1",
+    "Complete reference 2"
   ],
   "open_issues": [
     "Issue 1",

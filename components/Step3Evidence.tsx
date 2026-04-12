@@ -5,7 +5,9 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 
-type Provider = 'semantic_scholar' | 'crossref' | 'openaire'
+type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
+
+const PROVIDER_SEQUENCE: Provider[] = ['rcaap', 'crossref', 'semantic_scholar', 'openaire']
 
 function buildSourcePayload(article: SearchArticle): string {
   return [
@@ -21,6 +23,45 @@ function buildSourcePayload(article: SearchArticle): string {
   ].join('\n')
 }
 
+function simplifyRelatedQuery(value: string): string {
+  return value
+    .replace(/[()"]/g, ' ')
+    .replace(/\b(AND|OR|NOT)\b/gi, ' ')
+    .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function uniqueProviders(preferred: Provider): Provider[] {
+  return Array.from(new Set([preferred, ...PROVIDER_SEQUENCE]))
+}
+
+function buildRelatedQueryCandidates(
+  booleanQuery: string,
+  finalQuestion: string | undefined,
+  searchArticles: SearchArticle[]
+): string[] {
+  const titleTerms = searchArticles
+    .slice(0, 3)
+    .flatMap((article) => article.title.split(/\s+/))
+    .filter((term) => term.length >= 5)
+    .slice(0, 8)
+    .join(' ')
+
+  return Array.from(
+    new Set(
+      [
+        booleanQuery,
+        simplifyRelatedQuery(booleanQuery),
+        finalQuestion || '',
+        titleTerms,
+      ]
+        .map((query) => query.trim())
+        .filter((query) => query.length > 0)
+    )
+  )
+}
+
 export default function Step3Evidence() {
   const { locale, t } = useI18n()
   const {
@@ -28,8 +69,10 @@ export default function Step3Evidence() {
     evidenceRecords,
     finalResearchQuestion,
     projectId,
+    selectedSearchArticleIds,
     searchArticles,
     searchDesign,
+    setSelectedSearchArticleIds,
     setSearchArticles,
     setWorkflowStep,
     topic,
@@ -40,33 +83,56 @@ export default function Step3Evidence() {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null)
   const [analyzedSourceIds, setAnalyzedSourceIds] = useState<Set<string>>(new Set())
   const [relatedLoading, setRelatedLoading] = useState(false)
-  const [relatedPage, setRelatedPage] = useState(2)
-  const [hasMoreRelated, setHasMoreRelated] = useState(true)
-  const [relatedProvider, setRelatedProvider] = useState<Provider>('semantic_scholar')
+  const [relatedProvider, setRelatedProvider] = useState<Provider>('rcaap')
+  const [relatedPageByProvider, setRelatedPageByProvider] = useState<Record<Provider, number>>({
+    semantic_scholar: 1,
+    crossref: 1,
+    openaire: 1,
+    rcaap: 1,
+  })
   const [relatedFeedback, setRelatedFeedback] = useState('')
 
   const canRun = Boolean(finalResearchQuestion?.approvedByUser && searchDesign)
   const isPortuguese = locale === 'pt-PT'
+  const articlesForAnalysis =
+    selectedSearchArticleIds.length > 0
+      ? searchArticles.filter((article) => selectedSearchArticleIds.includes(article.id))
+      : searchArticles
 
   useEffect(() => {
-    const firstProvider = searchArticles.find((article) =>
-      article.provider === 'semantic_scholar' ||
-      article.provider === 'crossref' ||
-      article.provider === 'openaire'
+    const firstProvider = searchArticles.find(
+      (article) =>
+        article.provider === 'semantic_scholar' ||
+        article.provider === 'crossref' ||
+        article.provider === 'openaire' ||
+        article.provider === 'rcaap'
     )?.provider
 
-    if (firstProvider === 'semantic_scholar' || firstProvider === 'crossref' || firstProvider === 'openaire') {
+    if (
+      firstProvider === 'semantic_scholar' ||
+      firstProvider === 'crossref' ||
+      firstProvider === 'openaire' ||
+      firstProvider === 'rcaap'
+    ) {
       setRelatedProvider(firstProvider)
     }
   }, [searchArticles])
 
   useEffect(() => {
-    setRelatedPage(2)
-    setHasMoreRelated(true)
+    setRelatedPageByProvider({
+      semantic_scholar: searchArticles.some((article) => article.provider === 'semantic_scholar') ? 2 : 1,
+      crossref: searchArticles.some((article) => article.provider === 'crossref') ? 2 : 1,
+      openaire: searchArticles.some((article) => article.provider === 'openaire') ? 2 : 1,
+      rcaap: searchArticles.some((article) => article.provider === 'rcaap') ? 2 : 1,
+    })
     setRelatedFeedback('')
-  }, [searchDesign?.booleanQuery])
+  }, [searchArticles, searchDesign?.booleanQuery])
 
-  const extractFromSource = async (source: string, sourceId: string) => {
+  const extractFromSource = async (
+    source: string,
+    sourceId: string,
+    sourceArticle?: SearchArticle
+  ) => {
     if (!finalResearchQuestion?.question) {
       setError(t('steps.step3.locked'))
       return
@@ -117,6 +183,9 @@ export default function Step3Evidence() {
         id: `evidence-${Date.now()}`,
         title: parsed?.title || 'Untitled source',
         sourceType: parsed?.source_type || 'unknown',
+        sourceArticleId: sourceArticle?.id,
+        sourceProvider: sourceArticle?.provider,
+        sourceArticleTitle: sourceArticle?.title,
         claim: parsed?.claim || '',
         methodology: parsed?.methodology || '',
         findings: Array.isArray(parsed?.findings) ? parsed.findings : [],
@@ -152,6 +221,37 @@ export default function Step3Evidence() {
     await extractFromSource(sourceText, 'manual')
   }
 
+  const requestRelatedCandidates = async (
+    provider: Provider,
+    query: string,
+    page: number
+  ): Promise<{ page: number; hasNextPage: boolean; articles: SearchArticle[] }> => {
+    const response = await fetch('/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        provider,
+        page,
+        limit: 20,
+        locale,
+      }),
+    })
+
+    const payload = await response.json()
+    const data = payload?.data ?? payload
+
+    if (!response.ok || !payload?.ok) {
+      throw new Error(payload?.details || payload?.error || t('api.searchFailure'))
+    }
+
+    return {
+      page: typeof data.page === 'number' ? data.page : page,
+      hasNextPage: Boolean(data.hasNextPage),
+      articles: Array.isArray(data.articles) ? (data.articles as SearchArticle[]) : [],
+    }
+  }
+
   const fetchRelatedArticles = async () => {
     if (!searchDesign?.booleanQuery) {
       setError(t('steps.step3.noRetrievedArticles'))
@@ -163,46 +263,75 @@ export default function Step3Evidence() {
     setError('')
 
     try {
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: searchDesign.booleanQuery,
-          provider: relatedProvider,
-          page: relatedPage,
-          limit: 5,
-          locale,
-        }),
-      })
+      const providerCandidates = uniqueProviders(relatedProvider)
+      const queryCandidates = buildRelatedQueryCandidates(
+        searchDesign.booleanQuery,
+        finalResearchQuestion?.question,
+        searchArticles
+      )
+      const existingIds = new Set(searchArticles.map((article) => article.id))
+      let addedArticles: SearchArticle[] = []
+      let successfulProvider: Provider | null = null
+      let usedFallbackQuery = false
 
-      const payload = await response.json()
-      const data = payload?.data ?? payload
+      for (const providerCandidate of providerCandidates) {
+        for (let queryIndex = 0; queryIndex < queryCandidates.length; queryIndex += 1) {
+          let pageToTry = relatedPageByProvider[providerCandidate] ?? 1
 
-      if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.details || payload?.error || t('api.searchFailure'))
+          for (let attempt = 0; attempt < 2; attempt += 1) {
+            const result = await requestRelatedCandidates(
+              providerCandidate,
+              queryCandidates[queryIndex],
+              pageToTry
+            )
+
+            setRelatedPageByProvider((current) => ({
+              ...current,
+              [providerCandidate]: result.page + 1,
+            }))
+
+            const deduped = result.articles.filter((article) => !existingIds.has(article.id))
+            if (deduped.length > 0) {
+              addedArticles = deduped
+              successfulProvider = providerCandidate
+              usedFallbackQuery = queryIndex > 0
+              break
+            }
+
+            if (!result.hasNextPage) {
+              break
+            }
+
+            pageToTry = result.page + 1
+          }
+
+          if (addedArticles.length > 0) {
+            break
+          }
+        }
+
+        if (addedArticles.length > 0) {
+          break
+        }
       }
 
-      const incoming = Array.isArray(data.articles) ? data.articles : []
-      const existingIds = new Set(searchArticles.map((article) => article.id))
-      const deduped = incoming.filter((article: SearchArticle) => !existingIds.has(article.id))
-
-      if (deduped.length > 0) {
-        setSearchArticles([...searchArticles, ...deduped])
+      if (addedArticles.length > 0) {
+        setSearchArticles([...searchArticles, ...addedArticles])
+        setSelectedSearchArticleIds(
+          Array.from(new Set([...selectedSearchArticleIds, ...addedArticles.map((article) => article.id)]))
+        )
         setRelatedFeedback(
           isPortuguese
-            ? `${deduped.length} novo(s) artigo(s) relacionado(s) adicionado(s).`
-            : `${deduped.length} new related article(s) added.`
+            ? `${addedArticles.length} novo(s) artigo(s) relacionado(s) adicionado(s) via ${successfulProvider}${usedFallbackQuery ? ' com pesquisa simplificada' : ''}.`
+            : `${addedArticles.length} new related article(s) added via ${successfulProvider}${usedFallbackQuery ? ' using a simplified query' : ''}.`
         )
       } else {
         setRelatedFeedback(
           isPortuguese
-            ? 'Nao surgiram novos artigos nesta pagina.'
-            : 'No new articles were found on this page.'
+            ? 'Nao encontrei novos artigos reutilizaveis. Tenta mudar o fornecedor ou adicionar palavras complementares.'
+            : 'No reusable new articles were found. Try changing provider or adding complementary keywords.'
         )
       }
-
-      setHasMoreRelated(Boolean(data.hasNextPage))
-      setRelatedPage((current) => current + 1)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('api.searchFailure'))
     } finally {
@@ -240,14 +369,23 @@ export default function Step3Evidence() {
         <div className="text-sm font-semibold uppercase tracking-wide text-slate-600">
           {t('steps.step3.retrievedArticles')}
         </div>
-        {searchArticles.length === 0 ? (
+        <div className="text-xs text-slate-500">
+          {isPortuguese
+            ? `${articlesForAnalysis.length} artigo(s) selecionado(s) para analise`
+            : `${articlesForAnalysis.length} selected article(s) for analysis`}
+        </div>
+        {articlesForAnalysis.length === 0 ? (
           <div className="text-sm text-slate-600">
-            {t('steps.step3.noRetrievedArticles')}
+            {selectedSearchArticleIds.length > 0
+              ? t('steps.step3.noRetrievedArticles')
+              : isPortuguese
+                ? 'Sem artigos selecionados. Volta ao passo anterior para selecionar artigos.'
+                : 'No articles selected. Go back to the previous step and select articles.'}
           </div>
         ) : (
           <div className="space-y-3">
-            {searchArticles.map((article, index) => {
-              const sourceId = `article-${article.id}`
+            {articlesForAnalysis.map((article, index) => {
+              const sourceId = article.id
               const isCurrent = activeSourceId === sourceId
               const isAnalyzed = analyzedSourceIds.has(sourceId)
               return (
@@ -279,7 +417,7 @@ export default function Step3Evidence() {
                   </div>
                   <div className="mt-3">
                     <button
-                      onClick={() => extractFromSource(buildSourcePayload(article), sourceId)}
+                      onClick={() => extractFromSource(buildSourcePayload(article), sourceId, article)}
                       disabled={!canRun || loading}
                       className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                     >
@@ -305,8 +443,8 @@ export default function Step3Evidence() {
         </div>
         <div className="rounded border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-800">
           {isPortuguese
-            ? 'Se precisares de mais fontes, usa "Trazer novo artigo relacionado" para adicionar novos artigos antes da analise manual.'
-            : 'If you need more sources, use "Fetch new related article" to add fresh papers before manual analysis.'}
+            ? 'Se precisares de mais fontes, este botao tenta automaticamente varios fornecedores e uma pesquisa simplificada antes da analise manual.'
+            : 'If you need more sources, this button automatically tries several providers and a simplified query before manual analysis.'}
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -317,6 +455,7 @@ export default function Step3Evidence() {
               onChange={(event) => setRelatedProvider(event.target.value as Provider)}
               className="ml-2 rounded border border-slate-300 px-2 py-1 text-sm"
             >
+              <option value="rcaap">RCAAP</option>
               <option value="semantic_scholar">Semantic Scholar</option>
               <option value="crossref">Crossref</option>
               <option value="openaire">OpenAIRE Graph</option>
@@ -324,7 +463,7 @@ export default function Step3Evidence() {
           </label>
           <button
             onClick={fetchRelatedArticles}
-            disabled={!canRun || relatedLoading || !hasMoreRelated}
+            disabled={!canRun || relatedLoading}
             className="rounded bg-indigo-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {relatedLoading

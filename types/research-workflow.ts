@@ -76,7 +76,7 @@ export interface SearchStringSet {
 
 export interface SearchArticle {
   id: string
-  provider: 'semantic_scholar' | 'crossref' | 'openaire' | 'core'
+  provider: 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap' | 'core'
   title: string
   abstract: string
   year?: number
@@ -105,6 +105,9 @@ export interface EvidenceRecord {
   id: string
   title: string
   sourceType: 'paper' | 'report' | 'website' | 'book' | 'unknown'
+  sourceArticleId?: string
+  sourceProvider?: SearchArticle['provider']
+  sourceArticleTitle?: string
   claim: string
   methodology: string
   findings: string[]
@@ -126,6 +129,7 @@ export interface ExplanationDraft {
   outline: string[]
   argumentCore: string
   evidenceReferences: string[]
+  bibliography: string[]
   openIssues: string[]
 }
 
@@ -151,6 +155,7 @@ export interface ProjectWorkflowState {
   finalResearchQuestion: FinalResearchQuestion | null
   searchDesign: SearchDesign | null
   searchArticles: SearchArticle[]
+  selectedSearchArticleIds: string[]
   evidenceRecords: EvidenceRecord[]
   knowledgeStructure: KnowledgeStructure | null
   explanationDraft: ExplanationDraft | null

@@ -1,11 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
-import type { SearchDesign } from '@/types/research-workflow'
+import type { SearchArticle, SearchDesign } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 
-type Provider = 'semantic_scholar' | 'crossref' | 'openaire'
+type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
+
+function mergeUniqueArticles(existing: SearchArticle[], incoming: SearchArticle[]): SearchArticle[] {
+  const byId = new Map<string, SearchArticle>()
+  existing.forEach((article) => byId.set(article.id, article))
+  incoming.forEach((article) => byId.set(article.id, article))
+  return Array.from(byId.values())
+}
 
 export default function Step2Search() {
   const { locale, t } = useI18n()
@@ -14,25 +21,37 @@ export default function Step2Search() {
     projectId,
     searchDesign,
     searchArticles,
+    selectedSearchArticleIds,
+    clearSearchArticleSelection,
     setSearchArticles,
+    setSelectedSearchArticleIds,
     setSearchDesign,
     setWorkflowStep,
     topic,
+    toggleSearchArticleSelection,
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
-  const [provider, setProvider] = useState<Provider>('semantic_scholar')
+  const [provider, setProvider] = useState<Provider>('rcaap')
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [totalResults, setTotalResults] = useState<number | undefined>(undefined)
   const [hasNextPage, setHasNextPage] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
   const [userRefinementPrompt, setUserRefinementPrompt] = useState('')
   const [userRefinementKeywords, setUserRefinementKeywords] = useState('')
+  const articlesRef = useRef<SearchArticle[]>(searchArticles)
+
+  useEffect(() => {
+    articlesRef.current = searchArticles
+  }, [searchArticles])
 
   const isApproved = Boolean(finalResearchQuestion?.approvedByUser)
   const isPortuguese = locale === 'pt-PT'
 
   const providerLabel = (value: Provider) => {
+    if (value === 'rcaap') return 'RCAAP'
     if (value === 'openaire') return 'OpenAIRE Graph'
     if (value === 'crossref') return 'Crossref'
     return 'Semantic Scholar'
@@ -41,8 +60,9 @@ export default function Step2Search() {
   const runRetrieval = async (
     query: string,
     requestedPage: number = 1,
-    forcedProvider?: Provider
-  ) => {
+    forcedProvider?: Provider,
+    options: { replaceExisting?: boolean } = {}
+  ): Promise<{ page: number; hasNextPage: boolean } | null> => {
     setSearchLoading(true)
     setError('')
 
@@ -53,7 +73,7 @@ export default function Step2Search() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query,
-          limit: 5,
+          limit: pageSize,
           page: requestedPage,
           provider: effectiveProvider,
           locale,
@@ -66,15 +86,25 @@ export default function Step2Search() {
         throw new Error(payload?.details || payload?.error || t('api.searchFailure'))
       }
 
-      setSearchArticles(Array.isArray(data.articles) ? data.articles : [])
+      const incomingArticles = Array.isArray(data.articles) ? data.articles : []
+      const nextArticles = options.replaceExisting
+        ? incomingArticles
+        : mergeUniqueArticles(articlesRef.current, incomingArticles)
+
+      setSearchArticles(nextArticles)
+      articlesRef.current = nextArticles
       setPage(typeof data.page === 'number' ? data.page : requestedPage)
       setHasNextPage(Boolean(data.hasNextPage))
       setTotalResults(typeof data.totalResults === 'number' ? data.totalResults : undefined)
+      return {
+        page: typeof data.page === 'number' ? data.page : requestedPage,
+        hasNextPage: Boolean(data.hasNextPage),
+      }
     } catch (err) {
-      setSearchArticles([])
       setTotalResults(undefined)
       setHasNextPage(false)
       setError(err instanceof Error ? err.message : t('api.searchFailure'))
+      return null
     } finally {
       setSearchLoading(false)
     }
@@ -149,7 +179,8 @@ export default function Step2Search() {
       }
 
       setSearchDesign(nextSearchDesign)
-      await runRetrieval(nextSearchDesign.booleanQuery, 1)
+      clearSearchArticleSelection()
+      await runRetrieval(nextSearchDesign.booleanQuery, 1, undefined, { replaceExisting: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
@@ -161,6 +192,39 @@ export default function Step2Search() {
     setProvider(nextProvider)
     if (!searchDesign?.booleanQuery) return
     await runRetrieval(searchDesign.booleanQuery, 1, nextProvider)
+  }
+
+  const selectAllLoadedArticles = () => {
+    const allIds = Array.from(new Set([...selectedSearchArticleIds, ...searchArticles.map((article) => article.id)]))
+    setSelectedSearchArticleIds(allIds)
+  }
+
+  const loadMoreResults = async () => {
+    if (!searchDesign?.booleanQuery || searchLoading || !hasNextPage) return
+    await runRetrieval(searchDesign.booleanQuery, page + 1)
+  }
+
+  const loadAllRemainingResults = async () => {
+    if (!searchDesign?.booleanQuery || searchLoading || bulkLoading || !hasNextPage) return
+
+    setBulkLoading(true)
+    let nextPage = page + 1
+    let shouldContinue: boolean = hasNextPage
+    let safetyCounter = 0
+
+    while (shouldContinue && safetyCounter < 100) {
+      const result = await runRetrieval(searchDesign.booleanQuery, nextPage)
+      if (!result) break
+      shouldContinue = result.hasNextPage
+      nextPage = result.page + 1
+      safetyCounter += 1
+    }
+
+    setBulkLoading(false)
+  }
+
+  const proceedToEvidence = () => {
+    setWorkflowStep('step3_evidence_extraction')
   }
 
   return (
@@ -271,7 +335,9 @@ export default function Step2Search() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm font-semibold text-slate-800">{t('steps.step2.retrievalTitle')}</div>
               <div className="text-xs text-slate-600">
-                {isPortuguese ? 'Paginacao: 5 resultados por pagina' : 'Paging: 5 results per page'}
+                {isPortuguese
+                  ? `Paginacao: ${pageSize} resultados por pagina`
+                  : `Paging: ${pageSize} results per page`}
               </div>
             </div>
 
@@ -283,6 +349,7 @@ export default function Step2Search() {
                   onChange={(event) => void changeProvider(event.target.value as Provider)}
                   className="ml-2 rounded border border-slate-300 px-2 py-1 text-sm"
                 >
+                  <option value="rcaap">{providerLabel('rcaap')}</option>
                   <option value="semantic_scholar">{providerLabel('semantic_scholar')}</option>
                   <option value="crossref">{providerLabel('crossref')}</option>
                   <option value="openaire">{providerLabel('openaire')}</option>
@@ -295,40 +362,101 @@ export default function Step2Search() {
               >
                 {searchLoading ? t('steps.step2.retrieving') : t('steps.step2.retrieveButton')}
               </button>
+              <label className="text-sm text-slate-700">
+                {isPortuguese ? 'Resultados por pagina' : 'Results per page'}:
+                <select
+                  value={pageSize}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  className="ml-2 rounded border border-slate-300 px-2 py-1 text-sm"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </label>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <button
-                onClick={() => runRetrieval(searchDesign.booleanQuery, page - 1)}
-                disabled={searchLoading || page <= 1}
+                onClick={loadMoreResults}
+                disabled={searchLoading || bulkLoading || !hasNextPage}
                 className="rounded border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
               >
-                {isPortuguese ? 'Pagina anterior' : 'Previous page'}
+                {isPortuguese ? 'Carregar mais' : 'Load more'}
               </button>
               <button
-                onClick={() => runRetrieval(searchDesign.booleanQuery, page + 1)}
-                disabled={searchLoading || !hasNextPage}
+                onClick={loadAllRemainingResults}
+                disabled={searchLoading || bulkLoading || !hasNextPage}
                 className="rounded border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
               >
-                {isPortuguese ? 'Proxima pagina' : 'Next page'}
+                {bulkLoading
+                  ? isPortuguese
+                    ? 'A carregar todas as paginas...'
+                    : 'Loading all pages...'
+                  : isPortuguese
+                    ? 'Carregar todas as paginas'
+                    : 'Load all pages'}
               </button>
               <div className="ml-2 text-xs text-slate-600">
                 {isPortuguese ? `Pagina ${page}` : `Page ${page}`}
                 {typeof totalResults === 'number'
                   ? isPortuguese
-                    ? ` de ~${Math.max(1, Math.ceil(totalResults / 5))}`
-                    : ` of ~${Math.max(1, Math.ceil(totalResults / 5))}`
+                    ? ` de ~${Math.max(1, Math.ceil(totalResults / pageSize))}`
+                    : ` of ~${Math.max(1, Math.ceil(totalResults / pageSize))}`
                   : ''}
               </div>
+              <div className="text-xs text-slate-500">
+                {isPortuguese
+                  ? `${searchArticles.length} resultados carregados`
+                  : `${searchArticles.length} results loaded`}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="rounded bg-indigo-100 px-2 py-1 text-xs font-semibold text-indigo-800">
+                {isPortuguese
+                  ? `${selectedSearchArticleIds.length} selecionado(s) para analise`
+                  : `${selectedSearchArticleIds.length} selected for analysis`}
+              </div>
+              <button
+                onClick={selectAllLoadedArticles}
+                type="button"
+                className="rounded border border-indigo-300 bg-white px-3 py-1 text-xs font-semibold text-indigo-700"
+              >
+                {isPortuguese ? 'Selecionar todos os carregados' : 'Select all loaded'}
+              </button>
+              <button
+                onClick={clearSearchArticleSelection}
+                type="button"
+                className="rounded border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+              >
+                {isPortuguese ? 'Limpar selecao' : 'Clear selection'}
+              </button>
             </div>
 
             {searchArticles.length > 0 ? (
               <div className="space-y-3">
                 {searchArticles.map((article, index) => (
-                  <div key={article.id} className="rounded border border-slate-200 bg-slate-50 p-3">
+                  <div
+                    key={article.id}
+                    className={`rounded border p-3 transition ${
+                      selectedSearchArticleIds.includes(article.id)
+                        ? 'border-indigo-300 bg-indigo-50'
+                        : 'border-slate-200 bg-slate-50'
+                    }`}
+                  >
                     <div className="text-xs uppercase tracking-wide text-slate-500">
                       {t('steps.step2.articleLabel')} {index + 1} | {article.provider}
                     </div>
+                    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-indigo-700">
+                      <input
+                        type="checkbox"
+                        checked={selectedSearchArticleIds.includes(article.id)}
+                        onChange={() => toggleSearchArticleSelection(article.id)}
+                      />
+                      {isPortuguese ? 'Selecionar para analise' : 'Select for analysis'}
+                    </label>
                     <div className="mt-1 font-semibold text-slate-900">{article.title}</div>
                     <div className="mt-1 text-sm text-slate-600">
                       {(article.authors || []).slice(0, 3).join(', ') || t('common.unknownAuthors')}
@@ -349,8 +477,8 @@ export default function Step2Search() {
 
           <div className="flex justify-end">
             <button
-              onClick={() => setWorkflowStep('step3_evidence_extraction')}
-              disabled={searchArticles.length === 0}
+              onClick={proceedToEvidence}
+              disabled={searchArticles.length === 0 || selectedSearchArticleIds.length === 0}
               className="rounded bg-slate-900 px-4 py-3 text-white hover:bg-slate-800 disabled:opacity-50"
             >
               {t('steps.step2.continueButton')}
@@ -361,4 +489,3 @@ export default function Step2Search() {
     </div>
   )
 }
-
