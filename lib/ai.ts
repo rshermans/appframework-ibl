@@ -25,7 +25,7 @@ export async function callChatGPT(
         { role: 'user', content: userMessage },
       ],
       temperature,
-      max_tokens: 2000,
+      max_completion_tokens: 2000,
     })
 
     const content = response.choices[0]?.message?.content || ''
@@ -51,7 +51,7 @@ export async function streamChatGPT(
         { role: 'user', content: userMessage },
       ],
       temperature: 0.7,
-      max_tokens: 2000,
+      max_completion_tokens: 2000,
     })
 
     const content = response.choices[0]?.message?.content || ''
