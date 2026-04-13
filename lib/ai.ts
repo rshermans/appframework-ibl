@@ -14,19 +14,17 @@ export async function callChatGPT(
   userMessage: string
 ): Promise<{ content: string; tokens: number }> {
   try {
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+    const model = process.env.OPENAI_MODEL || 'gpt-5-mini'
     console.log(`🤖 [ChatGPT] Calling model: ${model}`)
     
-    const response = await openai.chat.completions.create({
+    const response = await openai.responses.create({
       model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      max_tokens: 2000,
+      instructions: systemPrompt,
+      input: userMessage,
+      max_completion_tokens: 2000,
     })
 
-    const content = response.choices[0]?.message?.content || ''
+    const content = response.output_text || ''
     const tokens = response.usage?.total_tokens || 0
 
     return { content, tokens }
@@ -42,16 +40,14 @@ export async function streamChatGPT(
   onChunk: (chunk: string) => void
 ): Promise<number> {
   try {
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      max_tokens: 2000,
+    const response = await openai.responses.create({
+      model: process.env.OPENAI_MODEL || 'gpt-5-mini',
+      instructions: systemPrompt,
+      input: userMessage,
+      max_completion_tokens: 2000,
     })
 
-    const content = response.choices[0]?.message?.content || ''
+    const content = response.output_text || ''
     if (content) {
       onChunk(content)
     }
