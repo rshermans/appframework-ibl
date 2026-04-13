@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { CandidateResearchQuestion } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { safeFetch } from '@/lib/safeFetch'
 
 interface Question {
   question: string
@@ -97,7 +98,7 @@ export default function Step0() {
       : ''
 
     try {
-      const response = await fetch('/api/ai', {
+      const { response, json: data } = await safeFetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -115,11 +116,10 @@ export default function Step0() {
         }),
       })
 
-      const data = await response.json()
       const payload = data?.data ?? data
 
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.details || data?.error || t('api.genericFailure'))
+        throw new Error((data?.details || data?.error || t('api.genericFailure')) as string)
       }
 
       setOutput(payload.output)

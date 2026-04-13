@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { KnowledgeStructure } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { safeFetch } from '@/lib/safeFetch'
 
 interface MindMapLine {
   level: number
@@ -131,7 +132,7 @@ export default function Step4Structure() {
     try {
       const evidenceJson = JSON.stringify(evidenceRecords, null, 2)
       const hasRefine = Boolean(refineInstructions.trim())
-      const response = await fetch('/api/ai', {
+      const { response, json: payload } = await safeFetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -151,11 +152,10 @@ export default function Step4Structure() {
         }),
       })
 
-      const payload = await response.json()
       const data = payload?.data ?? payload
 
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.details || payload?.error || t('api.genericFailure'))
+        throw new Error((payload?.details || payload?.error || t('api.genericFailure')) as string)
       }
 
       const parsed = JSON.parse(data.output)

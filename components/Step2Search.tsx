@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { SearchArticle, SearchDesign } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { safeFetch } from '@/lib/safeFetch'
 
 type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
 
@@ -68,7 +69,7 @@ export default function Step2Search() {
 
     try {
       const effectiveProvider = forcedProvider ?? provider
-      const response = await fetch('/api/search', {
+      const { response, json: payload } = await safeFetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -79,11 +80,10 @@ export default function Step2Search() {
           locale,
         }),
       })
-      const payload = await response.json()
       const data = payload?.data ?? payload
 
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.details || payload?.error || t('api.searchFailure'))
+        throw new Error((payload?.details || payload?.error || t('api.searchFailure')) as string)
       }
 
       const incomingArticles = Array.isArray(data.articles) ? data.articles : []
@@ -136,7 +136,7 @@ export default function Step2Search() {
       .join('\n')
 
     try {
-      const res = await fetch('/api/ai', {
+      const { response: res, json } = await safeFetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -155,11 +155,10 @@ export default function Step2Search() {
         }),
       })
 
-      const json = await res.json()
       const payload = json?.data ?? json
 
       if (!res.ok || !json?.ok) {
-        throw new Error(json?.details || json?.error || t('api.genericFailure'))
+        throw new Error((json?.details || json?.error || t('api.genericFailure')) as string)
       }
 
       const parsed = JSON.parse(payload.output)
