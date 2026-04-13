@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
 type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
@@ -178,11 +179,28 @@ export default function Step3Evidence() {
         throw new Error((json?.details || json?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = JSON.parse(payload.output)
+      const parsed = parseAiJson<{
+        title?: string
+        source_type?: string
+        claim?: string
+        methodology?: string
+        findings?: string[]
+        limitations?: string[]
+        relevance_score?: number
+        citation?: string
+      }>(payload.output)
+      const sourceType =
+        parsed?.source_type === 'paper' ||
+        parsed?.source_type === 'report' ||
+        parsed?.source_type === 'website' ||
+        parsed?.source_type === 'book'
+          ? parsed.source_type
+          : 'unknown'
+
       const nextEvidenceRecord: EvidenceRecord = {
         id: `evidence-${Date.now()}`,
         title: parsed?.title || 'Untitled source',
-        sourceType: parsed?.source_type || 'unknown',
+        sourceType,
         sourceArticleId: sourceArticle?.id,
         sourceProvider: sourceArticle?.provider,
         sourceArticleTitle: sourceArticle?.title,

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { FinalResearchQuestion } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
 export default function Step1B() {
@@ -85,7 +86,10 @@ export default function Step1B() {
         throw new Error((json?.details || json?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = JSON.parse(payload.output)
+      const parsed = parseAiJson<{
+        final_question?: string
+        justification?: string
+      }>(payload.output)
       const nextFinalQuestion: FinalResearchQuestion = {
         question: parsed?.final_question || '',
         justification: parsed?.justification || '',

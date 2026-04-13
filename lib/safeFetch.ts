@@ -6,7 +6,7 @@
 export async function safeFetch(
   url: string,
   options: RequestInit
-): Promise<{ response: Response; json: Record<string, unknown> }> {
+): Promise<{ response: Response; json: any }> {
   const response = await fetch(url, options)
 
   const contentType = response.headers.get('content-type') || ''

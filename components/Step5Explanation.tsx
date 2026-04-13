@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { ExplanationDraft, EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
 interface ReviewedReference {
@@ -176,7 +177,13 @@ export default function Step5Explanation() {
         throw new Error((payload?.details || payload?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = JSON.parse(data.output)
+      const parsed = parseAiJson<{
+        outline?: string[]
+        argument_core?: string
+        evidence_references?: string[]
+        bibliography?: string[]
+        open_issues?: string[]
+      }>(data.output)
       const nextDraft: ExplanationDraft = {
         outline: Array.isArray(parsed?.outline) ? parsed.outline : [],
         argumentCore: parsed?.argument_core || '',

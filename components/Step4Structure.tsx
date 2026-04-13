@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { KnowledgeStructure } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
 interface MindMapLine {
@@ -158,7 +159,14 @@ export default function Step4Structure() {
         throw new Error((payload?.details || payload?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = JSON.parse(data.output)
+      const parsed = parseAiJson<{
+        topics?: string[]
+        subtopics?: string[]
+        concept_map_nodes?: string[]
+        concept_map_edges?: Array<{ from?: string; to?: string; relation?: string }>
+        mind_map_markdown?: string
+        glossary?: KnowledgeStructure['glossary']
+      }>(data.output)
       const nextStructure: KnowledgeStructure = {
         topics: Array.isArray(parsed?.topics) ? parsed.topics : [],
         subtopics: Array.isArray(parsed?.subtopics) ? parsed.subtopics : [],

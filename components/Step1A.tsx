@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { ComparisonResult } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
 export default function Step1A() {
@@ -47,7 +48,11 @@ export default function Step1A() {
 
       setAnalysis(payload.output)
       try {
-        const parsed = JSON.parse(payload.output)
+        const parsed = parseAiJson<{
+          comparisons?: ComparisonResult['comparisons']
+          recommended_question?: string
+          recommendation_reason?: string
+        }>(payload.output)
         const comparisonResult: ComparisonResult = {
           mode,
           comparisons: Array.isArray(parsed?.comparisons) ? parsed.comparisons : [],

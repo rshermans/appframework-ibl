@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { SearchArticle, SearchDesign } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
 type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
@@ -161,7 +162,14 @@ export default function Step2Search() {
         throw new Error((json?.details || json?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = JSON.parse(payload.output)
+      const parsed = parseAiJson<{
+        keywords?: string[]
+        synonyms?: string[]
+        boolean_query?: string
+        search_strings?: SearchDesign['searchStrings']
+        recommended_databases?: string[]
+        filters?: string[]
+      }>(payload.output)
       const nextSearchDesign: SearchDesign = {
         keywords: Array.isArray(parsed?.keywords) ? parsed.keywords : [],
         synonyms: Array.isArray(parsed?.synonyms) ? parsed.synonyms : [],

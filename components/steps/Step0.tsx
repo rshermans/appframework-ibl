@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { CandidateResearchQuestion } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
 interface Question {
@@ -126,7 +127,7 @@ export default function Step0() {
       setInput(localTopic)
 
       try {
-        const parsed = JSON.parse(payload.output)
+        const parsed = parseAiJson<{ questions?: CandidateResearchQuestion[] }>(payload.output)
         const nextQuestions = Array.isArray(parsed)
           ? parsed
           : Array.isArray(parsed?.questions)

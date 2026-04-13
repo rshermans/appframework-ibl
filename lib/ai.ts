@@ -22,6 +22,11 @@ export async function callChatGPT(
       instructions: systemPrompt,
       input: userMessage,
       max_output_tokens: 2000,
+      text: {
+        format: {
+          type: 'json_object',
+        },
+      },
     })
 
     const content = response.output_text || ''
@@ -45,6 +50,11 @@ export async function streamChatGPT(
       instructions: systemPrompt,
       input: userMessage,
       max_output_tokens: 2000,
+      text: {
+        format: {
+          type: 'json_object',
+        },
+      },
     })
 
     const content = response.output_text || ''
