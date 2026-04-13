@@ -11,8 +11,7 @@ const openai = new OpenAI({
 
 export async function callChatGPT(
   systemPrompt: string,
-  userMessage: string,
-  temperature: number = 0.7
+  userMessage: string
 ): Promise<{ content: string; tokens: number }> {
   try {
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
@@ -24,7 +23,6 @@ export async function callChatGPT(
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
       ],
-      temperature,
       max_tokens: 2000,
     })
 
@@ -50,7 +48,6 @@ export async function streamChatGPT(
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
       ],
-      temperature: 0.7,
       max_tokens: 2000,
     })
 
