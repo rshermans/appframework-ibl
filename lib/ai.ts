@@ -21,7 +21,7 @@ export async function callChatGPT(
       model,
       instructions: systemPrompt,
       input: userMessage,
-      max_completion_tokens: 2000,
+      max_output_tokens: 2000,
     })
 
     const content = response.output_text || ''
@@ -44,7 +44,7 @@ export async function streamChatGPT(
       model: process.env.OPENAI_MODEL || 'gpt-5-mini',
       instructions: systemPrompt,
       input: userMessage,
-      max_completion_tokens: 2000,
+      max_output_tokens: 2000,
     })
 
     const content = response.output_text || ''
