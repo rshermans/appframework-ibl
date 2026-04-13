@@ -12,19 +12,52 @@ function stripCodeFences(value: string): string {
 }
 
 function extractJsonCandidate(value: string): string {
-  const objectStart = value.indexOf('{')
-  const objectEnd = value.lastIndexOf('}')
+  // Use bracket-depth counting to find the first *complete* JSON object or
+  // array. Using lastIndexOf('}') fails when the model appends commentary or
+  // a second JSON block after the main response.
+  function findFirstComplete(text: string, open: string, close: string): string | null {
+    const start = text.indexOf(open)
+    if (start === -1) return null
 
-  if (objectStart !== -1 && objectEnd !== -1 && objectEnd > objectStart) {
-    return value.slice(objectStart, objectEnd + 1)
+    let depth = 0
+    let inString = false
+    let escaped = false
+
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i]
+
+      if (escaped) {
+        escaped = false
+        continue
+      }
+
+      if (ch === '\\' && inString) {
+        escaped = true
+        continue
+      }
+
+      if (ch === '"') {
+        inString = !inString
+        continue
+      }
+
+      if (!inString) {
+        if (ch === open) depth++
+        else if (ch === close) {
+          depth--
+          if (depth === 0) return text.slice(start, i + 1)
+        }
+      }
+    }
+
+    return null
   }
 
-  const arrayStart = value.indexOf('[')
-  const arrayEnd = value.lastIndexOf(']')
+  const obj = findFirstComplete(value, '{', '}')
+  if (obj) return obj
 
-  if (arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
-    return value.slice(arrayStart, arrayEnd + 1)
-  }
+  const arr = findFirstComplete(value, '[', ']')
+  if (arr) return arr
 
   return value
 }
@@ -76,12 +109,26 @@ function escapeControlCharsInsideStrings(value: string): string {
   return result
 }
 
+function removeTrailingCommas(value: string): string {
+  // Remove trailing commas inside objects and arrays: [1, 2,] -> [1, 2]
+  // Runs multiple passes to handle nested structures.
+  let prev = ''
+  let current = value
+  while (current !== prev) {
+    prev = current
+    current = current.replace(/,(\s*[}\]])/g, '$1')
+  }
+  return current
+}
+
 function normalizeJsonText(value: string): string {
   return escapeControlCharsInsideStrings(
-    extractJsonCandidate(stripCodeFences(value))
-      .replace(/[“”]/g, '"')
-      .replace(/[‘’]/g, "'")
-      .trim()
+    removeTrailingCommas(
+      extractJsonCandidate(stripCodeFences(value))
+        .replace(/[""]/g, '"')
+        .replace(/['']/g, "'")
+        .trim()
+    )
   )
 }
 

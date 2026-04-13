@@ -150,7 +150,7 @@ export default function Step2Search() {
           rq: finalResearchQuestion.question,
           finalResearchQuestion,
           content: refinementBlock
-            ? `${isPortuguese ? 'Pergunta de investigacao' : 'Research question'}: ${finalResearchQuestion.question}\n${refinementBlock}`
+            ? `${isPortuguese ? 'Pergunta de investigacao' : 'Research question'}: ${finalResearchQuestion.question}\n${refinementBlock}\n\n${isPortuguese ? 'Devolve obrigatoriamente um JSON com os campos \"boolean_query\" (string nao vazia) e \"search_strings\" (array com pelo menos 2 entradas).' : 'You MUST return JSON with non-empty "boolean_query" (string) and "search_strings" (array with at least 2 entries).'}`
             : undefined,
           locale,
         }),
@@ -166,23 +166,58 @@ export default function Step2Search() {
         keywords?: string[]
         synonyms?: string[]
         boolean_query?: string
+        booleanQuery?: string
+        query?: string
+        search_query?: string
         search_strings?: SearchDesign['searchStrings']
+        searchStrings?: SearchDesign['searchStrings']
+        strings?: SearchDesign['searchStrings']
         recommended_databases?: string[]
+        recommendedDatabases?: string[]
         filters?: string[]
       }>(payload.output)
+
+      const normalizedSearchStrings =
+        (Array.isArray(parsed?.search_strings) && parsed.search_strings) ||
+        (Array.isArray(parsed?.searchStrings) && parsed.searchStrings) ||
+        (Array.isArray(parsed?.strings) && parsed.strings) ||
+        []
+
+      const normalizedBooleanQuery =
+        parsed?.boolean_query || parsed?.booleanQuery || parsed?.search_query || parsed?.query || ''
+
+      // Fallback: build boolean_query from keywords if model omitted it
+      const fallbackBooleanQuery = normalizedBooleanQuery
+        || (Array.isArray(parsed?.keywords) && parsed.keywords.length > 0
+          ? parsed.keywords.join(' AND ')
+          : '')
+
+      // Fallback: build a single search_strings entry from the boolean query
+      const fallbackSearchStrings = normalizedSearchStrings.length > 0
+        ? normalizedSearchStrings
+        : fallbackBooleanQuery
+          ? [{ database: 'General', query: fallbackBooleanQuery }]
+          : []
+
       const nextSearchDesign: SearchDesign = {
         keywords: Array.isArray(parsed?.keywords) ? parsed.keywords : [],
         synonyms: Array.isArray(parsed?.synonyms) ? parsed.synonyms : [],
-        booleanQuery: parsed?.boolean_query || '',
-        searchStrings: Array.isArray(parsed?.search_strings) ? parsed.search_strings : [],
+        booleanQuery: fallbackBooleanQuery,
+        searchStrings: fallbackSearchStrings,
         recommendedDatabases: Array.isArray(parsed?.recommended_databases)
           ? parsed.recommended_databases
+          : Array.isArray(parsed?.recommendedDatabases)
+            ? parsed.recommendedDatabases
           : [],
         filters: Array.isArray(parsed?.filters) ? parsed.filters : [],
       }
 
       if (!nextSearchDesign.booleanQuery || nextSearchDesign.searchStrings.length === 0) {
-        throw new Error(t('api.genericFailure'))
+        throw new Error(
+          isPortuguese
+            ? 'A IA devolveu JSON sem os campos obrigatorios (boolean_query e search_strings). Tente um refinamento mais especifico.'
+            : 'AI returned JSON without required fields (boolean_query and search_strings). Try a more specific refinement.'
+        )
       }
 
       setSearchDesign(nextSearchDesign)

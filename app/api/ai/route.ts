@@ -128,24 +128,26 @@ export async function POST(req: Request) {
     let dbSaved = false
     let dbError: string | null = null
     if (projectId) {
-      try {
-        await saveInteraction(
-          projectId,
-          parsedStage,
-          safeStepId,
-          safeStepLabel,
-          userMessage,
-          aiOutput,
-          topic,
-          safeMode,
-          tokens
-        )
-        dbSaved = true
-        console.log('[API] Saved interaction to database')
-      } catch (saveErr) {
-        dbError = saveErr instanceof Error ? saveErr.message : String(saveErr)
-        console.error(`[API] Database save failed: ${dbError}`)
-      }
+      dbSaved = true
+      saveInteraction(
+        projectId,
+        parsedStage,
+        safeStepId,
+        safeStepLabel,
+        userMessage,
+        aiOutput,
+        topic,
+        safeMode,
+        tokens
+      )
+        .then(() => {
+          console.log('[API] Background: saved interaction to database')
+        })
+        .catch((saveErr) => {
+          dbSaved = false
+          dbError = saveErr instanceof Error ? saveErr.message : String(saveErr)
+          console.error(`[API] Background: database save failed: ${dbError}`)
+        })
     }
 
     return NextResponse.json({

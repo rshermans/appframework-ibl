@@ -180,27 +180,39 @@ Respond with valid JSON only:
   knowledge_structure: {
     id: 'knowledge_structure',
     aliases: ['step6', 'step7', 'step8a', 'step8b'],
-    template: `You are a research synthesis architect.
+    template: `You are a research synthesis architect. Build a structured knowledge model from evidence records.
 
 Research Question: [RQ]
-Evidence Records JSON:
+
+Evidence Records (JSON):
 [EVIDENCE]
 
-Build a structured knowledge model from the evidence.
+MANDATORY FIELDS — your response will be rejected if any of these are missing or empty:
+- "topics": non-empty array of 3-8 main topic strings extracted from the evidence
+- "concept_map_nodes": non-empty array of concept node strings (include topics and subtopics)
 
-Respond with valid JSON only:
+All other fields below are also required but may be shorter if evidence is limited.
+
+Respond with valid JSON only using EXACTLY this structure:
 {
-  "topics": ["Topic 1", "Topic 2"],
-  "subtopics": ["Subtopic 1", "Subtopic 2"],
-  "concept_map_nodes": ["Node 1", "Node 2"],
+  "topics": ["Main topic 1", "Main topic 2", "Main topic 3"],
+  "subtopics": ["Subtopic 1", "Subtopic 2", "Subtopic 3"],
+  "concept_map_nodes": ["Concept A", "Concept B", "Concept C", "Concept D"],
   "concept_map_edges": [
-    { "from": "Node 1", "to": "Node 2", "relation": "supports | contrasts | extends | depends_on" }
+    { "from": "Concept A", "to": "Concept B", "relation": "supports" },
+    { "from": "Concept B", "to": "Concept C", "relation": "extends" }
   ],
-  "mind_map_markdown": "- Topic\\n  - Subtopic\\n    - Concept",
+  "mind_map_markdown": "- Topic 1\\n  - Subtopic 1\\n    - Detail\\n- Topic 2\\n  - Subtopic 2",
   "glossary": [
-    { "term": "Term 1", "definition": "Short definition based on the evidence" }
+    { "term": "Key term", "definition": "Short definition from the evidence" }
   ]
-}`,
+}
+
+Rules:
+- "topics" MUST have at least 3 items. Derive them from the evidence claims and findings.
+- "concept_map_nodes" MUST include all topics and key subtopics (minimum 4 nodes).
+- "concept_map_edges" should express relationships between nodes using: supports, contrasts, extends, depends_on, causes.
+- "mind_map_markdown" uses "- " bullet prefix with 2-space indentation per level.`,
   },
   's0-form': {
     id: 's0-form',
@@ -217,23 +229,31 @@ Level: [LEVEL]`,
   },
   step2: {
     id: 'step2',
-    template: `You are a research librarian supporting search string construction.
+    template: `You are a research librarian and information specialist. Your task is to build a comprehensive search strategy from a research question.
 
 Research Question: [RQ]
 
-Respond with valid JSON only:
+IMPORTANT: You MUST include ALL of the following fields in your JSON response. The "boolean_query" and "search_strings" fields are MANDATORY — omitting them will cause a system error.
+
+Respond with valid JSON only using EXACTLY this structure:
 {
-  "keywords": ["keyword 1", "keyword 2"],
+  "keywords": ["keyword 1", "keyword 2", "keyword 3"],
   "synonyms": ["synonym 1", "synonym 2"],
-  "boolean_query": "keyword 1 AND keyword 2",
+  "boolean_query": "(keyword1 OR synonym1) AND (keyword2 OR synonym2)",
   "search_strings": [
-    { "database": "Web of Science", "query": "..." },
-    { "database": "PubMed", "query": "..." },
-    { "database": "Google Scholar", "query": "..." }
+    { "database": "RCAAP", "query": "complete query string for RCAAP" },
+    { "database": "Google Scholar", "query": "complete query string for Google Scholar" },
+    { "database": "Semantic Scholar", "query": "complete query string for Semantic Scholar" }
   ],
-  "recommended_databases": ["Web of Science", "PubMed", "Google Scholar"],
-  "filters": ["peer reviewed", "last 5 years", "english"]
-}`,
+  "recommended_databases": ["RCAAP", "Google Scholar", "Semantic Scholar"],
+  "filters": ["peer reviewed", "last 5 years"]
+}
+
+Rules:
+- "boolean_query" must be a non-empty string with AND/OR operators connecting the main concepts.
+- "search_strings" must be a non-empty array with at least 2 database-specific queries.
+- Extract 3-6 keywords and their synonyms from the research question.
+- Use parentheses to group related terms in boolean expressions.`,
   },
   step4: {
     id: 'step4',

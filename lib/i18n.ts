@@ -14,7 +14,7 @@ const messages: Record<Locale, MessageTree> = {
     },
     language: {
       label: 'Idioma',
-      ptPT: 'Português europeu',
+      ptPT: 'Português PT',
       en: 'English',
     },
     home: {

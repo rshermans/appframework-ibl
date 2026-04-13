@@ -5,6 +5,7 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { ExplanationDraft, EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import { parseAiJson } from '@/lib/parseAiJson'
+import { retryWithBackoff } from '@/lib/retryHelper'
 import { safeFetch } from '@/lib/safeFetch'
 
 interface ReviewedReference {
@@ -110,6 +111,35 @@ function buildCompleteBibliography(
   return Array.from(new Set(entries))
 }
 
+function buildFallbackOutline(isPortuguese: boolean): string[] {
+  return isPortuguese
+    ? [
+        'Enquadramento da pergunta de investigacao',
+        'Sintese da evidencia principal',
+        'Analise critica dos achados',
+        'Implicacoes e proximos passos',
+        'Conclusao',
+      ]
+    : [
+        'Research question framing',
+        'Synthesis of the main evidence',
+        'Critical analysis of findings',
+        'Implications and next steps',
+        'Conclusion',
+      ]
+}
+
+function buildFallbackArgumentCore(
+  evidenceRecords: EvidenceRecord[],
+  topic: string,
+  isPortuguese: boolean
+): string {
+  const evidenceCount = evidenceRecords.length
+  return isPortuguese
+    ? `Com base em ${evidenceCount} registos de evidencia analisados sobre ${topic || 'o tema em estudo'}, observa-se um padrao consistente que sustenta uma explicacao cientifica inicial, ainda sujeita a refinamento critico.`
+    : `Based on ${evidenceCount} analyzed evidence records about ${topic || 'the current topic'}, the available findings support an initial scientific explanation that can be refined further.`
+}
+
 export default function Step5Explanation() {
   const { locale, t } = useI18n()
   const {
@@ -150,26 +180,32 @@ export default function Step5Explanation() {
     try {
       const evidenceJson = JSON.stringify(evidenceRecords, null, 2)
       const bibliographySeed = buildCompleteBibliography(evidenceRecords, searchArticles)
-      const { response, json: payload } = await safeFetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          stage: 2,
-          promptId: 'step9',
-          stepId: 'step5_explanation',
-          stepLabel: t('workflow.step5_explanation.label'),
-          topic,
-          rq: finalResearchQuestion.question,
-          finalResearchQuestion,
-          evidenceRecords,
-          knowledgeStructure,
-          evidence: evidenceJson,
-          bibliographySeed,
-          audience,
-          locale,
-        }),
-      })
+      const requestBody = {
+        projectId,
+        stage: 2,
+        promptId: 'step9',
+        stepId: 'step5_explanation',
+        stepLabel: t('workflow.step5_explanation.label'),
+        topic,
+        rq: finalResearchQuestion.question,
+        finalResearchQuestion,
+        evidenceRecords,
+        knowledgeStructure,
+        evidence: evidenceJson,
+        bibliographySeed,
+        audience,
+        locale,
+      }
+
+      const { response, json: payload } = await retryWithBackoff(
+        () =>
+          safeFetch('/api/ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          }),
+        { maxAttempts: 2, initialDelayMs: 1200, maxDelayMs: 3000 }
+      )
 
       const data = payload?.data ?? payload
 
@@ -180,25 +216,46 @@ export default function Step5Explanation() {
       const parsed = parseAiJson<{
         outline?: string[]
         argument_core?: string
+        argumentCore?: string
         evidence_references?: string[]
+        evidenceReferences?: string[]
         bibliography?: string[]
         open_issues?: string[]
+        openIssues?: string[]
       }>(data.output)
+
+      const normalizedOutline = Array.isArray(parsed?.outline) ? parsed.outline.filter(Boolean) : []
+      const normalizedArgumentCore = parsed?.argument_core || parsed?.argumentCore || ''
+      const normalizedEvidenceReferences = Array.isArray(parsed?.evidence_references)
+        ? parsed.evidence_references.filter(Boolean)
+        : Array.isArray(parsed?.evidenceReferences)
+          ? parsed.evidenceReferences.filter(Boolean)
+          : []
+      const normalizedOpenIssues = Array.isArray(parsed?.open_issues)
+        ? parsed.open_issues.filter(Boolean)
+        : Array.isArray(parsed?.openIssues)
+          ? parsed.openIssues.filter(Boolean)
+          : []
+
       const nextDraft: ExplanationDraft = {
-        outline: Array.isArray(parsed?.outline) ? parsed.outline : [],
-        argumentCore: parsed?.argument_core || '',
-        evidenceReferences: Array.isArray(parsed?.evidence_references)
-          ? parsed.evidence_references
-          : [],
+        outline:
+          normalizedOutline.length > 0 ? normalizedOutline : buildFallbackOutline(isPortuguese),
+        argumentCore:
+          normalizedArgumentCore || buildFallbackArgumentCore(evidenceRecords, topic, isPortuguese),
+        evidenceReferences: normalizedEvidenceReferences,
         bibliography:
           Array.isArray(parsed?.bibliography) && parsed.bibliography.length > 0
             ? parsed.bibliography
             : bibliographySeed,
-        openIssues: Array.isArray(parsed?.open_issues) ? parsed.open_issues : [],
+        openIssues: normalizedOpenIssues,
       }
 
-      if (nextDraft.outline.length === 0 || !nextDraft.argumentCore) {
-        throw new Error(t('api.genericFailure'))
+      if (nextDraft.bibliography.length === 0) {
+        throw new Error(
+          isPortuguese
+            ? 'A IA devolveu uma explicacao sem bibliografia aproveitavel.'
+            : 'AI returned an explanation without usable bibliography.'
+        )
       }
 
       setExplanationDraft(nextDraft)

@@ -133,6 +133,9 @@ export default function Step4Structure() {
     try {
       const evidenceJson = JSON.stringify(evidenceRecords, null, 2)
       const hasRefine = Boolean(refineInstructions.trim())
+      const requiredFieldsReminder = isPortuguese
+        ? 'Devolve obrigatoriamente JSON com os campos "topics" (array nao vazio) e "concept_map_nodes" (array nao vazio).'
+        : 'You MUST return JSON with non-empty "topics" array and non-empty "concept_map_nodes" array.'
       const { response, json: payload } = await safeFetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -147,8 +150,8 @@ export default function Step4Structure() {
           evidence: evidenceJson,
           evidenceRecords,
           content: hasRefine
-            ? `${evidenceJson}\n${isPortuguese ? 'Instrucoes complementares' : 'Complementary instructions'}: ${refineInstructions.trim()}`
-            : evidenceJson,
+            ? `${isPortuguese ? 'Instrucoes complementares' : 'Additional instructions'}: ${refineInstructions.trim()}\n\n${requiredFieldsReminder}`
+            : requiredFieldsReminder,
           locale,
         }),
       })
@@ -161,29 +164,112 @@ export default function Step4Structure() {
 
       const parsed = parseAiJson<{
         topics?: string[]
+        main_topics?: string[]
         subtopics?: string[]
+        key_subtopics?: string[]
         concept_map_nodes?: string[]
+        conceptMapNodes?: string[]
+        nodes?: string[]
         concept_map_edges?: Array<{ from?: string; to?: string; relation?: string }>
+        conceptMapEdges?: Array<{ from?: string; to?: string; relation?: string; source?: string; target?: string; label?: string }>
+        edges?: Array<{ from?: string; to?: string; relation?: string; source?: string; target?: string; label?: string }>
         mind_map_markdown?: string
+        mindMapMarkdown?: string
         glossary?: KnowledgeStructure['glossary']
+        terms?: KnowledgeStructure['glossary']
       }>(data.output)
+
+      const normalizeStringArray = (value: unknown): string[] => {
+        if (Array.isArray(value)) {
+          return value
+            .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+            .filter(Boolean)
+        }
+
+        if (typeof value === 'string') {
+          return value
+            .split(/[\n,;]+/)
+            .map((entry) => entry.trim())
+            .filter(Boolean)
+        }
+
+        return []
+      }
+
+      const normalizedTopics = normalizeStringArray(parsed?.topics ?? parsed?.main_topics)
+      const normalizedSubtopics = normalizeStringArray(parsed?.subtopics ?? parsed?.key_subtopics)
+      const normalizedNodes = normalizeStringArray(
+        parsed?.concept_map_nodes ?? parsed?.conceptMapNodes ?? parsed?.nodes
+      )
+
+      // Derive topics from nodes/edges if model omitted the topics field
+      const derivedTopicsFromNodes = normalizedTopics.length === 0 && normalizedNodes.length > 0
+        ? normalizedNodes.slice(0, 6)
+        : normalizedTopics
+
+      // Derive topics from evidence records as last resort
+      const lastResortTopics = derivedTopicsFromNodes.length === 0
+        ? evidenceRecords
+            .map((r: { claim?: string; title?: string }) => r.claim || r.title || '')
+            .filter(Boolean)
+            .slice(0, 5)
+        : derivedTopicsFromNodes
+
+      const rawEdges: Array<{
+        from?: string
+        to?: string
+        relation?: string
+        source?: string
+        target?: string
+        label?: string
+      }> = Array.isArray(parsed?.concept_map_edges)
+        ? parsed.concept_map_edges
+        : Array.isArray(parsed?.conceptMapEdges)
+          ? parsed.conceptMapEdges
+          : Array.isArray(parsed?.edges)
+            ? parsed.edges
+            : []
+
+      const normalizedEdges = rawEdges
+        .map((edge) => ({
+          from: (edge.from || edge.source || '').trim(),
+          to: (edge.to || edge.target || '').trim(),
+          relation: (edge.relation || edge.label || '').trim(),
+        }))
+        .filter((edge) => edge.from && edge.to)
+
+      const derivedNodes = Array.from(
+        new Set([
+          ...normalizedNodes,
+          ...lastResortTopics,
+          ...normalizedSubtopics,
+          ...normalizedEdges.flatMap((edge) => [edge.from, edge.to]),
+        ])
+      ).filter(Boolean)
+
+      const finalDerivedNodes = derivedNodes.length === 0
+        ? lastResortTopics
+        : derivedNodes
+
+      const normalizedGlossary = Array.isArray(parsed?.glossary)
+        ? parsed.glossary
+        : Array.isArray(parsed?.terms)
+          ? parsed.terms
+          : []
+
       const nextStructure: KnowledgeStructure = {
-        topics: Array.isArray(parsed?.topics) ? parsed.topics : [],
-        subtopics: Array.isArray(parsed?.subtopics) ? parsed.subtopics : [],
-        conceptMapNodes: Array.isArray(parsed?.concept_map_nodes) ? parsed.concept_map_nodes : [],
-        conceptMapEdges: Array.isArray(parsed?.concept_map_edges)
-          ? parsed.concept_map_edges
-              .map((edge: { from?: string; to?: string; relation?: string }) => ({
-                from: edge.from || '',
-                to: edge.to || '',
-                relation: edge.relation || '',
-              }))
-              .filter((edge: { from: string; to: string; relation: string }) => edge.from && edge.to)
-          : [],
+        topics: lastResortTopics,
+        subtopics: normalizedSubtopics,
+        conceptMapNodes: finalDerivedNodes,
+        conceptMapEdges: normalizedEdges,
         mindMapMarkdown:
-          typeof parsed?.mind_map_markdown === 'string' ? parsed.mind_map_markdown : '',
-        glossary: Array.isArray(parsed?.glossary)
-          ? parsed.glossary
+          typeof parsed?.mind_map_markdown === 'string'
+            ? parsed.mind_map_markdown
+            : typeof parsed?.mindMapMarkdown === 'string'
+              ? parsed.mindMapMarkdown
+              : '',
+        glossary: Array.isArray(normalizedGlossary)
+          ? normalizedGlossary
               .map((entry: { term?: string; definition?: string }) => ({
                 term: entry.term || '',
                 definition: entry.definition || '',
@@ -192,8 +278,12 @@ export default function Step4Structure() {
           : [],
       }
 
-      if (nextStructure.topics.length === 0 || nextStructure.conceptMapNodes.length === 0) {
-        throw new Error(t('api.genericFailure'))
+      if (nextStructure.topics.length === 0 && nextStructure.conceptMapNodes.length === 0) {
+        throw new Error(
+          isPortuguese
+            ? 'A IA devolveu uma estrutura sem topicos nem nos do mapa conceptual. Tente refinar as instrucoes.'
+            : 'AI returned a structure without topics or concept-map nodes. Try refining your instructions.'
+        )
       }
 
       setKnowledgeStructure(nextStructure)

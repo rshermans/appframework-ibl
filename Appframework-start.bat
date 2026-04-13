@@ -50,6 +50,7 @@ echo     Using port !PORT!
 
 echo [3/7] Cleaning local cache...
 if exist ".next" rd /s /q ".next"
+if exist "node_modules\.prisma\client" rd /s /q "node_modules\.prisma\client"
 
 echo [4/7] Checking dependencies...
 if not exist "node_modules" (
@@ -68,8 +69,17 @@ if not exist "node_modules" (
 )
 
 echo [5/7] Generating Prisma client...
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "Get-ChildItem 'node_modules\.prisma\client' -Filter '*.tmp*' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue;"
+
 call npm.cmd run prisma:generate
-if errorlevel 1 goto :fail
+if errorlevel 1 (
+  echo     [RETRY] Cleaning Prisma cache and retrying...
+  if exist "node_modules\.prisma\client" rd /s /q "node_modules\.prisma\client"
+  timeout /t 1 /nobreak >nul
+  call npm.cmd run prisma:generate
+  if errorlevel 1 goto :fail
+)
 
 echo [6/7] Syncing database schema (best effort)...
 call npm.cmd run prisma:push
