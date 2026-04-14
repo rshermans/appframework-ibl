@@ -41,11 +41,16 @@ export default function MarkmapPreview({ markdown, className }: MarkmapPreviewPr
         const width = Math.max(containerWidth || containerRef.current?.clientWidth || DEFAULT_WIDTH, 320)
 
         svg.innerHTML = ''
-        svg.setAttribute('width', `${width}`)
-        svg.setAttribute('height', `${DEFAULT_HEIGHT}`)
+        svg.setAttribute('width', String(width))
+        svg.setAttribute('height', String(DEFAULT_HEIGHT))
         svg.setAttribute('viewBox', `0 0 ${width} ${DEFAULT_HEIGHT}`)
-        svg.style.width = '100%'
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+        svg.style.width = `${width}px`
+        svg.style.maxWidth = '100%'
         svg.style.height = `${DEFAULT_HEIGHT}px`
+        svg.style.display = 'block'
+
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
 
         const [{ Transformer }, { Markmap }] = await Promise.all([
           import('markmap-lib'),
@@ -94,8 +99,8 @@ export default function MarkmapPreview({ markdown, className }: MarkmapPreviewPr
   }
 
   return (
-    <div ref={containerRef} className={`overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface_container_lowest)] p-2 ghost-border ${className || ''}`}>
-      <svg ref={svgRef} className="block w-full" />
+    <div ref={containerRef} className={`overflow-x-auto overflow-y-hidden rounded-[var(--radius-xl)] bg-[var(--surface_container_lowest)] p-2 ghost-border ${className || ''}`}>
+      <svg ref={svgRef} />
     </div>
   )
 }

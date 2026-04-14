@@ -28,6 +28,12 @@ export const useWizardStore = create<WizardState>()(
   evidenceRecords: [],
   knowledgeStructure: null,
   explanationDraft: null,
+  multimodalOutputs: {},
+  evidenceFidelityScore: null,
+  peerReviews: [],
+  selfAssessment: null,
+  reflectionJournal: [],
+  extensionPlan: null,
   interactions: [],
 
   setProject: (id: string, topic: string) =>
@@ -124,6 +130,44 @@ export const useWizardStore = create<WizardState>()(
 
   setExplanationDraft: (explanationDraft) =>
     set({ explanationDraft }),
+
+  // Stage 2 — Multimodal
+  setMultimodalPoster: (poster) =>
+    set((state) => ({ multimodalOutputs: { ...state.multimodalOutputs, poster } })),
+
+  setMultimodalPodcast: (podcast) =>
+    set((state) => ({ multimodalOutputs: { ...state.multimodalOutputs, podcast } })),
+
+  setMultimodalVideocast: (videocast) =>
+    set((state) => ({ multimodalOutputs: { ...state.multimodalOutputs, videocast } })),
+
+  setMultimodalGame: (game) =>
+    set((state) => ({ multimodalOutputs: { ...state.multimodalOutputs, game } })),
+
+  setMultimodalOral: (oral) =>
+    set((state) => ({ multimodalOutputs: { ...state.multimodalOutputs, oral } })),
+
+  setEvidenceFidelityScore: (evidenceFidelityScore) =>
+    set({ evidenceFidelityScore }),
+
+  // Stage 3 — Reflection
+  setPeerReviews: (peerReviews) =>
+    set({ peerReviews }),
+
+  addPeerReview: (review) =>
+    set((state) => ({ peerReviews: [...state.peerReviews, review] })),
+
+  setSelfAssessment: (selfAssessment) =>
+    set({ selfAssessment }),
+
+  addReflectionEntry: (entry) =>
+    set((state) => ({ reflectionJournal: [...state.reflectionJournal, entry] })),
+
+  setReflectionJournal: (reflectionJournal) =>
+    set({ reflectionJournal }),
+
+  setExtensionPlan: (extensionPlan) =>
+    set({ extensionPlan }),
 
   addInteraction: (record: InteractionRecord) =>
     set((state) => ({

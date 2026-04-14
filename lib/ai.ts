@@ -1,4 +1,7 @@
 import OpenAI from 'openai'
+import { withTimeout, TimeoutError, isAbortedError } from '@/lib/timeoutHelper'
+import { API_CONFIG, getTimeRemaining, canContinueProcessing } from '@/lib/apiTimeout'
+import { chooseModel, getNextFallbackModel, modelLogTag, type ModelSelection } from '@/lib/modelSelector'
 
 const apiKey = process.env.OPENAI_API_KEY
 if (!apiKey) {
@@ -7,6 +10,8 @@ if (!apiKey) {
 
 const openai = new OpenAI({
   apiKey,
+  timeout: API_CONFIG.OPENAI_TIMEOUT_MS,
+  maxRetries: 1, // Let our code handle retries
 })
 
 function extractResponseText(response: any): string {
@@ -43,129 +48,175 @@ function buildJsonInput(userMessage: string): string {
 
 export async function callChatGPT(
   systemPrompt: string,
-  userMessage: string
-): Promise<{ content: string; tokens: number }> {
-  try {
-    const model = process.env.OPENAI_MODEL || 'gpt-5-mini'
-    console.log(`🤖 [ChatGPT] Calling model: ${model}`)
+  userMessage: string,
+  stepId: string = 'generic_guidance'
+): Promise<{ content: string; tokens: number; model: string }> {
+  const startTime = Date.now()
+  const failedModels = new Set<string>()
 
-    const instructions = buildJsonInstructions(systemPrompt)
-    const input = buildJsonInput(userMessage)
+  const instructions = buildJsonInstructions(systemPrompt)
+  const input = buildJsonInput(userMessage)
 
-    const primaryResponse = await openai.responses.create({
-      model,
-      instructions,
-      input,
-      max_output_tokens: 2000,
-      text: {
-        format: {
-          type: 'json_object',
-        },
-      },
-    })
+  // Pick the primary model based on step complexity
+  let selection = chooseModel(stepId)
+  console.log(`🤖 [ChatGPT] Step: ${stepId} → Model: ${modelLogTag(selection)}`)
 
-    let content = extractResponseText(primaryResponse)
-    let tokens = primaryResponse.usage?.total_tokens || 0
+  while (true) {
+    const { model } = selection
 
-    // Fallback 1: some model+SDK combinations can return empty output when
-    // json_object format is enforced. Retry once without format constraint.
-    if (!content) {
-      const fallbackResponse = await openai.responses.create({
-        model,
-        instructions,
-        input,
-        max_output_tokens: 3000,
-      })
+    try {
+      // Attempt with current model + JSON format
+      console.log(`[ChatGPT] Attempting ${modelLogTag(selection)} with JSON format...`)
+      const response = await withTimeout(
+        openai.responses.create({
+          model,
+          instructions,
+          input,
+          max_output_tokens: selection.complexity === 'fast' ? 1500 : 2000,
+          text: { format: { type: 'json_object' } },
+        }),
+        { timeoutMs: selection.complexity === 'fast' ? 10000 : 15000 }
+      )
 
-      content = extractResponseText(fallbackResponse)
-      tokens = fallbackResponse.usage?.total_tokens || tokens
+      let content = extractResponseText(response)
+      const tokens = response.usage?.total_tokens || 0
+
+      // If empty with JSON format, retry same model without format constraint
+      if (!content && canContinueProcessing(startTime, 5000)) {
+        console.log(`[ChatGPT] Empty response from ${model}, retrying without JSON format...`)
+        const retryResponse = await withTimeout(
+          openai.responses.create({
+            model,
+            instructions,
+            input,
+            max_output_tokens: 3000,
+          }),
+          { timeoutMs: 12000 }
+        )
+        content = extractResponseText(retryResponse)
+      }
+
+      if (content) {
+        console.log(`[ChatGPT] ✅ Success with ${modelLogTag(selection)} — ${content.length} chars, ${tokens} tokens, ${Date.now() - startTime}ms`)
+        return { content, tokens, model }
+      }
+
+      // Content still empty → treat as failure for this model
+      console.warn(`[ChatGPT] ${model} returned empty content`)
+      failedModels.add(model)
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error)
+      console.warn(`[ChatGPT] ${model} failed: ${errMsg}`)
+      failedModels.add(model)
     }
 
-    // Fallback 2: try structured role messages for models that behave better
-    // with explicit system/user input items.
-    if (!content) {
-      const structuredResponse = await openai.responses.create({
-        model,
-        input: [
-          { role: 'system', content: instructions },
-          { role: 'user', content: input },
-        ],
-        max_output_tokens: 3000,
-      })
-
-      content = extractResponseText(structuredResponse)
-      tokens = structuredResponse.usage?.total_tokens || tokens
+    // ── Try next model in fallback chain ──
+    if (!canContinueProcessing(startTime, 4000)) {
+      console.error(`[ChatGPT] Timeout budget exhausted after ${Date.now() - startTime}ms. Tried: ${[...failedModels].join(', ')}`)
+      break
     }
 
-    if (!content) {
-      throw new Error('AI returned an empty response payload.')
+    const next = getNextFallbackModel(stepId, failedModels)
+    if (!next) {
+      console.error(`[ChatGPT] All models exhausted: ${[...failedModels].join(', ')}`)
+      break
     }
 
-    return { content, tokens }
-  } catch (error) {
-    console.error('ChatGPT Error:', error)
-    throw error
+    selection = next
+    console.log(`[ChatGPT] 🔄 Switching to fallback: ${modelLogTag(selection)}`)
   }
+
+  // All models failed
+  const totalTime = Date.now() - startTime
+  throw new Error(
+    `ChatGPT call failed: all models exhausted (${[...failedModels].join(', ')}). ` +
+    `Step: ${stepId}, elapsed: ${totalTime}ms`
+  )
 }
 
 export async function streamChatGPT(
   systemPrompt: string,
   userMessage: string,
-  onChunk: (chunk: string) => void
+  onChunk: (chunk: string) => void,
+  stepId: string = 'generic_guidance'
 ): Promise<number> {
-  try {
-    const model = process.env.OPENAI_MODEL || 'gpt-5-mini'
-    const instructions = buildJsonInstructions(systemPrompt)
-    const input = buildJsonInput(userMessage)
+  const startTime = Date.now()
+  const failedModels = new Set<string>()
 
-    const primaryResponse = await openai.responses.create({
-      model,
-      instructions,
-      input,
-      max_output_tokens: 2000,
-      text: {
-        format: {
-          type: 'json_object',
-        },
-      },
-    })
+  const instructions = buildJsonInstructions(systemPrompt)
+  const input = buildJsonInput(userMessage)
 
-    let content = extractResponseText(primaryResponse)
-    let tokens = primaryResponse.usage?.total_tokens || 0
+  let selection = chooseModel(stepId)
+  console.log(`🤖 [StreamChatGPT] Step: ${stepId} → Model: ${modelLogTag(selection)}`)
 
-    if (!content) {
-      const fallbackResponse = await openai.responses.create({
-        model,
-        instructions,
-        input,
-        max_output_tokens: 3000,
-      })
-      content = extractResponseText(fallbackResponse)
-      tokens = fallbackResponse.usage?.total_tokens || tokens
+  while (true) {
+    const { model } = selection
+
+    try {
+      console.log(`[StreamChatGPT] Attempting ${modelLogTag(selection)} with JSON format...`)
+      const response = await withTimeout(
+        openai.responses.create({
+          model,
+          instructions,
+          input,
+          max_output_tokens: selection.complexity === 'fast' ? 1500 : 2000,
+          text: { format: { type: 'json_object' } },
+        }),
+        { timeoutMs: selection.complexity === 'fast' ? 10000 : 15000 }
+      )
+
+      let content = extractResponseText(response)
+      let tokens = response.usage?.total_tokens || 0
+
+      // If empty with JSON format, retry same model without format constraint
+      if (!content && canContinueProcessing(startTime, 5000)) {
+        console.log(`[StreamChatGPT] Empty response from ${model}, retrying without JSON format...`)
+        const retryResponse = await withTimeout(
+          openai.responses.create({
+            model,
+            instructions,
+            input,
+            max_output_tokens: 3000,
+          }),
+          { timeoutMs: 12000 }
+        )
+        content = extractResponseText(retryResponse)
+        tokens = retryResponse.usage?.total_tokens || tokens
+      }
+
+      if (content) {
+        onChunk(content)
+        console.log(`[StreamChatGPT] ✅ Success with ${modelLogTag(selection)} — ${content.length} chars, ${Date.now() - startTime}ms`)
+        return tokens
+      }
+
+      console.warn(`[StreamChatGPT] ${model} returned empty content`)
+      failedModels.add(model)
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error)
+      console.warn(`[StreamChatGPT] ${model} failed: ${errMsg}`)
+      failedModels.add(model)
     }
 
-    if (!content) {
-      const structuredResponse = await openai.responses.create({
-        model,
-        input: [
-          { role: 'system', content: instructions },
-          { role: 'user', content: input },
-        ],
-        max_output_tokens: 3000,
-      })
-      content = extractResponseText(structuredResponse)
-      tokens = structuredResponse.usage?.total_tokens || tokens
+    // ── Try next model in fallback chain ──
+    if (!canContinueProcessing(startTime, 4000)) {
+      console.error(`[StreamChatGPT] Timeout budget exhausted after ${Date.now() - startTime}ms. Tried: ${[...failedModels].join(', ')}`)
+      break
     }
 
-    if (!content) {
-      throw new Error('AI returned an empty response payload.')
+    const next = getNextFallbackModel(stepId, failedModels)
+    if (!next) {
+      console.error(`[StreamChatGPT] All models exhausted: ${[...failedModels].join(', ')}`)
+      break
     }
 
-    onChunk(content)
-
-    return tokens
-  } catch (error) {
-    console.error('ChatGPT Stream Error:', error)
-    throw error
+    selection = next
+    console.log(`[StreamChatGPT] 🔄 Switching to fallback: ${modelLogTag(selection)}`)
   }
+
+  const totalTime = Date.now() - startTime
+  throw new Error(
+    `StreamChatGPT failed: all models exhausted (${[...failedModels].join(', ')}). ` +
+    `Step: ${stepId}, elapsed: ${totalTime}ms`
+  )
 }

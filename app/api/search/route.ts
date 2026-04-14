@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { searchScientificArticles, type SearchProvider } from '@/lib/search'
 import { getMessage, normalizeLocale, type Locale } from '@/lib/i18n'
+import { withTimeout, TimeoutError, isAbortedError } from '@/lib/timeoutHelper'
 
 export async function POST(req: Request) {
+  const startTime = Date.now()
   let locale: Locale = 'pt-PT'
 
   try {
@@ -24,7 +26,14 @@ export async function POST(req: Request) {
       )
     }
 
-    const result = await searchScientificArticles({ query, limit, page, provider })
+    // Timeout for search operations (28s to leave buffer)
+    const result = await withTimeout(
+      searchScientificArticles({ query, limit, page, provider }),
+      { timeoutMs: 28000 }
+    )
+
+    const responseTime = Date.now() - startTime
+    console.log(`[Search API] Query completed in ${responseTime}ms`)
 
     return NextResponse.json({
       ok: true,
@@ -45,14 +54,21 @@ export async function POST(req: Request) {
       articles: result.articles,
     })
   } catch (error) {
+    const isTimeout = error instanceof TimeoutError || isAbortedError(error)
+    const statusCode = isTimeout ? 504 : 500
     const message = error instanceof Error ? error.message : String(error)
+    const responseTime = Date.now() - startTime
+
+    console.error(`[Search API] ${isTimeout ? 'TIMEOUT' : 'ERROR'} (${responseTime}ms): ${message}`)
+
     return NextResponse.json(
       {
         ok: false,
-        error: getMessage(locale, 'api.searchFailure'),
+        error: isTimeout ? 'Search timeout' : getMessage(locale, 'api.searchFailure'),
         details: message,
+        responseTime,
       },
-      { status: 500 }
+      { status: statusCode }
     )
   }
 }

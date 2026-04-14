@@ -140,6 +140,84 @@ export interface MultimodalPlan {
   assetsNeeded: string[]
 }
 
+// ── Stage 2: Multimodal output drafts ─────────────────────────────────────────
+
+export interface EvidenceAnchor {
+  claimText: string
+  evidenceRecordId: string
+  citationKey: string
+  validated: boolean
+}
+
+export interface PosterDraft {
+  title: string
+  sections: Array<{ label: string; content: string; anchors: EvidenceAnchor[] }>
+  layoutSuggestion: string
+  fidelityScore: number
+}
+
+export interface PodcastScript {
+  title: string
+  segments: Array<{ timestamp: string; speaker: string; text: string; anchors: EvidenceAnchor[] }>
+  durationEstimateMinutes: number
+  fidelityScore: number
+}
+
+export interface VideostoryBoard {
+  title: string
+  scenes: Array<{ sceneNumber: number; description: string; visualNote: string; anchors: EvidenceAnchor[] }>
+  fidelityScore: number
+}
+
+export interface GameScenario {
+  title: string
+  objective: string
+  branches: Array<{ id: string; prompt: string; choices: Array<{ id: string; text: string; consequence: string }> }>
+  fidelityScore: number
+}
+
+export interface OralPresentation {
+  title: string
+  slides: Array<{ slideNumber: number; heading: string; bulletPoints: string[]; speakerNotes: string; anchors: EvidenceAnchor[] }>
+  totalDurationMinutes: number
+  fidelityScore: number
+}
+
+// ── Stage 3: Reflection & extension types ────────────────────────────────────
+
+export interface PeerReview {
+  id: string
+  reviewedProjectId: string
+  reviewerTeam: string
+  rubricDimension: string
+  strengths: string
+  improvements: string
+  anonymous: boolean
+  submittedAt: string
+}
+
+export interface SelfAssessmentRecord {
+  rubricDimensions: Array<{ dimension: string; score: number; justification: string }>
+  overallReflection: string
+  completedAt: string
+}
+
+export interface ReflectionEntry {
+  id: string
+  prompt: string
+  response: string
+  createdAt: string
+}
+
+export interface ExtensionPath {
+  title: string
+  description: string
+  complexity: 'low' | 'medium' | 'high'
+  suggestedDatabases: string[]
+  potentialMethodologies: string[]
+  gapAddressed: string
+}
+
 export interface ReflectionRecord {
   strengths: string[]
   weaknesses: string[]

@@ -4,9 +4,18 @@ import type {
   EvidenceRecord,
   ExplanationDraft,
   FinalResearchQuestion,
+  GameScenario,
   KnowledgeStructure,
+  OralPresentation,
+  PeerReview,
+  PodcastScript,
+  PosterDraft,
+  ExtensionPath,
+  ReflectionEntry,
   SearchArticle,
   SearchDesign,
+  SelfAssessmentRecord,
+  VideostoryBoard,
   WorkflowStepId,
 } from '@/types/research-workflow'
 
@@ -101,6 +110,22 @@ export interface WizardState {
   knowledgeStructure: KnowledgeStructure | null
   explanationDraft: ExplanationDraft | null
   
+  // Stage 2 — Multimodal outputs
+  multimodalOutputs: {
+    poster?: PosterDraft
+    podcast?: PodcastScript
+    videocast?: VideostoryBoard
+    game?: GameScenario
+    oral?: OralPresentation
+  }
+  evidenceFidelityScore: number | null
+
+  // Stage 3 — Reflection
+  peerReviews: PeerReview[]
+  selfAssessment: SelfAssessmentRecord | null
+  reflectionJournal: ReflectionEntry[]
+  extensionPlan: ExtensionPath[] | null
+
   // History
   interactions: InteractionRecord[]
   
@@ -128,6 +153,20 @@ export interface WizardState {
   setEvidenceRecords: (records: EvidenceRecord[]) => void
   setKnowledgeStructure: (structure: KnowledgeStructure | null) => void
   setExplanationDraft: (draft: ExplanationDraft | null) => void
+  // Stage 2
+  setMultimodalPoster: (draft: PosterDraft | undefined) => void
+  setMultimodalPodcast: (script: PodcastScript | undefined) => void
+  setMultimodalVideocast: (board: VideostoryBoard | undefined) => void
+  setMultimodalGame: (scenario: GameScenario | undefined) => void
+  setMultimodalOral: (pres: OralPresentation | undefined) => void
+  setEvidenceFidelityScore: (score: number | null) => void
+  // Stage 3
+  setPeerReviews: (reviews: PeerReview[]) => void
+  addPeerReview: (review: PeerReview) => void
+  setSelfAssessment: (record: SelfAssessmentRecord | null) => void
+  addReflectionEntry: (entry: ReflectionEntry) => void
+  setReflectionJournal: (entries: ReflectionEntry[]) => void
+  setExtensionPlan: (paths: ExtensionPath[] | null) => void
   addInteraction: (record: InteractionRecord) => void
 }
 

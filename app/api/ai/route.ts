@@ -4,11 +4,27 @@ import { buildDefaultUserMessage, getPrompt, resolvePromptId, type PromptMode } 
 import { saveInteraction } from '@/lib/db'
 import { getMissingRequiredFields, resolveWorkflowStepId } from '@/lib/workflow'
 import { getMessage, normalizeLocale, type Locale } from '@/lib/i18n'
+import { withTimeout, TimeoutError, isAbortedError } from '@/lib/timeoutHelper'
+import { API_CONFIG, getTimeRemaining, canContinueProcessing } from '@/lib/apiTimeout'
 
 export async function POST(req: Request) {
+  const startTime = Date.now()
   let safeLocale: Locale = 'pt-PT'
 
   try {
+    // Check if we have time to process
+    if (!canContinueProcessing(startTime, 5000)) {
+      console.error('[API] Insufficient time to process request')
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Server timeout - insufficient processing time',
+          details: 'The request could not be processed within the available time window.',
+        },
+        { status: 504 }
+      )
+    }
+
     const body = await req.json()
     const {
       projectId,
@@ -114,6 +130,7 @@ export async function POST(req: Request) {
     }
 
     console.log(`[API] Received request - Step: ${safeStepId}, Prompt: ${resolvedPromptId}, Topic: ${topic}`)
+    console.log(`[API] Time remaining: ${getTimeRemaining(startTime)}ms`)
 
     const systemPrompt = getPrompt(safePromptKey, promptVariables, { mode: safeMode, locale: safeLocale })
     console.log(`[API] Generated system prompt for prompt: ${resolvedPromptId}`)
@@ -122,13 +139,33 @@ export async function POST(req: Request) {
       content || buildDefaultUserMessage(safePromptKey, promptVariables, { mode: safeMode, locale: safeLocale })
     console.log(`[API] Calling ChatGPT with user message length: ${userMessage.length}`)
 
-    const { content: aiOutput, tokens } = await callChatGPT(systemPrompt, userMessage)
-    console.log(`[API] ChatGPT responded with ${tokens} tokens`)
+    // Check time before expensive operation
+    if (!canContinueProcessing(startTime, 5000)) {
+      console.error('[API] Insufficient time before ChatGPT call')
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Server timeout - insufficient time for AI processing',
+          details: 'The request is taking too long. Try again.',
+        },
+        { status: 504 }
+      )
+    }
+
+    // Call ChatGPT with timeout enforcement + hybrid model selection
+    const { content: aiOutput, tokens, model: usedModel } = await withTimeout(
+      callChatGPT(systemPrompt, userMessage, safeStepId),
+      { timeoutMs: API_CONFIG.FUNCTION_TIMEOUT_MS - 3000 } // 22s timeout for API level
+    )
+
+    console.log(`[API] ChatGPT responded with ${tokens} tokens using model: ${usedModel}`)
+    console.log(`[API] Time remaining after ChatGPT: ${getTimeRemaining(startTime)}ms`)
 
     let dbSaved = false
     let dbError: string | null = null
     if (projectId) {
       dbSaved = true
+      // Fire and forget - don't await database save to avoid timeout
       saveInteraction(
         projectId,
         parsedStage,
@@ -150,19 +187,25 @@ export async function POST(req: Request) {
         })
     }
 
+    const responseTime = Date.now() - startTime
+    console.log(`[API] Total response time: ${responseTime}ms`)
+
     return NextResponse.json({
       ok: true,
       data: {
         output: aiOutput,
         tokens,
+        model: usedModel,
         promptId: resolvedPromptId,
         stepId: safeStepId,
         stepLabel: safeStepLabel,
         dbSaved,
         dbError,
+        responseTime,
       },
       output: aiOutput,
       tokens,
+      model: usedModel,
       promptId: resolvedPromptId,
       stepId: safeStepId,
       stepLabel: safeStepLabel,
@@ -170,17 +213,23 @@ export async function POST(req: Request) {
       dbError,
     })
   } catch (error) {
+    const isTimeout = error instanceof TimeoutError || isAbortedError(error)
+    const statusCode = isTimeout ? 504 : 500
+    const errorType = isTimeout ? 'TIMEOUT' : 'ERROR'
     const errorMsg = error instanceof Error ? error.message : String(error)
-    console.error(`[API] Error: ${errorMsg}`)
+    const responseTime = Date.now() - startTime
+
+    console.error(`[API] ${errorType} (${responseTime}ms elapsed):`, errorMsg)
     console.error('Error details:', error)
 
     return NextResponse.json(
       {
         ok: false,
-        error: getMessage(safeLocale, 'api.genericFailure'),
+        error: isTimeout ? 'Request timeout' : getMessage(safeLocale, 'api.genericFailure'),
         details: errorMsg,
+        responseTime,
       },
-      { status: 500 }
+      { status: statusCode }
     )
   }
 }

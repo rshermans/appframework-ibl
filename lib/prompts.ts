@@ -13,6 +13,15 @@ export type PromptId =
   | 'step4'
   | 'step9'
   | 'generic_guidance'
+  | 'multimodal_poster'
+  | 'multimodal_podcast'
+  | 'multimodal_video'
+  | 'multimodal_game'
+  | 'multimodal_oral'
+  | 'peer_review_guide'
+  | 'self_assessment'
+  | 'reflection_journal'
+  | 'inquiry_extension'
 
 type PromptVariables = Record<string, string | undefined>
 
@@ -320,6 +329,224 @@ Topic: [TOPIC]
 Research Question: [RQ]
 Context: [CONTEXT]`,
   },
+  multimodal_poster: {
+    id: 'multimodal_poster',
+    template: `You are a scientific communication specialist designing a research poster.
+
+Research Question: [RQ]
+Evidence Summary: [EVIDENCE]
+Audience: [AUDIENCE]
+
+Generate a structured poster scaffold. Every section must reference at least one evidence record anchor.
+
+Respond with valid JSON only:
+{
+  "title": "Poster title",
+  "sections": [
+    {
+      "label": "Section name (e.g. Introduction, Methods, Results, Conclusion)",
+      "content": "Suggested text draft for this section",
+      "anchors": [
+        { "claimText": "Claim from evidence", "evidenceRecordId": "id", "citationKey": "Author, Year", "validated": false }
+      ]
+    }
+  ],
+  "layoutSuggestion": "Brief description of suggested poster layout",
+  "fidelityScore": 85
+}`,
+  },
+  multimodal_podcast: {
+    id: 'multimodal_podcast',
+    template: `You are a science communication producer creating a podcast script.
+
+Research Question: [RQ]
+Evidence Summary: [EVIDENCE]
+Audience: [AUDIENCE]
+Target duration (minutes): [DURATION]
+
+Respond with valid JSON only:
+{
+  "title": "Podcast episode title",
+  "segments": [
+    {
+      "timestamp": "00:00",
+      "speaker": "Host | Expert | Narrator",
+      "text": "Script text for this segment",
+      "anchors": [
+        { "claimText": "Claim cited", "evidenceRecordId": "id", "citationKey": "Author, Year", "validated": false }
+      ]
+    }
+  ],
+  "durationEstimateMinutes": 10,
+  "fidelityScore": 80
+}`,
+  },
+  multimodal_video: {
+    id: 'multimodal_video',
+    template: `You are a science video producer designing a videocast storyboard.
+
+Research Question: [RQ]
+Evidence Summary: [EVIDENCE]
+Audience: [AUDIENCE]
+
+Respond with valid JSON only:
+{
+  "title": "Videocast title",
+  "scenes": [
+    {
+      "sceneNumber": 1,
+      "description": "What happens in this scene",
+      "visualNote": "Suggested visual element (chart, animation, text overlay)",
+      "anchors": [
+        { "claimText": "Claim cited", "evidenceRecordId": "id", "citationKey": "Author, Year", "validated": false }
+      ]
+    }
+  ],
+  "fidelityScore": 75
+}`,
+  },
+  multimodal_game: {
+    id: 'multimodal_game',
+    template: `You are a game designer creating an evidence-based science game.
+
+Research Question: [RQ]
+Evidence Summary: [EVIDENCE]
+Audience: [AUDIENCE]
+
+Create a branching narrative game where players make scientific decisions. Consequences must be grounded in evidence.
+
+Respond with valid JSON only:
+{
+  "title": "Game title",
+  "objective": "Learning objective of the game",
+  "branches": [
+    {
+      "id": "start",
+      "prompt": "Scenario description presented to player",
+      "choices": [
+        { "id": "a", "text": "Choice A text", "consequence": "What happens if player picks A" },
+        { "id": "b", "text": "Choice B text", "consequence": "What happens if player picks B" }
+      ]
+    }
+  ],
+  "fidelityScore": 70
+}`,
+  },
+  multimodal_oral: {
+    id: 'multimodal_oral',
+    template: `You are a scientific presentation coach building a slide outline with speaker notes.
+
+Research Question: [RQ]
+Evidence Summary: [EVIDENCE]
+Audience: [AUDIENCE]
+Duration (minutes): [DURATION]
+
+Respond with valid JSON only:
+{
+  "title": "Presentation title",
+  "slides": [
+    {
+      "slideNumber": 1,
+      "heading": "Slide heading",
+      "bulletPoints": ["Point 1", "Point 2"],
+      "speakerNotes": "What the presenter should say for this slide",
+      "anchors": [
+        { "claimText": "Claim cited", "evidenceRecordId": "id", "citationKey": "Author, Year", "validated": false }
+      ]
+    }
+  ],
+  "totalDurationMinutes": 10,
+  "fidelityScore": 85
+}`,
+  },
+  peer_review_guide: {
+    id: 'peer_review_guide',
+    template: `You are a peer review facilitator for IBL research projects.
+
+Reviewer Team: [REVIEWER]
+Reviewed Project Topic: [TOPIC]
+Rubric Dimension: [DIMENSION]
+Work Sample: [WORK_SAMPLE]
+
+Generate guiding prompts to help the reviewer provide constructive rubric-aligned feedback.
+
+Respond with valid JSON only:
+{
+  "strengths_prompt": "Question to help reviewer articulate what is strong",
+  "improvements_prompt": "Question to help reviewer identify improvements",
+  "evidence_check": "Specific thing to verify in the evidence chain",
+  "ethical_note": "One relevant ethical consideration for this dimension"
+}`,
+  },
+  self_assessment: {
+    id: 'self_assessment',
+    template: `You are an IBL self-assessment facilitator.
+
+Research Question: [RQ]
+Evidence Summary: [EVIDENCE]
+Explanation Draft: [EXPLANATION]
+
+Map the work against IBL rubric dimensions R1–R8 and generate self-assessment prompts.
+
+Respond with valid JSON only:
+{
+  "rubricDimensions": [
+    {
+      "dimension": "R1: Research Question Quality",
+      "score": 3,
+      "justification": "Evidence-based justification for the score",
+      "improvementHint": "Specific suggestion to raise score"
+    }
+  ],
+  "overallReflection": "Synthesised reflection across all dimensions"
+}`,
+  },
+  reflection_journal: {
+    id: 'reflection_journal',
+    template: `You are a metacognition facilitator guiding reflective journaling.
+
+Research Question: [RQ]
+Stage: [STAGE]
+Context: [CONTEXT]
+
+Generate 3 short reflective micro-prompts to trigger authentic metacognition.
+One prompt per epistemic dimension: what was learned, what was difficult, what would be done differently.
+
+Respond with valid JSON only:
+{
+  "prompts": [
+    { "id": "learned", "prompt": "What is the most important thing you learned through this inquiry?" },
+    { "id": "challenge", "prompt": "What was the hardest part and why?" },
+    { "id": "redo", "prompt": "If you could redo one decision, what would it be and why?" }
+  ]
+}`,
+  },
+  inquiry_extension: {
+    id: 'inquiry_extension',
+    template: `You are an inquiry extension planner supporting IBL Stage 3.
+
+Research Question: [RQ]
+Knowledge Structure: [KNOWLEDGE_STRUCTURE]
+Evidence Summary: [EVIDENCE]
+Open Issues: [OPEN_ISSUES]
+
+Identify gaps and propose 3 distinct extension paths with complexity estimates.
+
+Respond with valid JSON only:
+{
+  "gapsDetected": ["Gap 1 description", "Gap 2 description"],
+  "extensionPaths": [
+    {
+      "title": "Extension path title",
+      "description": "What this path would investigate",
+      "complexity": "low | medium | high",
+      "suggestedDatabases": ["Database 1"],
+      "potentialMethodologies": ["Methodology 1"],
+      "gapAddressed": "Which gap this addresses"
+    }
+  ]
+}`,
+  },
 }
 
 const PROMPT_ALIAS_MAP = Object.values(PROMPT_REGISTRY).reduce<Record<string, PromptId>>(
@@ -406,6 +633,42 @@ export function buildDefaultUserMessage(
       return portuguese
         ? 'Organiza a evidência extraída em tópicos, subtópicos e um mapa conceptual.'
         : 'Organize the extracted evidence into topics, subtopics, and a concept map.'
+    case 'multimodal_poster':
+      return portuguese
+        ? 'Gera um scaffolding estructurado para poster científico ancorado na evidência recolhida.'
+        : 'Generate a structured scientific poster scaffold anchored to the collected evidence.'
+    case 'multimodal_podcast':
+      return portuguese
+        ? 'Cria o script de um episódio de podcast de comunicação científica baseado na evidência.'
+        : 'Create a science communication podcast script based on the evidence.'
+    case 'multimodal_video':
+      return portuguese
+        ? 'Gera um storyboard de videocast científico por cenas, ancorado na evidência.'
+        : 'Generate a scene-by-scene scientific videocast storyboard anchored to the evidence.'
+    case 'multimodal_game':
+      return portuguese
+        ? 'Cria um jogo de ciência com ramificações narrativas baseadas em evidência.'
+        : 'Create an evidence-based science game with branching narrative scenarios.'
+    case 'multimodal_oral':
+      return portuguese
+        ? 'Gera um outline de apresentação oral com notas de orador ancoradas na evidência.'
+        : 'Generate an oral presentation outline with speaker notes anchored to the evidence.'
+    case 'peer_review_guide':
+      return portuguese
+        ? 'Gera prompts guiados para revisão por pares alinhados com a rúbrica IBL.'
+        : 'Generate guided prompts for peer review aligned with the IBL rubric.'
+    case 'self_assessment':
+      return portuguese
+        ? 'Mapeia o trabalho realizado contra as dimensões da rúbrica IBL R1–R8.'
+        : 'Map the completed work against IBL rubric dimensions R1–R8.'
+    case 'reflection_journal':
+      return portuguese
+        ? 'Gera 3 micro-prompts de reflexão metacognitiva para o estágio atual.'
+        : 'Generate 3 metacognitive reflective micro-prompts for the current stage.'
+    case 'inquiry_extension':
+      return portuguese
+        ? 'Identifica lacunas na investigação e propõe 3 caminhos de extensão distintos.'
+        : 'Identify research gaps and propose 3 distinct extension paths.'
     default:
       return portuguese
         ? 'Fornece orientação estruturada de investigação para a etapa atual.'
