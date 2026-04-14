@@ -2,6 +2,9 @@
 command = "npm run build"
 functions = ".next/server"
 
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "OPENAI_MODEL,NEXT_PUBLIC_APP_URL"
+
 [functions]
 node_bundler = "nft"
 # Netlify timeout limits: 30s (basic) or 60s (pro)
