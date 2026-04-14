@@ -9,7 +9,7 @@ export default function LocaleSwitcher({ compact = false }: { compact?: boolean 
   return (
     <div className={compact ? 'flex items-center gap-2' : 'flex flex-wrap items-center gap-3'}>
       <span className="text-sm font-semibold text-slate-700">{t('language.label')}</span>
-      <div className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+      <div className="inline-flex rounded-full bg-[var(--surface_container)] p-1 ghost-border">
         {SUPPORTED_LOCALES.map((option) => (
           <button
             key={option}
@@ -17,8 +17,8 @@ export default function LocaleSwitcher({ compact = false }: { compact?: boolean 
             onClick={() => setLocale(option)}
             className={`rounded-full px-3 py-1 text-sm transition ${
               locale === option
-                ? 'bg-slate-900 text-white'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'primary-gradient text-[var(--on_primary)]'
+                : 'text-[var(--on_surface)] opacity-70 hover:bg-[var(--surface_container_low)]'
             }`}
           >
             {getLocaleLabel(option as Locale)}

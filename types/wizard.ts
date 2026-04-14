@@ -81,6 +81,7 @@ export interface WizardState {
   stage: Stage
   step: string | number
   workflowStep: WorkflowStepId
+  step0OptionalCompleted: boolean
   
   // Current work
   currentInput: string
@@ -108,6 +109,7 @@ export interface WizardState {
   setStage: (stage: Stage) => void
   setStep: (step: string | number) => void
   setWorkflowStep: (step: WorkflowStepId) => void
+  setStep0OptionalCompleted: (value: boolean) => void
   setInput: (input: string) => void
   setOutput: (output: string) => void
   setMode: (mode: string) => void

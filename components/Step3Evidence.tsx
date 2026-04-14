@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import StepHeader from '@/components/StepHeader'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -358,40 +359,43 @@ export default function Step3Evidence() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">{t('steps.step3.title')}</h2>
-        <p className="text-sm text-gray-600">{t('steps.step3.intro')}</p>
+        <StepHeader
+          stepId="step3_evidence_extraction"
+          title={t('steps.step3.title')}
+          subtitle={t('steps.step3.intro')}
+        />
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-slate-700">{t('steps.step3.anchor')}</div>
-        <div className="font-medium text-slate-900">
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)] opacity-70">{t('steps.step3.anchor')}</div>
+        <div className="font-medium text-[var(--on_surface)]">
           {finalResearchQuestion?.question || t('common.noData')}
         </div>
       </div>
 
       {!canRun && (
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {t('steps.step3.locked')}
         </div>
       )}
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {error}
         </div>
       )}
 
-      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
-        <div className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+      <div className="space-y-3 tonal-card p-5">
+        <div className="font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
           {t('steps.step3.retrievedArticles')}
         </div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-[var(--on_surface)] opacity-70">
           {isPortuguese
             ? `${articlesForAnalysis.length} artigo(s) selecionado(s) para analise`
             : `${articlesForAnalysis.length} selected article(s) for analysis`}
         </div>
         {articlesForAnalysis.length === 0 ? (
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-[var(--on_surface)] opacity-70">
             {selectedSearchArticleIds.length > 0
               ? t('steps.step3.noRetrievedArticles')
               : isPortuguese
@@ -407,35 +411,35 @@ export default function Step3Evidence() {
               return (
                 <div
                   key={article.id}
-                  className={`rounded border p-4 transition ${
+                  className={`rounded-[var(--radius-md)] p-4 transition ${
                     isAnalyzed
-                      ? 'border-emerald-300 bg-emerald-50'
-                      : 'border-slate-200 bg-slate-50'
+                      ? 'ai-user-decided rq-active-accent'
+                      : 'bg-[var(--surface_container_low)]'
                   }`}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-wide text-slate-500">
+                  <div className="flex flex-wrap items-center justify-between gap-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                     <div>
                       {t('steps.step3.evidenceLabel')} {index + 1} | {article.provider}
                     </div>
                     {isAnalyzed && (
-                      <div className="rounded-full bg-emerald-600 px-2 py-1 text-[10px] font-semibold text-white">
+                      <div className="primary-gradient rounded-[var(--radius-md)] px-2 py-1 text-[10px] font-semibold text-[var(--on_primary)]">
                         {isPortuguese ? 'Analisado' : 'Analysed'}
                       </div>
                     )}
                   </div>
-                  <div className="mt-1 font-semibold text-slate-900">{article.title}</div>
-                  <div className="mt-1 text-sm text-slate-600">
+                  <div className="mt-1 font-semibold text-[var(--on_surface)]">{article.title}</div>
+                  <div className="mt-1 text-sm text-[var(--on_surface)] opacity-70">
                     {(article.authors || []).slice(0, 4).join(', ') || t('common.unknownAuthors')}
                     {article.year ? ` | ${article.year}` : ''}
                   </div>
-                  <div className="mt-2 text-sm text-slate-700">
+                  <div className="mt-2 text-sm text-[var(--on_surface)] opacity-70">
                     {article.abstract || t('common.noAbstract')}
                   </div>
                   <div className="mt-3">
                     <button
                       onClick={() => extractFromSource(buildSourcePayload(article), sourceId, article)}
                       disabled={!canRun || loading}
-                      className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                      className="primary-gradient rounded-[var(--radius-md)] px-3 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
                     >
                       {isCurrent && loading
                         ? t('steps.step3.analyzing')
@@ -453,23 +457,23 @@ export default function Step3Evidence() {
         )}
       </div>
 
-      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
-        <div className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+      <div className="space-y-3 tonal-card p-5">
+        <div className="font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
           {t('steps.step3.manualTitle')}
         </div>
-        <div className="rounded border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-800">
+        <div className="bg-[var(--surface_container_low)] p-3 text-sm text-[var(--on_surface)]">
           {isPortuguese
             ? 'Se precisares de mais fontes, este botao tenta automaticamente varios fornecedores e uma pesquisa simplificada antes da analise manual.'
             : 'If you need more sources, this button automatically tries several providers and a simplified query before manual analysis.'}
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm text-slate-700">
+          <label className="text-sm text-[var(--on_surface)] opacity-70">
             {isPortuguese ? 'Fonte relacionada' : 'Related source'}:
             <select
               value={relatedProvider}
               onChange={(event) => setRelatedProvider(event.target.value as Provider)}
-              className="ml-2 rounded border border-slate-300 px-2 py-1 text-sm"
+              className="ml-2 ghost-input inline-block w-auto"
             >
               <option value="rcaap">RCAAP</option>
               <option value="semantic_scholar">Semantic Scholar</option>
@@ -480,7 +484,7 @@ export default function Step3Evidence() {
           <button
             onClick={fetchRelatedArticles}
             disabled={!canRun || relatedLoading}
-            className="rounded bg-indigo-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="primary-gradient rounded-[var(--radius-md)] px-3 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
           >
             {relatedLoading
               ? isPortuguese
@@ -493,7 +497,7 @@ export default function Step3Evidence() {
         </div>
 
         {relatedFeedback && (
-          <div className="rounded border border-emerald-200 bg-emerald-50 p-2 text-sm text-emerald-700">
+          <div className="ai-user-decided rq-active-accent p-2 text-sm">
             {relatedFeedback}
           </div>
         )}
@@ -504,12 +508,12 @@ export default function Step3Evidence() {
           rows={8}
           disabled={!canRun || loading}
           placeholder={t('steps.step3.manualPlaceholder')}
-          className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+          className="ghost-input w-full disabled:opacity-50"
         />
         <button
           onClick={runManualExtraction}
           disabled={!canRun || loading || !sourceText.trim()}
-          className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="primary-gradient rounded-[var(--radius-md)] px-4 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
         >
           {activeSourceId === 'manual' && loading ? t('steps.step3.analyzing') : t('steps.step3.analyzeManual')}
         </button>
@@ -517,22 +521,22 @@ export default function Step3Evidence() {
 
       {evidenceRecords.length > 0 && (
         <div className="space-y-4">
-          <div className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+          <div className="font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
             {t('steps.step3.evidenceTitle')}
           </div>
 
           {evidenceRecords.map((record, index) => (
-            <div key={record.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-1 text-xs uppercase tracking-wide text-slate-500">
+            <div key={record.id} className="tonal-card p-5">
+              <div className="mb-1 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                 {t('steps.step3.evidenceLabel')} {index + 1}
               </div>
-              <div className="text-lg font-semibold text-slate-900">{record.title}</div>
-              <div className="mt-2 text-sm text-slate-600">
+              <div className="text-lg font-semibold text-[var(--on_surface)]">{record.title}</div>
+              <div className="mt-2 text-sm text-[var(--on_surface)] opacity-70">
                 {t('steps.step3.typeLabel')}: {record.sourceType} | {t('steps.step3.relevanceLabel')}:{' '}
                 {record.relevanceScore}/5
               </div>
 
-              <div className="mt-4 space-y-4 text-sm text-slate-800">
+              <div className="mt-4 space-y-4 text-sm text-[var(--on_surface)]">
                 <div>
                   <div className="mb-1 font-semibold">{t('steps.step3.claim')}</div>
                   <div>{record.claim}</div>
@@ -547,7 +551,7 @@ export default function Step3Evidence() {
                   <div className="mb-1 font-semibold">{t('steps.step3.findings')}</div>
                   <ul className="space-y-1">
                     {record.findings.map((finding) => (
-                      <li key={finding} className="rounded border bg-slate-50 px-3 py-2">
+                      <li key={finding} className="bg-[var(--surface_container)] px-3 py-2">
                         {finding}
                       </li>
                     ))}
@@ -558,7 +562,7 @@ export default function Step3Evidence() {
                   <div className="mb-1 font-semibold">{t('steps.step3.limitations')}</div>
                   <ul className="space-y-1">
                     {record.limitations.map((limitation) => (
-                      <li key={limitation} className="rounded border bg-slate-50 px-3 py-2">
+                      <li key={limitation} className="bg-[var(--surface_container)] px-3 py-2">
                         {limitation}
                       </li>
                     ))}
@@ -567,7 +571,7 @@ export default function Step3Evidence() {
 
                 <div>
                   <div className="mb-1 font-semibold">{t('steps.step3.citation')}</div>
-                  <div className="rounded border bg-slate-50 p-3">{record.citation}</div>
+                  <div className="bg-[var(--surface_container)] p-3">{record.citation}</div>
                 </div>
               </div>
             </div>
@@ -576,7 +580,7 @@ export default function Step3Evidence() {
           <div className="flex justify-end">
             <button
               onClick={() => setWorkflowStep('step4_knowledge_structure')}
-              className="rounded bg-slate-900 px-4 py-3 text-white hover:bg-slate-800"
+              className="primary-gradient rounded-[var(--radius-md)] px-4 py-3 text-[var(--on_primary)] transition hover:brightness-110"
             >
               {t('steps.step3.continueButton')}
             </button>

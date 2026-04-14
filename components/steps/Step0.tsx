@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { CandidateResearchQuestion } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import StepHeader from '@/components/StepHeader'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -27,6 +28,7 @@ export default function Step0() {
     setCandidateResearchQuestions,
     setInput,
     setOutput,
+    setStep0OptionalCompleted,
     setWorkflowStep,
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
@@ -146,19 +148,24 @@ export default function Step0() {
 
   return (
     <div className="space-y-4">
+      <StepHeader
+        stepId="step0_generate"
+        title={t('steps.step0.title')}
+      />
+
       <div>
-        <label className="mb-2 block text-sm font-semibold">{t('steps.step0.topicLabel')}</label>
+        <label className="mb-2 block text-sm font-semibold text-[var(--on_surface)]">{t('steps.step0.topicLabel')}</label>
         <input
           type="text"
           value={localTopic}
           onChange={(e) => setLocalTopic(e.target.value)}
           placeholder={t('steps.step0.topicPlaceholder')}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
+          className="ghost-input w-full"
         />
       </div>
 
-      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-indigo-900">
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
           {isPortuguese ? 'Refazer geracao com orientacoes adicionais' : 'Refine generation with extra guidance'}
         </div>
         <input
@@ -169,12 +176,12 @@ export default function Step0() {
               ? 'Ex.: perguntas com foco em impacto social e viabilidade metodologica'
               : 'e.g. focus on social impact and methodological feasibility'
           }
-          className="w-full rounded border border-indigo-200 bg-white px-3 py-2 text-sm"
+          className="ghost-input w-full"
         />
       </div>
 
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-emerald-900">
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
           {isPortuguese ? 'Inserir perguntas manualmente (sem IA)' : 'Insert questions manually (without AI)'}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -186,11 +193,11 @@ export default function Step0() {
                 ? 'Escreve uma pergunta de investigacao manual'
                 : 'Write a manual research question'
             }
-            className="min-w-[260px] flex-1 rounded border border-emerald-200 bg-white px-3 py-2 text-sm"
+            className="ghost-input min-w-[260px] flex-1"
           />
           <button
             onClick={addManualQuestion}
-            className="rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+            className="primary-gradient rounded-[var(--radius-md)] px-4 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110"
           >
             {isPortuguese ? 'Adicionar' : 'Add'}
           </button>
@@ -198,7 +205,7 @@ export default function Step0() {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-100 p-3 text-sm text-red-700">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {error}
         </div>
       )}
@@ -206,9 +213,21 @@ export default function Step0() {
       <button
         onClick={runGeneration}
         disabled={loading}
-        className="w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+        title={isPortuguese ? 'Executar geracao assistida por IA para criar perguntas candidatas.' : 'Run AI-assisted generation to create candidate questions.'}
+        className="primary-gradient w-full rounded-[var(--radius-md)] px-4 py-3 font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
       >
         {loading ? t('steps.step0.generating') : t('steps.step0.generate')}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setStep0OptionalCompleted(true)
+          setWorkflowStep('step1_select')
+        }}
+        className="w-full bg-[var(--surface_container)] px-4 py-2 text-sm font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_low)]"
+      >
+        {isPortuguese ? 'Ignorar Step 0 (opcional)' : 'Skip Step 0 (optional)'}
       </button>
 
       {questions.length > 0 && (
@@ -216,14 +235,14 @@ export default function Step0() {
           <h3 className="text-lg font-semibold">{t('steps.step0.candidateTitle')}</h3>
           <p className="text-sm text-slate-600">{t('steps.step0.candidateIntro')}</p>
           {questions.map((q, idx) => (
-            <div key={`${q.question}-${idx}`} className="rounded-lg border border-gray-200 p-4 transition hover:border-slate-400">
+            <div key={`${q.question}-${idx}`} className="tonal-card p-4 transition hover:bg-[var(--surface_container_low)]">
               <div className="mb-2 flex items-start justify-between gap-3">
-                <div className="font-semibold text-slate-900">
+                <div className="font-semibold text-[var(--on_surface)]">
                   Q{idx + 1}: {q.question}
                 </div>
                 <button
                   onClick={() => removeQuestion(q.question)}
-                  className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 hover:bg-red-100"
+                  className="rounded-[var(--radius-md)] bg-[var(--surface_container)] px-2 py-1 text-xs text-[var(--on_surface)] opacity-60 hover:opacity-100"
                 >
                   {isPortuguese ? 'Remover' : 'Remove'}
                 </button>
@@ -260,8 +279,11 @@ export default function Step0() {
           ))}
 
           <button
-            onClick={() => setWorkflowStep('step1_select')}
-            className="w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
+            onClick={() => {
+              setStep0OptionalCompleted(true)
+              setWorkflowStep('step1_select')
+            }}
+            className="primary-gradient w-full rounded-[var(--radius-md)] px-4 py-3 font-semibold text-[var(--on_primary)] transition hover:brightness-110"
           >
             {t('steps.step0.continueButton')}
           </button>

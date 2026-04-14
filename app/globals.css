@@ -2,6 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design System: "The Digital Curator" ── */
+
+:root {
+  /* Core palette with clearer academic highlights */
+  --primary: #2563eb;
+  --primary_container: #1e40af;
+  --on_primary: #ffffff;
+  --primary_fixed_dim: #93c5fd;
+
+  --secondary: #dc2626;
+  --secondary_container: #fee2e2;
+  --secondary_fixed: #fee2e2;
+  --on_secondary_container: #7f1d1d;
+  --on_secondary_fixed: #7f1d1d;
+
+  --success: #16a34a;
+  --success_soft: #dcfce7;
+  --info: #2563eb;
+  --info_soft: #dbeafe;
+  --warning: #d97706;
+  --warning_soft: #fef3c7;
+
+  /* Surfaces */
+  --surface: #f8fbff;
+  --surface_container_lowest: #ffffff;
+  --surface_container_low: #f1f5f9;
+  --surface_container: #e8eef8;
+  --surface_container_high: #dbe7f5;
+  --surface_variant: #eff6ff;
+  --outline_variant: #94a3b8;
+  --on_surface: #0f172a;
+
+  /* Ambient shadow color */
+  --shadow_ambient: rgba(15, 23, 42, 0.06);
+  --shadow_float: rgba(37, 99, 235, 0.14);
+
+  /* Roundedness scale */
+  --radius-md: 0.375rem;
+  --radius-xl: 0.75rem;
+}
+
+/* ── Reset ── */
 * {
   margin: 0;
   padding: 0;
@@ -9,9 +51,114 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-body), sans-serif;
+  background:
+    radial-gradient(circle at 8% 8%, rgba(37, 99, 235, 0.10), transparent 28%),
+    radial-gradient(circle at 92% 6%, rgba(220, 38, 38, 0.08), transparent 24%),
+    radial-gradient(circle at 50% 100%, rgba(22, 163, 74, 0.08), transparent 24%),
+    var(--surface);
+  color: var(--on_surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Typography families ── */
+.font-display {
+  font-family: var(--font-display), sans-serif;
+}
+
+.font-label {
+  font-family: var(--font-label), sans-serif;
+}
+
+/* ── Signature textures ── */
+.primary-gradient {
+  background-image: linear-gradient(135deg, var(--primary), var(--primary_container));
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+}
+
+.primary-gradient,
+.primary-gradient * {
+  color: var(--on_primary);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+/* ── Tonal card — clear layered paper ── */
+.tonal-card {
+  background: var(--surface_container_lowest);
+  box-shadow: 0 12px 32px var(--shadow_ambient);
+}
+
+/* Ghost border — soft but visible */
+.ghost-border {
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.10);
+}
+
+/* ── Ghost input — readable and focused ── */
+.ghost-input {
+  background: var(--surface_container_lowest);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.85rem;
+  color: var(--on_surface);
+  font-size: 0.875rem;
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.35);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.ghost-input::placeholder {
+  color: #64748b;
+}
+.ghost-input:focus {
+  background: var(--surface_container_lowest);
+  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.24);
+}
+
+/* ── Ambient float shadow (modals, active cards) ── */
+.ambient-shadow {
+  box-shadow: 0 18px 32px var(--shadow_float);
+}
+
+/* ── AI lifecycle states ── */
+.ai-generating {
+  background: linear-gradient(135deg, var(--info_soft), #ffffff);
+  animation: shimmer 2.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+.ai-needs-validation {
+  background: var(--secondary_fixed);
+  color: var(--on_secondary_fixed);
+  box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.14);
+}
+
+.ai-user-decided {
+  background: linear-gradient(135deg, var(--success_soft), #f0fdf4);
+  color: var(--on_surface);
+  box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.14);
+}
+
+.ai-user-decided,
+.ai-user-decided * {
+  color: var(--on_surface);
+}
+
+/* ── Research Question active accent ── */
+.rq-active-accent {
+  border-left: 4px solid var(--success);
+}
+
+/* ── Thread progress line ── */
+.thread-line {
+  width: 2px;
+  background: var(--outline_variant);
 }

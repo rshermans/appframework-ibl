@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { ComparisonResult } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import StepHeader from '@/components/StepHeader'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -72,51 +73,49 @@ export default function Step1A() {
   }
 
   return (
-    <div>
-      <h2 className="mb-4 text-xl font-semibold">{t('steps.step1A.title')}</h2>
+    <div className="space-y-6">
+      <StepHeader stepId="step1a_compare" title={t('steps.step1A.title')} />
 
-      <div className="mb-4 space-y-2">
-        <div className="text-sm font-semibold text-slate-700">{t('steps.step1A.selectedTitle')}</div>
+      <div className="space-y-3">
+        <div className="font-label text-xs font-semibold uppercase tracking-[0.1em] text-[var(--on_surface)] opacity-60">{t('steps.step1A.selectedTitle')}</div>
         {selectedRQs.map((rq, i) => (
-          <div key={i} className="rounded border p-2">
+          <div key={i} className="tonal-card ghost-border p-3 text-sm">
             {rq}
           </div>
         ))}
       </div>
 
       {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {error}
         </div>
       )}
 
-      <div className="mb-4">
-        <label className="mr-4">
+      <div className="flex items-center gap-6">
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
             type="radio"
             value="quick"
             checked={mode === 'quick'}
             onChange={() => setMode('quick')}
           />
-          {' '}
           {t('steps.step1A.quick')}
         </label>
 
-        <label>
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
             type="radio"
             value="advanced"
             checked={mode === 'advanced'}
             onChange={() => setMode('advanced')}
           />
-          {' '}
           {t('steps.step1A.advanced')}
         </label>
       </div>
 
-      <div className="mb-4 rounded border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-900">
+      <div className="bg-[var(--surface_container_low)] p-4 text-sm text-[var(--on_surface)]">
         <div className="font-semibold">{isPortuguese ? 'Modo selecionado' : 'Selected mode'}: {mode}</div>
-        <div className="mt-1">
+        <div className="mt-1 opacity-70">
           {mode === 'quick'
             ? isPortuguese
               ? 'Quick: mais rapido, menos profundidade analitica, bom para iteracoes iniciais.'
@@ -130,7 +129,7 @@ export default function Step1A() {
       <button
         onClick={runAnalysis}
         disabled={loading}
-        className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+        className="primary-gradient rounded-[var(--radius-md)] px-5 py-2.5 font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
       >
         {loading ? t('steps.step1A.running') : t('steps.step1A.run')}
       </button>

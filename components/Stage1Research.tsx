@@ -2,8 +2,12 @@
 
 import { useWizardStore } from '@/store/wizardStore'
 import { getStepContract, resolveWorkflowStepId } from '@/lib/workflow'
+import { getIblEthicalTip, getIblStepMeta, type IBLStepKey } from '@/lib/iblFramework'
 import { useI18n } from '@/components/I18nProvider'
 import LocaleSwitcher from '@/components/LocaleSwitcher'
+import InfoTooltip from '@/components/InfoTooltip'
+import EthicalTip from '@/components/EthicalTip'
+import ArqusBrand from '@/components/ArqusBrand'
 import StepSelect from './StepSelect'
 import Step1A from './Step1A'
 import Step1B from './Step1B'
@@ -22,18 +26,7 @@ const ACTIVE_WORKFLOW_STEPS = [
   'step3_evidence_extraction',
   'step4_knowledge_structure',
   'step5_explanation',
-] as const
-
-const STEP_BADGES: Record<(typeof ACTIVE_WORKFLOW_STEPS)[number], string> = {
-  step0_generate: 'Step 0',
-  step1_select: 'Step 1',
-  step1a_compare: 'Step 1A',
-  step1b_synthesize: 'Step 1B',
-  step2_search_design: 'Step 2',
-  step3_evidence_extraction: 'Step 3',
-  step4_knowledge_structure: 'Step 4',
-  step5_explanation: 'Step 5',
-}
+] as const satisfies readonly IBLStepKey[]
 
 function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
   switch (stepId) {
@@ -66,6 +59,7 @@ export default function Stage1Research() {
     finalResearchQuestion,
     searchArticles,
     searchDesign,
+    step0OptionalCompleted,
     stage,
     workflowStep,
     setWorkflowStep,
@@ -74,20 +68,45 @@ export default function Stage1Research() {
   if (stage !== 1) return null
 
   const activeStep = resolveWorkflowStepId(workflowStep)
+  const visibleSteps =
+    step0OptionalCompleted && activeStep !== 'step0_generate'
+      ? ACTIVE_WORKFLOW_STEPS.filter((stepId) => stepId !== 'step0_generate')
+      : ACTIVE_WORKFLOW_STEPS
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="mb-2 text-2xl font-bold text-slate-900">{t('stage1.title')}</h2>
-          <p className="max-w-3xl text-slate-600">{t('stage1.intro')}</p>
+      <section className="relative overflow-hidden bg-[var(--surface_container_low)] p-6 md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(27,38,59,0.12)_0%,rgba(27,38,59,0.03)_52%,rgba(120,89,27,0.12)_100%)]" />
+        <div className="relative flex flex-wrap items-start justify-between gap-6">
+          <div className="space-y-3">
+            <ArqusBrand />
+            <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--on_surface)] md:text-4xl">
+              {t('stage1.title')}
+            </h2>
+            <p className="max-w-3xl text-slate-700">{t('stage1.intro')}</p>
+            <EthicalTip title={t('common.stageEthicalTip')} tip={getIblEthicalTip('stage1')} />
+          </div>
+          <LocaleSwitcher compact />
         </div>
-        <LocaleSwitcher compact />
-      </div>
+      </section>
 
-      <div className="grid gap-3 md:grid-cols-8">
-        {ACTIVE_WORKFLOW_STEPS.map((stepId) => {
+      {step0OptionalCompleted && activeStep !== 'step0_generate' && (
+        <div className="inline-flex items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface_container)] px-4 py-2.5 text-xs font-semibold text-[var(--on_surface)] ghost-border">
+          <span className="opacity-70">{t('common.step0Archived')}</span>
+          <button
+            type="button"
+            onClick={() => setWorkflowStep('step0_generate')}
+            className="rounded-[var(--radius-md)] bg-[var(--surface_container_lowest)] px-2.5 py-1 text-[10px] uppercase tracking-[0.1em] text-[var(--on_surface)] transition hover:bg-[var(--surface_container_low)]"
+          >
+            {t('common.reopen')}
+          </button>
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-4 xl:grid-cols-7">
+        {visibleSteps.map((stepId) => {
           const step = getStepContract(stepId)
+          const iblMeta = getIblStepMeta(stepId)
           const isActive = activeStep === stepId
           const isStep2Locked =
             stepId === 'step2_search_design' && !finalResearchQuestion?.approvedByUser
@@ -107,21 +126,27 @@ export default function Stage1Research() {
                 }
               }}
               disabled={isLocked}
-              className={`rounded-xl border p-4 text-left transition ${
+              title={iblMeta.title}
+              className={`group relative p-4 text-left transition-all duration-200 ${
                 isActive
-                  ? 'border-slate-900 bg-slate-900 text-white'
-                  : 'border-slate-200 bg-white text-slate-900 hover:border-slate-400'
-              } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                  ? 'bg-[linear-gradient(135deg,rgba(37,99,235,0.10),rgba(22,163,74,0.10))] ambient-shadow rq-active-accent ring-1 ring-[rgba(37,99,235,0.18)]'
+                  : 'tonal-card ghost-border hover:bg-[var(--surface_container_low)]'
+              } ${isLocked ? 'cursor-not-allowed opacity-40' : ''}`}
             >
               <div
-                className={`text-xs uppercase tracking-wide ${
-                  isActive ? 'text-slate-300' : 'text-slate-500'
+                className={`font-label text-[10px] uppercase tracking-[0.12em] ${
+                  isActive ? 'text-[var(--primary_container)]' : 'text-[var(--outline_variant)]'
                 }`}
               >
-                {t(`workflow.${stepId}.badge`) || STEP_BADGES[stepId]}
+                {t(`workflow.${stepId}.badge`) || iblMeta.badge}
               </div>
-              <div className="mt-1 font-semibold">{t(`workflow.${stepId}.label`) || step.label}</div>
-              <div className={`mt-2 text-sm ${isActive ? 'text-slate-200' : 'text-slate-600'}`}>
+              <div className="mt-1.5 text-sm font-semibold">
+                <InfoTooltip
+                  label={t(`workflow.${stepId}.label`) || step.label}
+                  description={iblMeta.title}
+                />
+              </div>
+              <div className={`mt-2 text-xs leading-5 text-[var(--on_surface)] ${isActive ? 'opacity-90' : 'opacity-70'}`}>
                 {isStep2Locked
                   ? t('common.lockedStep2')
                   : isStep3Locked
@@ -132,12 +157,21 @@ export default function Stage1Research() {
                       ? t('common.lockedStep5')
                     : t(`workflow.${stepId}.description`) || step.description}
               </div>
+              {iblMeta.isOptional && (
+                <span className="mt-3 inline-flex rounded-[var(--radius-md)] bg-[var(--secondary_container)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--on_secondary_container)]">
+                  {t('common.optional')}
+                </span>
+              )}
             </button>
           )
         })}
       </div>
 
-      <div className="rounded-xl bg-white p-6 shadow">{renderStep(activeStep)}</div>
+      <div className="bg-[var(--surface_container_low)] p-1">
+        <div className="tonal-card p-6 md:p-10">
+          {renderStep(activeStep)}
+        </div>
+      </div>
     </div>
   )
 }

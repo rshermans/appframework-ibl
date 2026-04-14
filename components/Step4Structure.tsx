@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { KnowledgeStructure } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import StepHeader from '@/components/StepHeader'
+import MarkmapPreview from '@/components/MarkmapPreview'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -95,6 +97,13 @@ function buildPlantUmlMindMap(lines: MindMapLine[]): string {
   return ['@startmindmap', ...normalized, '@endmindmap'].join('\n')
 }
 
+function buildMarkmapMarkdown(lines: MindMapLine[]): string {
+  return lines
+    .filter((line) => line.text.length > 0)
+    .map((line) => `${'  '.repeat(Math.max(0, line.level - 1))}- ${line.text}`)
+    .join('\n')
+}
+
 export default function Step4Structure() {
   const { locale, t } = useI18n()
   const {
@@ -115,6 +124,9 @@ export default function Step4Structure() {
   const isPortuguese = locale === 'pt-PT'
   const rootLabel = finalResearchQuestion?.question || topic || 'Research Question'
   const mindMapLines = knowledgeStructure ? buildMindMapLines(knowledgeStructure, rootLabel) : []
+  const markmapMarkdown = knowledgeStructure
+    ? (knowledgeStructure.mindMapMarkdown?.trim() || buildMarkmapMarkdown(mindMapLines))
+    : ''
   const plantUmlMindMap = knowledgeStructure ? buildPlantUmlMindMap(mindMapLines) : ''
 
   const buildKnowledgeStructure = async () => {
@@ -297,19 +309,22 @@ export default function Step4Structure() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">{t('steps.step4.title')}</h2>
-        <p className="text-sm text-gray-600">{t('steps.step4.intro')}</p>
+        <StepHeader
+          stepId="step4_knowledge_structure"
+          title={t('steps.step4.title')}
+          subtitle={t('steps.step4.intro')}
+        />
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-slate-700">{t('steps.step4.evidenceInput')}</div>
-        <div className="text-sm text-slate-800">
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)] opacity-70">{t('steps.step4.evidenceInput')}</div>
+        <div className="text-sm text-[var(--on_surface)]">
           {t('steps.step4.availableEvidence', { count: evidenceRecords.length })}
         </div>
       </div>
 
-      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-indigo-900">
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
           {isPortuguese ? 'Refazer estrutura com instrucoes adicionais' : 'Redo structure with additional instructions'}
         </div>
         <textarea
@@ -321,18 +336,18 @@ export default function Step4Structure() {
               ? 'Ex.: destacar relacoes causais e criar glossario focado em termos tecnicos'
               : 'e.g. emphasize causal links and build a glossary focused on technical terms'
           }
-          className="w-full rounded border border-indigo-200 bg-white px-3 py-2 text-sm"
+          className="ghost-input w-full"
         />
       </div>
 
       {!canRun && (
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {t('steps.step4.locked')}
         </div>
       )}
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {error}
         </div>
       )}
@@ -341,7 +356,7 @@ export default function Step4Structure() {
         <button
           onClick={buildKnowledgeStructure}
           disabled={!canRun || loading}
-          className="rounded bg-slate-900 px-4 py-3 text-white disabled:opacity-50"
+          className="primary-gradient rounded-[var(--radius-md)] px-4 py-3 text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
         >
           {loading
             ? t('steps.step4.generating')
@@ -352,23 +367,23 @@ export default function Step4Structure() {
         <button
           onClick={() => setMindMapOpen(true)}
           disabled={!knowledgeStructure}
-          className="rounded border border-indigo-300 bg-white px-4 py-3 text-indigo-800 disabled:opacity-50"
+          className="tonal-card ghost-border px-4 py-3 text-[var(--on_surface)] disabled:opacity-50"
         >
           {isPortuguese ? 'Abrir popup do mind map' : 'Open mind map popup'}
         </button>
       </div>
 
       {knowledgeStructure && (
-        <div className="space-y-5 rounded-xl border border-indigo-200 bg-indigo-50 p-5">
+        <div className="space-y-5 bg-[var(--surface_container_low)] p-5">
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step4.topics')}
             </div>
             <div className="flex flex-wrap gap-2">
               {knowledgeStructure.topics.map((topicItem) => (
                 <span
                   key={topicItem}
-                  className="rounded-full border border-indigo-200 bg-white px-3 py-1 text-sm text-slate-900"
+                  className="rounded-full bg-[var(--surface_container)] px-3 py-1 text-sm text-[var(--on_surface)]"
                 >
                   {topicItem}
                 </span>
@@ -377,12 +392,12 @@ export default function Step4Structure() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step4.subtopics')}
             </div>
             <ul className="space-y-2">
               {knowledgeStructure.subtopics.map((subtopic) => (
-                <li key={subtopic} className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm">
+                <li key={subtopic} className="bg-[var(--surface_container)] px-3 py-2 text-sm">
                   {subtopic}
                 </li>
               ))}
@@ -390,14 +405,14 @@ export default function Step4Structure() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step4.conceptNodes')}
             </div>
             <div className="flex flex-wrap gap-2">
               {knowledgeStructure.conceptMapNodes.map((node) => (
                 <span
                   key={node}
-                  className="rounded border border-indigo-200 bg-white px-3 py-1 text-sm text-slate-900"
+                  className="bg-[var(--surface_container)] px-3 py-1 text-sm text-[var(--on_surface)]"
                 >
                   {node}
                 </span>
@@ -406,14 +421,14 @@ export default function Step4Structure() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step4.conceptEdges')}
             </div>
             <ul className="space-y-2">
               {knowledgeStructure.conceptMapEdges.map((edge, index) => (
                 <li
                   key={`${edge.from}-${edge.to}-${index}`}
-                  className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900"
+                  className="bg-[var(--surface_container)] px-3 py-2 text-sm text-[var(--on_surface)]"
                 >
                   {edge.from} {'->'} {edge.to} ({edge.relation})
                 </li>
@@ -423,10 +438,10 @@ export default function Step4Structure() {
 
           {knowledgeStructure.mindMapMarkdown && (
             <div>
-              <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+              <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                 {isPortuguese ? 'Mind map (texto)' : 'Mind map (text)'}
               </div>
-              <pre className="overflow-x-auto rounded border border-indigo-200 bg-white p-3 text-sm text-slate-900">
+              <pre className="overflow-x-auto bg-[var(--surface_container)] p-3 text-sm text-[var(--on_surface)]">
                 {knowledgeStructure.mindMapMarkdown}
               </pre>
             </div>
@@ -434,12 +449,12 @@ export default function Step4Structure() {
 
           {Array.isArray(knowledgeStructure.glossary) && knowledgeStructure.glossary.length > 0 && (
             <div>
-              <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+              <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                 {isPortuguese ? 'Glossario' : 'Glossary'}
               </div>
               <ul className="space-y-2">
                 {knowledgeStructure.glossary.map((entry) => (
-                  <li key={`${entry.term}-${entry.definition}`} className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900">
+                  <li key={`${entry.term}-${entry.definition}`} className="bg-[var(--surface_container)] px-3 py-2 text-sm text-[var(--on_surface)]">
                     <span className="font-semibold">{entry.term}:</span> {entry.definition}
                   </li>
                 ))}
@@ -450,7 +465,7 @@ export default function Step4Structure() {
           <div className="flex justify-end">
             <button
               onClick={() => setWorkflowStep('step5_explanation')}
-              className="rounded bg-slate-900 px-4 py-3 text-white hover:bg-slate-800"
+              className="primary-gradient rounded-[var(--radius-md)] px-4 py-3 text-[var(--on_primary)] transition hover:brightness-110"
             >
               {t('steps.step4.continueButton')}
             </button>
@@ -463,10 +478,10 @@ export default function Step4Structure() {
           <div className="max-h-[90vh] w-full max-w-6xl overflow-auto rounded-2xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
-                <div className="text-lg font-semibold text-slate-900">
+                <div className="text-lg font-semibold text-[var(--on_surface)]">
                   {isPortuguese ? 'Preview do mind map' : 'Mind map preview'}
                 </div>
-                <div className="text-sm text-slate-500">
+                <div className="text-sm text-[var(--on_surface)] opacity-70">
                   {isPortuguese
                     ? 'Representacao visual do texto futuro e codigo PlantUML pronto para editor externo.'
                     : 'Visual representation of the future text and PlantUML code ready for external editors.'}
@@ -474,7 +489,7 @@ export default function Step4Structure() {
               </div>
               <button
                 onClick={() => setMindMapOpen(false)}
-                className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700"
+                className="ghost-input"
               >
                 {isPortuguese ? 'Fechar' : 'Close'}
               </button>
@@ -482,34 +497,18 @@ export default function Step4Structure() {
 
             <div className="grid gap-6 p-5 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-4">
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-                  <div className="mb-3 text-sm font-semibold uppercase tracking-wide text-indigo-700">
-                    {isPortuguese ? 'Estrutura visual tipo markmap' : 'Markmap-style visual structure'}
+                <div className="bg-[var(--surface_container_low)] p-4">
+                  <div className="mb-3 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
+                    {isPortuguese ? 'Preview visual interativo do mind map' : 'Interactive mind map preview'}
                   </div>
-                  <div className="space-y-2">
-                    {mindMapLines.map((line, index) => (
-                      <div
-                        key={`${line.level}-${line.text}-${index}`}
-                        className={`rounded px-3 py-2 text-sm ${
-                          line.level === 1
-                            ? 'bg-slate-900 font-semibold text-white'
-                            : line.level === 2
-                              ? 'border border-indigo-200 bg-white text-slate-900'
-                              : 'border border-slate-200 bg-slate-50 text-slate-700'
-                        }`}
-                        style={{ marginLeft: `${(line.level - 1) * 20}px` }}
-                      >
-                        {line.text}
-                      </div>
-                    ))}
-                  </div>
+                  <MarkmapPreview markdown={markmapMarkdown} />
                 </div>
 
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                  <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+                <div className="ai-user-decided rq-active-accent p-4">
+                  <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--primary_container)]">
                     {isPortuguese ? 'Leitura do mapa' : 'Map reading'}
                   </div>
-                  <p className="text-sm text-slate-700">
+                  <p className="text-sm text-[var(--on_surface)] opacity-90">
                     {isPortuguese
                       ? 'O nodo raiz representa a pergunta final. Os ramos de segundo nivel correspondem aos topicos centrais e o terceiro nivel antecipa os detalhes que deverao aparecer no texto cientifico.'
                       : 'The root node represents the final question. Second-level branches capture the central topics, and the third level anticipates the details that should appear in the scientific text.'}
@@ -518,21 +517,30 @@ export default function Step4Structure() {
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">
+                <div className="bg-[var(--surface_container_low)] p-4">
+                  <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                     PlantUML mind map
                   </div>
-                  <pre className="overflow-x-auto rounded border border-slate-200 bg-white p-3 text-sm text-slate-900">
+                  <pre className="overflow-x-auto bg-[var(--surface_container)] p-3 text-sm text-[var(--on_surface)]">
                     {plantUmlMindMap}
                   </pre>
                 </div>
 
+                <div className="bg-[var(--surface_container_low)] p-4">
+                  <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
+                    {isPortuguese ? 'Outline para plugin' : 'Plugin outline'}
+                  </div>
+                  <pre className="overflow-x-auto bg-[var(--surface_container)] p-3 text-sm text-[var(--on_surface)]">
+                    {markmapMarkdown}
+                  </pre>
+                </div>
+
                 {knowledgeStructure.mindMapMarkdown && (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">
+                  <div className="bg-[var(--surface_container_low)] p-4">
+                    <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                       {isPortuguese ? 'Outline original' : 'Original outline'}
                     </div>
-                    <pre className="overflow-x-auto rounded border border-slate-200 bg-white p-3 text-sm text-slate-900">
+                    <pre className="overflow-x-auto bg-[var(--surface_container)] p-3 text-sm text-[var(--on_surface)]">
                       {knowledgeStructure.mindMapMarkdown}
                     </pre>
                   </div>

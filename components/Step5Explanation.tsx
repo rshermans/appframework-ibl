@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { ExplanationDraft, EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import StepHeader from '@/components/StepHeader'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { retryWithBackoff } from '@/lib/retryHelper'
 import { safeFetch } from '@/lib/safeFetch'
@@ -269,28 +270,31 @@ export default function Step5Explanation() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">{t('steps.step5.title')}</h2>
-        <p className="text-sm text-gray-600">{t('steps.step5.intro')}</p>
+        <StepHeader
+          stepId="step5_explanation"
+          title={t('steps.step5.title')}
+          subtitle={t('steps.step5.intro')}
+        />
       </div>
 
       {!canRun && (
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {t('steps.step5.locked')}
         </div>
       )}
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {error}
         </div>
       )}
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-slate-700">{t('common.audience')}</div>
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)] opacity-70">{t('common.audience')}</div>
         <select
           value={audience}
           onChange={(event) => setAudience(event.target.value as 'expert' | 'general')}
-          className="rounded border border-slate-300 bg-white px-3 py-2 text-sm"
+          className="ghost-input inline-block w-auto"
         >
           <option value="expert">{t('steps.step5.expert')}</option>
           <option value="general">{t('steps.step5.general')}</option>
@@ -300,20 +304,20 @@ export default function Step5Explanation() {
       <button
         onClick={buildExplanationDraft}
         disabled={!canRun || loading}
-        className="rounded bg-slate-900 px-4 py-3 text-white disabled:opacity-50"
+        className="primary-gradient rounded-[var(--radius-md)] px-4 py-3 text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
       >
         {loading ? t('steps.step5.generating') : t('steps.step5.generateButton')}
       </button>
 
       {explanationDraft && (
-        <div className="space-y-5 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+        <div className="space-y-5 ai-user-decided rq-active-accent p-5">
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step5.outline')}
             </div>
             <ol className="space-y-2">
               {explanationDraft.outline.map((item, index) => (
-                <li key={`${item}-${index}`} className="rounded border bg-white px-3 py-2 text-sm">
+                <li key={`${item}-${index}`} className="tonal-card ghost-border px-3 py-2 text-sm">
                   {index + 1}. {item}
                 </li>
               ))}
@@ -321,22 +325,22 @@ export default function Step5Explanation() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step5.argumentCore')}
             </div>
-            <div className="rounded border bg-white p-4 text-sm text-slate-900">
+            <div className="tonal-card ghost-border p-4 text-sm text-[var(--on_surface)]">
               {explanationDraft.argumentCore}
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+              <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                 {t('steps.step5.evidenceReferences')}
               </div>
               <ul className="space-y-2">
                 {explanationDraft.evidenceReferences.map((reference) => (
-                  <li key={reference} className="rounded border bg-white px-3 py-2 text-sm text-slate-900">
+                  <li key={reference} className="tonal-card ghost-border px-3 py-2 text-sm text-[var(--on_surface)]">
                     {reference}
                   </li>
                 ))}
@@ -344,12 +348,12 @@ export default function Step5Explanation() {
             </div>
 
             <div>
-              <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+              <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                 {t('steps.step5.openIssues')}
               </div>
               <ul className="space-y-2">
                 {explanationDraft.openIssues.map((issue) => (
-                  <li key={issue} className="rounded border bg-white px-3 py-2 text-sm text-slate-900">
+                  <li key={issue} className="tonal-card ghost-border px-3 py-2 text-sm text-[var(--on_surface)]">
                     {issue}
                   </li>
                 ))}
@@ -358,12 +362,12 @@ export default function Step5Explanation() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {isPortuguese ? 'Bibliografia completa' : 'Complete bibliography'}
             </div>
             <ul className="space-y-2">
               {explanationDraft.bibliography.map((entry) => (
-                <li key={entry} className="rounded border bg-white px-3 py-2 text-sm text-slate-900">
+                <li key={entry} className="tonal-card ghost-border px-3 py-2 text-sm text-[var(--on_surface)]">
                   {entry}
                 </li>
               ))}
@@ -371,16 +375,16 @@ export default function Step5Explanation() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {isPortuguese ? 'Referências verificáveis (com links)' : 'Verifiable references (with links)'}
             </div>
             <ul className="space-y-2">
               {reviewedReferences.map((reference) => (
-                <li key={reference.key} className="rounded border bg-white px-3 py-3 text-sm text-slate-900">
+                <li key={reference.key} className="tonal-card ghost-border px-3 py-3 text-sm text-[var(--on_surface)]">
                   <div>{reference.citation}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                     {reference.provider && (
-                      <span className="rounded bg-slate-100 px-2 py-1 font-semibold text-slate-700">
+                      <span className="bg-[var(--surface_container)] px-2 py-1 font-semibold text-[var(--on_surface)] opacity-70">
                         {reference.provider}
                       </span>
                     )}
@@ -389,7 +393,7 @@ export default function Step5Explanation() {
                         href={reference.articleUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded bg-blue-100 px-2 py-1 font-semibold text-blue-800 hover:bg-blue-200"
+                        className="bg-[var(--surface_container)] px-2 py-1 font-semibold text-[var(--on_surface)] hover:brightness-110"
                       >
                         {isPortuguese ? 'Abrir artigo' : 'Open article'}
                       </a>
@@ -399,7 +403,7 @@ export default function Step5Explanation() {
                         href={reference.articleUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded bg-emerald-100 px-2 py-1 font-semibold text-emerald-800 hover:bg-emerald-200"
+                        className="bg-[var(--surface_container)] px-2 py-1 font-semibold text-[var(--on_surface)] hover:brightness-110"
                       >
                         {isPortuguese ? 'Baixar PDF' : 'Download PDF'}
                       </a>
@@ -409,13 +413,13 @@ export default function Step5Explanation() {
                         href={reference.doiUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded bg-indigo-100 px-2 py-1 font-semibold text-indigo-800 hover:bg-indigo-200"
+                        className="bg-[var(--surface_container)] px-2 py-1 font-semibold text-[var(--on_surface)] hover:brightness-110"
                       >
                         DOI
                       </a>
                     )}
                     {!reference.articleUrl && !reference.doiUrl && (
-                      <span className="rounded bg-amber-100 px-2 py-1 font-semibold text-amber-800">
+                      <span className="ai-needs-validation px-2 py-1 font-semibold text-sm">
                         {isPortuguese ? 'Sem link disponível nesta referência' : 'No link available for this reference'}
                       </span>
                     )}

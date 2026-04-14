@@ -71,7 +71,9 @@ async function searchSemanticScholar(
     headers['x-api-key'] = apiKey
   }
 
-  const response = await runSemanticScholarRequest(() =>
+  let resolvedPage = page
+  let resolvedPageSize = pageSize
+  let response = await runSemanticScholarRequest(() =>
     fetch(url.toString(), {
       method: 'GET',
       headers,
@@ -81,7 +83,34 @@ async function searchSemanticScholar(
 
   if (!response.ok) {
     const details = await safeReadText(response)
-    throw new Error(`Semantic Scholar search failed (${response.status}): ${details}`)
+    const offsetUnavailable =
+      response.status === 400 &&
+      /Requested data for this limit and\/or offset is not available/i.test(details)
+
+    if (offsetUnavailable) {
+      const fallbackUrl = new URL('https://api.semanticscholar.org/graph/v1/paper/search')
+      resolvedPage = 1
+      resolvedPageSize = Math.min(pageSize, 10)
+      fallbackUrl.searchParams.set('query', query)
+      fallbackUrl.searchParams.set('limit', String(resolvedPageSize))
+      fallbackUrl.searchParams.set('offset', '0')
+      fallbackUrl.searchParams.set('fields', 'paperId,title,abstract,year,authors,url,externalIds')
+
+      response = await runSemanticScholarRequest(() =>
+        fetch(fallbackUrl.toString(), {
+          method: 'GET',
+          headers,
+          cache: 'no-store',
+        })
+      )
+
+      if (!response.ok) {
+        const retryDetails = await safeReadText(response)
+        throw new Error(`Semantic Scholar search failed (${response.status}): ${retryDetails}`)
+      }
+    } else {
+      throw new Error(`Semantic Scholar search failed (${response.status}): ${details}`)
+    }
   }
 
   const payload = (await response.json()) as {
@@ -119,13 +148,13 @@ async function searchSemanticScholar(
     provider: 'semantic_scholar',
     articles,
     pagination: {
-      page,
-      pageSize,
+      page: resolvedPage,
+      pageSize: resolvedPageSize,
       totalResults,
       hasNextPage:
         totalResults !== undefined
-          ? page * pageSize < totalResults
-          : articles.length === pageSize,
+          ? resolvedPage * resolvedPageSize < totalResults
+          : articles.length === resolvedPageSize,
     },
   }
 }

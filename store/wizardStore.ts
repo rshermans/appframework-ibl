@@ -1,13 +1,17 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { WizardState, Stage, InteractionRecord } from '@/types/wizard'
 import { resolveWorkflowStepId, toLegacyStepId } from '@/lib/workflow'
 
-export const useWizardStore = create<WizardState>((set) => ({
+export const useWizardStore = create<WizardState>()(
+  persist(
+    (set) => ({
   projectId: '',
   topic: '',
   stage: 1,
   step: 'step0',
   workflowStep: 'step0_generate',
+  step0OptionalCompleted: false,
   currentInput: '',
   currentOutput: '',
   currentMode: 'standard',
@@ -37,6 +41,9 @@ export const useWizardStore = create<WizardState>((set) => ({
 
   setWorkflowStep: (workflowStep) =>
     set({ workflowStep, step: toLegacyStepId(workflowStep) }),
+
+  setStep0OptionalCompleted: (step0OptionalCompleted) =>
+    set({ step0OptionalCompleted }),
 
   setInput: (input: string) =>
     set({ currentInput: input }),
@@ -122,4 +129,15 @@ export const useWizardStore = create<WizardState>((set) => ({
     set((state) => ({
       interactions: [...state.interactions, record],
     })),
-}))
+    }),
+    {
+      name: 'ibl-step0-memory',
+      partialize: (state) => ({
+        topic: state.topic,
+        rqCandidates: state.rqCandidates,
+        candidateResearchQuestions: state.candidateResearchQuestions,
+        step0OptionalCompleted: state.step0OptionalCompleted,
+      }),
+    }
+  )
+)

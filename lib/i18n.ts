@@ -34,42 +34,42 @@ const messages: Record<Locale, MessageTree> = {
     workflow: {
       step0_generate: {
         badge: 'Etapa 0',
-        label: 'Gerar perguntas',
+        label: 'Candidate Research Questions',
         description: 'Gerar um conjunto limitado de candidatos a perguntas de investigação.',
       },
       step1_select: {
         badge: 'Etapa 1',
-        label: 'Selecionar perguntas',
+        label: 'Final RQ Candidate Selection',
         description: 'Seleciona até três candidatos para comparação posterior.',
       },
       step1a_compare: {
         badge: 'Etapa 1A',
-        label: 'Comparar perguntas',
-        description: 'A IA compara as perguntas selecionadas e apresenta a análise.',
+        label: 'Final RQ Synthesis Support',
+        description: 'Comparação assistida para apoiar a síntese final da pergunta de investigação.',
       },
       step1b_synthesize: {
         badge: 'Etapa 1B',
-        label: 'Sintetizar pergunta final',
-        description: 'Cria uma pergunta final e uma justificação curta a partir da comparação.',
+        label: 'Epistemological Analysis & Final RQ Decision',
+        description: 'Consolida a decisão final da pergunta e justificação metodológica.',
       },
       step2_search_design: {
         badge: 'Etapa 2',
-        label: 'Desenhar a pesquisa',
+        label: 'Search String Builder / Search Design',
         description: 'Transforma a pergunta final num plano de pesquisa reutilizável.',
       },
       step3_evidence_extraction: {
-        badge: 'Etapa 3',
-        label: 'Extrair evidência',
+        badge: 'Etapa 4',
+        label: 'Evidence Extractor',
         description: 'Extrai evidência de fontes externas para registos estruturados.',
       },
       step4_knowledge_structure: {
-        badge: 'Etapa 4',
-        label: 'Estruturar conhecimento',
-        description: 'Organiza a evidência em tópicos, subtópicos e relações conceptuais.',
+        badge: 'Etapas 6-7',
+        label: 'Topic/Subtopic Mapper + Mind Map',
+        description: 'Organiza evidência em tópicos e gera estrutura conceptual visual.',
       },
       step5_explanation: {
-        badge: 'Etapa 5',
-        label: 'Construir explicação',
+        badge: 'Etapa 9',
+        label: 'Scientific Explanation Scaffolder',
         description: 'Transforma o conhecimento estruturado num esboço de explicação científica.',
       },
     },
@@ -86,6 +86,11 @@ const messages: Record<Locale, MessageTree> = {
       loading: 'A carregar...',
       provider: 'Fornecedor',
       audience: 'Público-alvo',
+      ethicalTip: 'Dica ética',
+      stageEthicalTip: 'Dica ética do estágio',
+      optional: 'Opcional',
+      step0Archived: 'A Etapa 0 foi arquivada na memória. Podes reabri-la se precisares.',
+      reopen: 'Reabrir',
     },
     steps: {
       step0: {
@@ -159,7 +164,7 @@ const messages: Record<Locale, MessageTree> = {
         providerLabel: 'Fornecedor',
       },
       step3: {
-        title: 'Etapa 3 - Extração de evidência',
+        title: 'Etapa 4 - Evidence Extractor',
         intro:
           'Analisa artigos científicos recuperados com um clique ou cola texto personalizado quando necessário.',
         anchor: 'Âncora da investigação',
@@ -186,7 +191,7 @@ const messages: Record<Locale, MessageTree> = {
         continueButton: 'Continuar para a Etapa 4',
       },
       step4: {
-        title: 'Etapa 4 - Estrutura de conhecimento',
+        title: 'Etapas 6-7 - Topic/Subtopic Mapper e Mind Map',
         intro:
           'Converte a evidência extraída num modelo estruturado de tópicos, subtópicos e relações conceptuais.',
         evidenceInput: 'Entrada de evidência',
@@ -201,7 +206,7 @@ const messages: Record<Locale, MessageTree> = {
         availableEvidence: '{count} registo(s) de evidência disponível(eis).',
       },
       step5: {
-        title: 'Etapa 5 - Explicação científica',
+        title: 'Etapa 9 - Scientific Explanation Scaffolder',
         intro:
           'Constrói um esboço de explicação rigoroso a partir da evidência estruturada e do mapa de conhecimento.',
         locked:
@@ -215,6 +220,16 @@ const messages: Record<Locale, MessageTree> = {
         expert: 'Especialista',
         general: 'Geral',
       },
+    },
+    progress: {
+      title: 'Progresso',
+      topic: 'Tópico definido',
+      candidateQuestions: 'Perguntas candidatas',
+      finalQuestion: 'Pergunta final aprovada',
+      searchDesign: 'Design de pesquisa',
+      evidence: 'Evidência extraída',
+      knowledgeStructure: 'Estrutura de conhecimento',
+      explanation: 'Explicação científica',
     },
     copilot: {
       title: 'Copilot - Em breve',
@@ -255,42 +270,42 @@ const messages: Record<Locale, MessageTree> = {
     workflow: {
       step0_generate: {
         badge: 'Step 0',
-        label: 'Generate questions',
+        label: 'Candidate Research Questions',
         description: 'Generate a bounded set of candidate research questions.',
       },
       step1_select: {
         badge: 'Step 1',
-        label: 'Select questions',
+        label: 'Final RQ Candidate Selection',
         description: 'Select up to three candidates for later comparison.',
       },
       step1a_compare: {
         badge: 'Step 1A',
-        label: 'Compare questions',
-        description: 'The AI compares selected questions and surfaces analysis.',
+        label: 'Final RQ Synthesis Support',
+        description: 'AI-assisted comparison to support final research-question synthesis.',
       },
       step1b_synthesize: {
         badge: 'Step 1B',
-        label: 'Synthesize final question',
-        description: 'Create one final question and a short justification from the comparison.',
+        label: 'Epistemological Analysis & Final RQ Decision',
+        description: 'Consolidate the final question decision with methodological justification.',
       },
       step2_search_design: {
         badge: 'Step 2',
-        label: 'Design search',
+        label: 'Search String Builder / Search Design',
         description: 'Turn the final question into a reusable search plan.',
       },
       step3_evidence_extraction: {
-        badge: 'Step 3',
-        label: 'Extract evidence',
+        badge: 'Step 4',
+        label: 'Evidence Extractor',
         description: 'Extract evidence from external sources into structured records.',
       },
       step4_knowledge_structure: {
-        badge: 'Step 4',
-        label: 'Structure knowledge',
-        description: 'Organise evidence into topics, subtopics, and conceptual relationships.',
+        badge: 'Steps 6-7',
+        label: 'Topic/Subtopic Mapper + Mind Map',
+        description: 'Organize evidence into topic structures and concept mapping.',
       },
       step5_explanation: {
-        badge: 'Step 5',
-        label: 'Build explanation',
+        badge: 'Step 9',
+        label: 'Scientific Explanation Scaffolder',
         description: 'Transform structured knowledge into a scientific explanation draft.',
       },
     },
@@ -307,6 +322,11 @@ const messages: Record<Locale, MessageTree> = {
       loading: 'Loading...',
       provider: 'Provider',
       audience: 'Audience',
+      ethicalTip: 'Ethical tip',
+      stageEthicalTip: 'Stage ethical tip',
+      optional: 'Optional',
+      step0Archived: 'Step 0 was archived in memory. You can reopen it whenever needed.',
+      reopen: 'Reopen',
     },
     steps: {
       step0: {
@@ -380,7 +400,7 @@ const messages: Record<Locale, MessageTree> = {
         providerLabel: 'Provider',
       },
       step3: {
-        title: 'Step 3 - Evidence Extraction',
+        title: 'Step 4 - Evidence Extractor',
         intro: 'Analyse retrieved scientific articles with one click, or paste custom text when needed.',
         anchor: 'Research anchor',
         locked:
@@ -405,7 +425,7 @@ const messages: Record<Locale, MessageTree> = {
         continueButton: 'Continue to Step 4',
       },
       step4: {
-        title: 'Step 4 - Knowledge Structure',
+        title: 'Steps 6-7 - Topic/Subtopic Mapper and Mind Map',
         intro:
           'Convert extracted evidence into a structured model of topics, subtopics, and concept relationships.',
         evidenceInput: 'Evidence input',
@@ -420,7 +440,7 @@ const messages: Record<Locale, MessageTree> = {
         availableEvidence: '{count} evidence record(s) available.',
       },
       step5: {
-        title: 'Step 5 - Scientific Explanation',
+        title: 'Step 9 - Scientific Explanation Scaffolder',
         intro: 'Build a rigorous explanation draft from the structured evidence and knowledge map.',
         locked:
           'Step 5 is locked until the final question is approved and both evidence and knowledge structure are available.',
@@ -433,6 +453,16 @@ const messages: Record<Locale, MessageTree> = {
         expert: 'Expert',
         general: 'General',
       },
+    },
+    progress: {
+      title: 'Progress',
+      topic: 'Topic defined',
+      candidateQuestions: 'Candidate questions',
+      finalQuestion: 'Final question approved',
+      searchDesign: 'Search design',
+      evidence: 'Evidence extracted',
+      knowledgeStructure: 'Knowledge structure',
+      explanation: 'Scientific explanation',
     },
     copilot: {
       title: 'Copilot - Coming Soon',

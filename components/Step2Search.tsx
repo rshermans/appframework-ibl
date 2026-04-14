@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { SearchArticle, SearchDesign } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import StepHeader from '@/components/StepHeader'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -272,24 +273,27 @@ export default function Step2Search() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">{t('steps.step2.title')}</h2>
-        <p className="text-sm text-gray-600">{t('steps.step2.intro')}</p>
+        <StepHeader
+          stepId="step2_search_design"
+          title={t('steps.step2.title')}
+          subtitle={t('steps.step2.intro')}
+        />
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-slate-700">
+      <div className="tonal-card rq-active-accent p-4">
+        <div className="font-label mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--on_surface)] opacity-60">
           {t('steps.step2.currentQuestion')}
         </div>
-        <div className="font-medium text-slate-900">
+        <div className="font-semibold text-[var(--on_surface)]">
           {finalResearchQuestion?.question || t('common.noData')}
         </div>
-        <div className="mt-3 text-sm text-slate-600">
+        <div className="mt-3 text-sm opacity-60">
           {isApproved ? t('steps.step2.statusApproved') : t('steps.step2.statusPending')}
         </div>
       </div>
 
-      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-indigo-800">
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
           {isPortuguese ? 'Refazer com contexto do utilizador' : 'Redo with user context'}
         </div>
         <div className="grid gap-3 md:grid-cols-2">
@@ -301,7 +305,7 @@ export default function Step2Search() {
                 ? 'Ex.: foco em estudos europeus e revisoes sistematicas'
                 : 'e.g. focus on European studies and systematic reviews'
             }
-            className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm"
+            className="ghost-input"
           />
           <input
             value={userRefinementKeywords}
@@ -311,19 +315,19 @@ export default function Step2Search() {
                 ? 'Ex.: health literacy, intervention design'
                 : 'e.g. health literacy, intervention design'
             }
-            className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm"
+            className="ghost-input"
           />
         </div>
       </div>
 
       {!isApproved && (
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {t('steps.step2.locked')}
         </div>
       )}
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {error}
         </div>
       )}
@@ -331,20 +335,20 @@ export default function Step2Search() {
       <button
         onClick={runSearchDesign}
         disabled={loading || !isApproved}
-        className="rounded bg-slate-900 px-4 py-3 text-white disabled:opacity-50"
+        className="primary-gradient rounded-[var(--radius-md)] px-5 py-3 font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
       >
         {loading ? t('steps.step2.generating') : t('steps.step2.generateButton')}
       </button>
 
       {searchDesign && (
-        <div className="space-y-5 rounded-xl border border-sky-200 bg-sky-50 p-5">
+        <div className="tonal-card space-y-6 p-6">
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
+            <div className="font-label mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step2.keywords')}
             </div>
             <div className="flex flex-wrap gap-2">
               {searchDesign.keywords.map((keyword) => (
-                <span key={keyword} className="rounded-full bg-white px-3 py-1 text-sm text-slate-900">
+                <span key={keyword} className="bg-[var(--surface_container_low)] px-3 py-1 text-sm text-[var(--on_surface)]">
                   {keyword}
                 </span>
               ))}
@@ -352,12 +356,12 @@ export default function Step2Search() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
+            <div className="font-label mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step2.synonyms')}
             </div>
             <div className="flex flex-wrap gap-2">
               {searchDesign.synonyms.map((synonym) => (
-                <span key={synonym} className="rounded-full bg-white px-3 py-1 text-sm text-slate-900">
+                <span key={synonym} className="bg-[var(--surface_container_low)] px-3 py-1 text-sm text-[var(--on_surface)]">
                   {synonym}
                 </span>
               ))}
@@ -365,15 +369,15 @@ export default function Step2Search() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-sky-700">
+            <div className="font-label mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step2.booleanQuery')}
             </div>
-            <div className="rounded border bg-white p-4 font-mono text-sm text-slate-900">
+            <div className="bg-[var(--surface_container_high)] p-4 font-mono text-sm text-[var(--on_surface)]">
               {searchDesign.booleanQuery}
             </div>
           </div>
 
-          <div className="space-y-3 rounded border border-slate-200 bg-white p-4">
+          <div className="space-y-3 bg-[var(--surface_container_low)] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm font-semibold text-slate-800">{t('steps.step2.retrievalTitle')}</div>
               <div className="text-xs text-slate-600">
@@ -384,12 +388,12 @@ export default function Step2Search() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <label className="text-sm text-slate-700">
+              <label className="text-sm text-[var(--on_surface)]">
                 {t('steps.step2.providerLabel')}:
                 <select
                   value={provider}
                   onChange={(event) => void changeProvider(event.target.value as Provider)}
-                  className="ml-2 rounded border border-slate-300 px-2 py-1 text-sm"
+                  className="ghost-input ml-2 inline-block w-auto"
                 >
                   <option value="rcaap">{providerLabel('rcaap')}</option>
                   <option value="semantic_scholar">{providerLabel('semantic_scholar')}</option>
@@ -400,16 +404,16 @@ export default function Step2Search() {
               <button
                 onClick={() => runRetrieval(searchDesign.booleanQuery, 1)}
                 disabled={searchLoading}
-                className="rounded bg-sky-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="primary-gradient rounded-[var(--radius-md)] px-3 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
               >
                 {searchLoading ? t('steps.step2.retrieving') : t('steps.step2.retrieveButton')}
               </button>
-              <label className="text-sm text-slate-700">
+              <label className="text-sm text-[var(--on_surface)] opacity-70">
                 {isPortuguese ? 'Resultados por pagina' : 'Results per page'}:
                 <select
                   value={pageSize}
                   onChange={(event) => setPageSize(Number(event.target.value))}
-                  className="ml-2 rounded border border-slate-300 px-2 py-1 text-sm"
+                  className="ghost-input ml-2 inline-block w-auto"
                 >
                   <option value={10}>10</option>
                   <option value={20}>20</option>
@@ -423,14 +427,14 @@ export default function Step2Search() {
               <button
                 onClick={loadMoreResults}
                 disabled={searchLoading || bulkLoading || !hasNextPage}
-                className="rounded border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
+                className="bg-[var(--surface_container)] px-3 py-1.5 text-sm text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)] disabled:opacity-40"
               >
                 {isPortuguese ? 'Carregar mais' : 'Load more'}
               </button>
               <button
                 onClick={loadAllRemainingResults}
                 disabled={searchLoading || bulkLoading || !hasNextPage}
-                className="rounded border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
+                className="bg-[var(--surface_container)] px-3 py-1.5 text-sm text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)] disabled:opacity-40"
               >
                 {bulkLoading
                   ? isPortuguese
@@ -456,7 +460,7 @@ export default function Step2Search() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="rounded bg-indigo-100 px-2 py-1 text-xs font-semibold text-indigo-800">
+              <div className="rounded-[var(--radius-md)] bg-[var(--secondary_container)] px-2 py-1 text-xs font-semibold text-[var(--on_secondary_container)]">
                 {isPortuguese
                   ? `${selectedSearchArticleIds.length} selecionado(s) para analise`
                   : `${selectedSearchArticleIds.length} selected for analysis`}
@@ -464,14 +468,14 @@ export default function Step2Search() {
               <button
                 onClick={selectAllLoadedArticles}
                 type="button"
-                className="rounded border border-indigo-300 bg-white px-3 py-1 text-xs font-semibold text-indigo-700"
+                className="bg-[var(--surface_container)] px-3 py-1 text-xs font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)]"
               >
                 {isPortuguese ? 'Selecionar todos os carregados' : 'Select all loaded'}
               </button>
               <button
                 onClick={clearSearchArticleSelection}
                 type="button"
-                className="rounded border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+                className="bg-[var(--surface_container)] px-3 py-1 text-xs font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)]"
               >
                 {isPortuguese ? 'Limpar selecao' : 'Clear selection'}
               </button>
@@ -482,16 +486,18 @@ export default function Step2Search() {
                 {searchArticles.map((article, index) => (
                   <div
                     key={article.id}
-                    className={`rounded border p-3 transition ${
+                    className={`p-4 transition-all duration-200 ${
                       selectedSearchArticleIds.includes(article.id)
-                        ? 'border-indigo-300 bg-indigo-50'
-                        : 'border-slate-200 bg-slate-50'
+                        ? 'ai-user-decided rq-active-accent'
+                        : 'bg-[var(--surface_container)] ghost-border hover:bg-[var(--surface_container_low)]'
                     }`}
                   >
-                    <div className="text-xs uppercase tracking-wide text-slate-500">
+                    <div className={`font-label text-[10px] uppercase tracking-[0.1em] ${
+                      selectedSearchArticleIds.includes(article.id) ? 'text-[var(--on_primary)] opacity-70' : 'opacity-50'
+                    }`}>
                       {t('steps.step2.articleLabel')} {index + 1} | {article.provider}
                     </div>
-                    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-indigo-700">
+                    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold">
                       <input
                         type="checkbox"
                         checked={selectedSearchArticleIds.includes(article.id)}
@@ -499,8 +505,8 @@ export default function Step2Search() {
                       />
                       {isPortuguese ? 'Selecionar para analise' : 'Select for analysis'}
                     </label>
-                    <div className="mt-1 font-semibold text-slate-900">{article.title}</div>
-                    <div className="mt-1 text-sm text-slate-600">
+                    <div className={`mt-1 font-semibold ${selectedSearchArticleIds.includes(article.id) ? 'text-[var(--on_primary)]' : 'text-[var(--on_surface)]'}`}>{article.title}</div>
+                    <div className="mt-1 text-sm opacity-60">
                       {(article.authors || []).slice(0, 3).join(', ') || t('common.unknownAuthors')}
                       {article.year ? ` | ${article.year}` : ''}
                     </div>
@@ -521,7 +527,7 @@ export default function Step2Search() {
             <button
               onClick={proceedToEvidence}
               disabled={searchArticles.length === 0 || selectedSearchArticleIds.length === 0}
-              className="rounded bg-slate-900 px-4 py-3 text-white hover:bg-slate-800 disabled:opacity-50"
+              className="primary-gradient rounded-[var(--radius-md)] px-5 py-3 font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
             >
               {t('steps.step2.continueButton')}
             </button>

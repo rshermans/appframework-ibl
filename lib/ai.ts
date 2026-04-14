@@ -56,7 +56,7 @@ export async function callChatGPT(
       model,
       instructions,
       input,
-      max_output_tokens: 4000,
+      max_output_tokens: 2000,
       text: {
         format: {
           type: 'json_object',
@@ -74,7 +74,7 @@ export async function callChatGPT(
         model,
         instructions,
         input,
-        max_output_tokens: 4000,
+        max_output_tokens: 3000,
       })
 
       content = extractResponseText(fallbackResponse)

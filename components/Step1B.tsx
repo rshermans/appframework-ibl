@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { FinalResearchQuestion } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
+import StepHeader from '@/components/StepHeader'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -153,17 +154,20 @@ export default function Step1B() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">{t('steps.step1B.title')}</h2>
-        <p className="text-sm text-gray-600">{t('steps.step1B.intro')}</p>
+        <StepHeader
+          stepId="step1b_synthesize"
+          title={t('steps.step1B.title')}
+          subtitle={t('steps.step1B.intro')}
+        />
       </div>
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-blue-900">
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
           {isPortuguese ? 'Escolha humana da RQ final (sem geracao automatica)' : 'Human selection of the final RQ (no auto-generation)'}
         </div>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {selectedRQs.map((rq) => (
-            <label key={rq} className="flex cursor-pointer items-start gap-2 rounded border border-blue-100 bg-white p-2">
+            <label key={rq} className="flex cursor-pointer items-start gap-2 tonal-card ghost-border p-3">
               <input
                 type="radio"
                 name="manual-final-rq"
@@ -171,7 +175,7 @@ export default function Step1B() {
                 onChange={() => setSelectedRQChoice(rq)}
                 className="mt-1"
               />
-              <span className="text-sm text-slate-800">{rq}</span>
+              <span className="text-sm text-[var(--on_surface)]">{rq}</span>
             </label>
           ))}
         </div>
@@ -183,11 +187,11 @@ export default function Step1B() {
               ? 'Justificacao opcional para esta escolha manual'
               : 'Optional justification for this manual choice'
           }
-          className="mt-3 w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm"
+          className="ghost-input mt-3 w-full"
         />
         <button
           onClick={useSelectedQuestionAsFinal}
-          className="mt-3 rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+          className="primary-gradient mt-3 rounded-[var(--radius-md)] px-4 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110"
         >
           {isPortuguese ? 'Usar pergunta selecionada' : 'Use selected question'}
         </button>
@@ -201,18 +205,18 @@ export default function Step1B() {
           <div className="font-medium text-slate-900">
             {comparisonResult.recommendedQuestion || t('common.noData')}
           </div>
-          <div className="mt-2 text-sm text-slate-600">
+          <div className="mt-2 text-sm opacity-70">
             {comparisonResult.recommendationReason || t('common.noData')}
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-4 text-sm">
           {t('steps.step1B.noComparison')}
         </div>
       )}
 
-      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-        <div className="mb-2 text-sm font-semibold text-indigo-900">
+      <div className="bg-[var(--surface_container_low)] p-4">
+        <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
           {isPortuguese ? 'Refazer sintese com input do utilizador' : 'Redo synthesis with user input'}
         </div>
         <div className="grid gap-3 md:grid-cols-2">
@@ -224,7 +228,7 @@ export default function Step1B() {
                 ? 'Ex.: foco em contexto europeu e resultados aplicados'
                 : 'e.g. focus on European context and applied outcomes'
             }
-            className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm"
+            className="ghost-input"
           />
           <input
             value={refinementKeywords}
@@ -234,13 +238,13 @@ export default function Step1B() {
                 ? 'Ex.: intervention, longitudinal, mixed-methods'
                 : 'e.g. intervention, longitudinal, mixed-methods'
             }
-            className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm"
+            className="ghost-input"
           />
         </div>
         <button
           onClick={runSynthesis}
           disabled={loading || !comparisonResult}
-          className="mt-3 rounded bg-indigo-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="primary-gradient mt-3 rounded-[var(--radius-md)] px-4 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
         >
           {loading
             ? t('steps.step1B.creating')
@@ -251,21 +255,21 @@ export default function Step1B() {
       </div>
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {error}
         </div>
       )}
 
       {finalResearchQuestion && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
-          <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+        <div className="tonal-card rq-active-accent p-6 space-y-4">
+          <div className="font-label text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--secondary)]">
             {t('workflow.step1b_synthesize.label')}
           </div>
-          <div className="text-lg font-semibold text-slate-900">{finalResearchQuestion.question}</div>
-          <div className="mt-3 text-sm text-slate-700">{finalResearchQuestion.justification}</div>
+          <div className="font-display text-lg font-semibold text-[var(--on_surface)]">{finalResearchQuestion.question}</div>
+          <div className="text-sm leading-7 opacity-70">{finalResearchQuestion.justification}</div>
 
-          <div className="mt-4 rounded border border-emerald-300 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold text-emerald-800">
+          <div className="bg-[var(--surface_container_low)] p-4">
+            <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
               {isPortuguese
                 ? 'Reformular antes de aprovar'
                 : 'Rewrite before approval'}
@@ -274,17 +278,17 @@ export default function Step1B() {
               value={rewriteDraft}
               onChange={(event) => setRewriteDraft(event.target.value)}
               rows={3}
-              className="w-full rounded border border-emerald-200 px-3 py-2 text-sm"
+              className="ghost-input w-full"
             />
             <button
               onClick={applyRewrite}
-              className="mt-2 rounded bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="mt-2 rounded-[var(--radius-md)] bg-[var(--surface_container)] px-3 py-2 text-sm font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)]"
             >
               {isPortuguese ? 'Aplicar reformulacao' : 'Apply rewrite'}
             </button>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() =>
                 setFinalResearchQuestion({
@@ -292,23 +296,23 @@ export default function Step1B() {
                   approvedByUser: true,
                 })
               }
-              className="rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="primary-gradient rounded-[var(--radius-md)] px-4 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110"
             >
               {t('steps.step1B.approveButton')}
             </button>
-            <div className="rounded border border-emerald-300 bg-white px-3 py-2 text-sm text-emerald-900">
+            <div className={`rounded-[var(--radius-md)] px-3 py-2 text-sm font-semibold ${finalResearchQuestion.approvedByUser ? 'ai-user-decided' : 'ai-needs-validation'}`}>
               {t('steps.step1B.statusLabel')}: {finalResearchQuestion.approvedByUser ? t('common.approved') : t('common.pendingApproval')}
             </div>
             {finalResearchQuestion.approvedByUser && (
               <button
                 onClick={() => setWorkflowStep('step2_search_design')}
-                className="rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                className="primary-gradient rounded-[var(--radius-md)] px-4 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110"
               >
                 {t('steps.step1B.continueButton')}
               </button>
             )}
           </div>
-          <div className="mt-4 rounded border border-emerald-300 bg-white p-3 text-sm text-emerald-900">
+          <div className="bg-[var(--surface_container_low)] p-3 text-sm opacity-70">
             {t('steps.step1B.anchorNote')}
           </div>
         </div>

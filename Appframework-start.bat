@@ -10,9 +10,26 @@ echo ==========================================
 echo AppFramework quick start
 echo ==========================================
 
+REM --- Resolve Node.js even if not in cmd PATH ---
 where node >nul 2>&1
 if errorlevel 1 (
-  echo [ERROR] Node.js not found in PATH.
+  REM Try common installation paths
+  if exist "%ProgramFiles%\nodejs\node.exe" (
+    set "PATH=%ProgramFiles%\nodejs;%PATH%"
+  ) else if exist "%LOCALAPPDATA%\fnm_multishells" (
+    for /f "delims=" %%D in ('dir /b /ad /o-n "%LOCALAPPDATA%\fnm_multishells" 2^>nul') do (
+      if exist "%LOCALAPPDATA%\fnm_multishells\%%D\node.exe" (
+        set "PATH=%LOCALAPPDATA%\fnm_multishells\%%D;%PATH%"
+        goto :node_found
+      )
+    )
+  )
+)
+:node_found
+where node >nul 2>&1
+if errorlevel 1 (
+  echo [ERROR] Node.js not found in PATH or standard locations.
+  echo         Install from https://nodejs.org or add to PATH.
   exit /b 1
 )
 
