@@ -306,7 +306,7 @@ export default function Step5Explanation() {
         disabled={!canRun || loading}
         className="primary-gradient rounded-[var(--radius-md)] px-4 py-3 text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
       >
-        {loading ? t('steps.step5.generating') : t('steps.step5.generateButton')}
+        {loading ? t('steps.step5.generating') : (explanationDraft ? t('steps.step5.redoButton') : t('steps.step5.generateButton'))}
       </button>
 
       {explanationDraft && (
@@ -328,7 +328,7 @@ export default function Step5Explanation() {
             <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step5.argumentCore')}
             </div>
-            <div className="tonal-card ghost-border p-4 text-sm text-[var(--on_surface)]">
+            <div className="tonal-card ghost-border p-4 text-sm text-[var(--on_surface)] text-justified">
               {explanationDraft.argumentCore}
             </div>
           </div>

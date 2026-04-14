@@ -74,36 +74,34 @@ export default function Step8Glossary() {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="Step 8"
-        title="Scientific Glossary Builder"
-        description="Review the AI-generated glossary from your knowledge structure. Edit, remove, or add terms — keep only entries anchored to reviewed sources."
+        stepId="step8_glossary"
+        title={t('steps.step8.title')}
+        subtitle={t('steps.step8.intro')}
       />
 
       <EthicalTip
-        title="Ethical tip — Glossary Integrity"
+        title={t('steps.step8.ethicalTip')}
         tip={getIblEthicalTip('step8_glossary')}
         className="mb-2"
       />
 
       {!knowledgeStructure && (
         <div className="rounded-[var(--radius-xl)] border border-[var(--outline_variant)] bg-[var(--surface_container_low)] p-6 text-center text-sm text-[var(--on_surface_variant)]">
-          No knowledge structure found. Complete Step 4 (Knowledge Structuring) first.
+          {t('steps.step8.noStructure')}
         </div>
       )}
 
       {knowledgeStructure && (
         <>
-          {/* Existing entries */}
           <div className="space-y-3">
             {entries.length === 0 && (
               <p className="text-sm text-[var(--on_surface_variant)]">
-                No glossary terms yet. Add entries below or re-run Step 4 to regenerate.
+                {t('steps.step8.noTerms')}
               </p>
             )}
 
             {entries.map((entry, index) =>
               editIndex === index ? (
-                /* Edit row */
                 <div
                   key={index}
                   className="rounded-[var(--radius-xl)] border border-[var(--primary)] bg-[var(--primary_container)] p-4 space-y-3"
@@ -128,19 +126,18 @@ export default function Step8Glossary() {
                       onClick={commitEdit}
                       className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-1.5 text-xs font-semibold text-[var(--on_primary)] hover:brightness-90 transition"
                     >
-                      Save
+                      {t('common.save')}
                     </button>
                     <button
                       type="button"
                       onClick={cancelEdit}
                       className="rounded-[var(--radius-md)] bg-[var(--surface_container_high)] px-4 py-1.5 text-xs font-semibold text-[var(--on_surface)] hover:brightness-95 transition"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
               ) : (
-                /* View row */
                 <div
                   key={index}
                   className="flex items-start gap-3 rounded-[var(--radius-xl)] border border-[var(--outline_variant)] bg-[var(--surface_container_low)] p-4"
@@ -174,22 +171,21 @@ export default function Step8Glossary() {
             )}
           </div>
 
-          {/* Add new term */}
           <div className="rounded-[var(--radius-xl)] border border-[var(--outline_variant)] bg-[var(--surface_container)] p-4 space-y-3">
             <p className="text-xs font-semibold text-[var(--on_surface_variant)] uppercase tracking-wide">
-              Add a term
+              {t('steps.step8.addTermTitle')}
             </p>
             <input
               type="text"
               value={newTerm}
               onChange={(e) => setNewTerm(e.target.value)}
-              placeholder="Scientific term or concept"
+              placeholder={t('steps.step8.termPlaceholder')}
               className="w-full rounded-[var(--radius-md)] border border-[var(--outline)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--on_surface)] placeholder:text-[var(--on_surface_variant)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             />
             <textarea
               value={newDef}
               onChange={(e) => setNewDef(e.target.value)}
-              placeholder="Definition anchored to a reviewed source"
+              placeholder={t('steps.step8.defPlaceholder')}
               rows={2}
               className="w-full rounded-[var(--radius-md)] border border-[var(--outline)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--on_surface)] placeholder:text-[var(--on_surface_variant)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
             />
@@ -199,22 +195,21 @@ export default function Step8Glossary() {
               disabled={!newTerm.trim() || !newDef.trim()}
               className="rounded-[var(--radius-md)] bg-[var(--secondary_container)] px-4 py-2 text-sm font-semibold text-[var(--on_secondary_container)] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              + Add term
+              {t('steps.step8.addButton')}
             </button>
           </div>
 
-          {/* Save & proceed */}
           <div className="flex flex-col gap-3 rounded-[var(--radius-xl)] border border-[var(--outline_variant)] bg-[var(--surface_container)] p-4">
-            <p className="text-sm text-[var(--on_surface_variant)]">
-              <strong className="text-[var(--on_surface)]">{entries.length}</strong> term{entries.length !== 1 ? 's' : ''} in the glossary.
-            </p>
+            <div className="text-sm text-[var(--on_surface_variant)]">
+              {t('steps.step8.summary', { count: entries.length })}
+            </div>
             <button
               type="button"
               onClick={handleSave}
               disabled={entries.length === 0}
-              className="self-start rounded-[var(--radius-md)] bg-[var(--primary)] px-6 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="self-start rounded-[var(--radius-md)] bg-[var(--primary)] px-8 py-3 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Save Glossary & Proceed to Explanation →
+              {t('steps.step8.continueButton')} →
             </button>
           </div>
         </>

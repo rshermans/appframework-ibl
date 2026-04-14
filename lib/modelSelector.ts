@@ -21,9 +21,9 @@ export interface ModelSelection {
 
 // ─── Model tiers ────────────────────────────────────────────────────
 const MODEL_TIERS: Record<TaskComplexity, string> = {
-  heavy: 'gpt-5-mini',
+  heavy: 'gpt-4o',
   medium: 'gpt-4o',
-  fast: 'gpt-5-nano',
+  fast: 'gpt-4o-mini',
 }
 
 const ULTIMATE_FALLBACK = 'gpt-4o-mini'
@@ -33,9 +33,9 @@ const ULTIMATE_FALLBACK = 'gpt-4o-mini'
  * When a model fails we try the next one in the chain.
  */
 const FALLBACK_CHAINS: Record<TaskComplexity, string[]> = {
-  heavy:  ['gpt-5-mini', 'gpt-4o',     'gpt-4o-mini'],
-  medium: ['gpt-4o',     'gpt-5-mini',  'gpt-4o-mini'],
-  fast:   ['gpt-5-nano', 'gpt-4o-mini', 'gpt-4o'],
+  heavy: ['gpt-4o', 'gpt-4o-mini'],
+  medium: ['gpt-4o', 'gpt-4o-mini'],
+  fast: ['gpt-4o-mini'],
 }
 
 // ─── Step → Complexity mapping ──────────────────────────────────────

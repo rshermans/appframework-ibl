@@ -57,6 +57,15 @@ export default function Step5SourceSelection() {
     setWorkflowStep,
   } = useWizardStore()
 
+  // Localized dimensions
+  const DIMENSIONS = [
+    { key: 'currency',   label: t('steps.step5_source_selection.dimensions.currency'),   description: t('steps.step5_source_selection.dimensions.currencyDesc') },
+    { key: 'relevance',  label: t('steps.step5_source_selection.dimensions.relevance'),  description: t('steps.step5_source_selection.dimensions.relevanceDesc') },
+    { key: 'authority',  label: t('steps.step5_source_selection.dimensions.authority'),  description: t('steps.step5_source_selection.dimensions.authorityDesc') },
+    { key: 'accuracy',   label: t('steps.step5_source_selection.dimensions.accuracy'),   description: t('steps.step5_source_selection.dimensions.accuracyDesc') },
+    { key: 'purpose',    label: t('steps.step5_source_selection.dimensions.purpose'),    description: t('steps.step5_source_selection.dimensions.purposeDesc') },
+  ] as const
+
   // Build a deduplicated list of source article IDs from evidenceRecords
   const sourceIds = Array.from(
     new Set(evidenceRecords.map((r) => r.sourceArticleId ?? r.id))
@@ -110,20 +119,20 @@ export default function Step5SourceSelection() {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="Step 5"
-        title="Source Selection & CRAAP Analysis"
-        description="Evaluate each source using CRAAP criteria. Tick the sources you want to carry forward into knowledge structuring."
+        stepId="step5_source_selection"
+        title={t('steps.step5_source_selection.title')}
+        subtitle={t('steps.step5_source_selection.intro')}
       />
 
       <EthicalTip
-        title="Ethical tip — Source Credibility"
+        title={t('steps.step5_source_selection.ethicalTip')}
         tip={getIblEthicalTip('step5_source_selection')}
         className="mb-2"
       />
 
       {sourceIds.length === 0 && (
         <div className="rounded-[var(--radius-xl)] border border-[var(--outline_variant)] bg-[var(--surface_container_low)] p-6 text-center text-sm text-[var(--on_surface_variant)]">
-          No evidence sources found. Complete Step 3 (Evidence Extraction) first.
+          {t('steps.step5_source_selection.noSources')}
         </div>
       )}
 
@@ -148,18 +157,16 @@ export default function Step5SourceSelection() {
                   : 'border-[var(--outline_variant)] bg-[var(--surface_container_low)]'
               }`}
             >
-              {/* Source header */}
               <div className="mb-4 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[var(--on_surface)] leading-snug line-clamp-2">
+                  <p className={`text-sm font-semibold leading-snug line-clamp-2 ${isConfirmed ? 'text-[var(--on_primary_container)]' : 'text-[var(--on_surface)]'}`}>
                     {label}
                   </p>
-                  <p className="mt-1 text-xs text-[var(--on_surface_variant)]">
-                    {records.length} evidence record{records.length !== 1 ? 's' : ''}
+                  <p className={`mt-1 text-xs ${isConfirmed ? 'text-[var(--on_primary_container)] opacity-70' : 'text-[var(--on_surface_variant)]'}`}>
+                    {records.length} {t('steps.step3.evidenceLabel').toLowerCase()}(s)
                   </p>
                 </div>
 
-                {/* CRAAP badge */}
                 <span
                   className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
                     passed
@@ -171,9 +178,8 @@ export default function Step5SourceSelection() {
                 </span>
               </div>
 
-              {/* CRAAP checkboxes */}
               <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-5">
-                {CRAAP_DIMENSIONS.map((dim) => (
+                {DIMENSIONS.map((dim) => (
                   <label
                     key={dim.key}
                     title={dim.description}
@@ -190,7 +196,6 @@ export default function Step5SourceSelection() {
                 ))}
               </div>
 
-              {/* Confirm toggle */}
               <button
                 type="button"
                 onClick={() => toggleConfirmed(sourceId)}
@@ -203,27 +208,29 @@ export default function Step5SourceSelection() {
                     : 'cursor-not-allowed bg-[var(--surface_container_high)] text-[var(--on_surface_variant)] opacity-50'
                 }`}
               >
-                {isConfirmed ? '✓ Confirmed — carry forward' : passed ? 'Confirm this source' : 'Score ≥ 3/5 to confirm'}
+                {isConfirmed 
+                  ? t('steps.step5_source_selection.confirmedButton') 
+                  : passed 
+                    ? t('steps.step5_source_selection.confirmButton') 
+                    : t('steps.step5_source_selection.scoreToConfirm')}
               </button>
             </div>
           )
         })}
       </div>
 
-      {/* Summary + proceed */}
       {sourceIds.length > 0 && (
         <div className="flex flex-col gap-3 rounded-[var(--radius-xl)] border border-[var(--outline_variant)] bg-[var(--surface_container)] p-4">
-          <p className="text-sm text-[var(--on_surface_variant)]">
-            <strong className="text-[var(--on_surface)]">{confirmed_count}</strong> of{' '}
-            <strong className="text-[var(--on_surface)]">{total_count}</strong> sources confirmed for knowledge structuring.
-          </p>
+          <div className="text-sm text-[var(--on_surface_variant)]">
+            {t('steps.step5_source_selection.summary', { confirmed: confirmed_count, total: total_count })}
+          </div>
           <button
             type="button"
             onClick={handleSave}
             disabled={confirmed_count === 0}
-            className="self-start rounded-[var(--radius-md)] bg-[var(--primary)] px-6 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="self-start rounded-[var(--radius-md)] bg-[var(--primary)] px-8 py-3 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Proceed to Knowledge Structuring →
+            {t('steps.step5_source_selection.continueButton')} →
           </button>
         </div>
       )}

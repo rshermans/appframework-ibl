@@ -266,7 +266,7 @@ export default function Step1B() {
             {t('workflow.step1b_synthesize.label')}
           </div>
           <div className="font-display text-lg font-semibold text-[var(--on_surface)]">{finalResearchQuestion.question}</div>
-          <div className="text-sm leading-7 opacity-70">{finalResearchQuestion.justification}</div>
+          <div className="text-sm leading-7 opacity-70 text-justified">{finalResearchQuestion.justification}</div>
 
           <div className="bg-[var(--surface_container_low)] p-4">
             <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">

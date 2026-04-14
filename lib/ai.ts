@@ -128,9 +128,12 @@ export async function callChatGPT(
 
   // All models failed
   const totalTime = Date.now() - startTime
+  const failedList = Array.from(failedModels).join(', ')
+  console.error(`[ChatGPT] ❌ ALL MODELS EXHAUSTED after ${totalTime}ms. Tried: [${failedList}]`)
+  
   throw new Error(
-    `ChatGPT call failed: all models exhausted (${[...failedModels].join(', ')}). ` +
-    `Step: ${stepId}, elapsed: ${totalTime}ms`
+    `ChatGPT call failed: all models reached timeout or error (${failedList}). ` +
+    `Step: ${stepId}, total_elapsed: ${totalTime}ms`
   )
 }
 

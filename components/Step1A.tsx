@@ -115,7 +115,7 @@ export default function Step1A() {
 
       <div className="bg-[var(--surface_container_low)] p-4 text-sm text-[var(--on_surface)]">
         <div className="font-semibold">{isPortuguese ? 'Modo selecionado' : 'Selected mode'}: {mode}</div>
-        <div className="mt-1 opacity-70">
+        <div className="mt-1 opacity-70 text-justified">
           {mode === 'quick'
             ? isPortuguese
               ? 'Quick: mais rapido, menos profundidade analitica, bom para iteracoes iniciais.'

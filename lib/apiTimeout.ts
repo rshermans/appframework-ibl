@@ -5,11 +5,11 @@
 
 export const API_CONFIG = {
   // Netlify function timeout is 30s (basic) to 60s (pro)
-  // Set our limit to 25s to allow buffer for response
-  FUNCTION_TIMEOUT_MS: 25000,
+  // Set our limit to 28s to allow buffer for response
+  FUNCTION_TIMEOUT_MS: 28000,
 
-  // OpenAI API timeout - give it 20s to respond
-  OPENAI_TIMEOUT_MS: 20000,
+  // OpenAI API timeout - give it 22s to respond
+  OPENAI_TIMEOUT_MS: 22000,
 
   // Retry configuration for failed requests
   RETRY_CONFIG: {

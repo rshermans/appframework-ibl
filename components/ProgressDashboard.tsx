@@ -18,8 +18,11 @@ function useProgressSteps(): ProgressStep[] {
     { stepId: 'step1_select', i18nKey: 'progress.candidateQuestions', done: (state.candidateResearchQuestions?.length ?? 0) > 0 || (state.rqCandidates?.length ?? 0) > 0 },
     { stepId: 'step1b_synthesize', i18nKey: 'progress.finalQuestion', done: Boolean(state.finalResearchQuestion) },
     { stepId: 'step2_search_design', i18nKey: 'progress.searchDesign', done: Boolean(state.searchDesign) },
+    { stepId: null, i18nKey: 'progress.searchRetrieval', done: (state.searchArticles?.length ?? 0) > 0 },
     { stepId: 'step3_evidence_extraction', i18nKey: 'progress.evidence', done: (state.evidenceRecords?.length ?? 0) > 0 },
+    { stepId: 'step5_source_selection', i18nKey: 'progress.sourceSelection', done: (state.evidenceRecords?.length ?? 0) > 0 }, // Logic can be more specific if available
     { stepId: 'step4_knowledge_structure', i18nKey: 'progress.knowledgeStructure', done: Boolean(state.knowledgeStructure) },
+    { stepId: 'step8_glossary', i18nKey: 'progress.glossary', done: Boolean(state.knowledgeStructure) }, // Locked until structure exists
     { stepId: 'step5_explanation', i18nKey: 'progress.explanation', done: Boolean(state.explanationDraft) },
   ]
 }

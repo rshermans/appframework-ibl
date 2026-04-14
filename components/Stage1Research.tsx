@@ -139,7 +139,7 @@ export default function Stage1Research() {
               }}
               disabled={isLocked}
               title={iblMeta.title}
-              className={`group relative p-4 text-left transition-all duration-200 ${
+              className={`group relative flex flex-col p-4 text-left transition-all duration-200 min-h-[140px] ${
                 isActive
                   ? 'bg-[linear-gradient(135deg,rgba(37,99,235,0.10),rgba(22,163,74,0.10))] ambient-shadow rq-active-accent ring-1 ring-[rgba(37,99,235,0.18)]'
                   : 'tonal-card ghost-border hover:bg-[var(--surface_container_low)]'
@@ -152,24 +152,28 @@ export default function Stage1Research() {
               >
                 {t(`workflow.${stepId}.badge`) || iblMeta.badge}
               </div>
-              <div className="mt-1.5 text-sm font-semibold">
+              <div className="mt-1.5 flex items-start justify-between gap-2">
+                <span className="text-sm font-semibold leading-tight text-[var(--on_surface)]">
+                  {t(`workflow.${stepId}.label`) || step.label}
+                </span>
                 <InfoTooltip
-                  label={t(`workflow.${stepId}.label`) || step.label}
+                  label=""
                   description={iblMeta.title}
+                  className="mt-0.5 flex-shrink-0"
                 />
               </div>
-              <div className={`mt-2 text-xs leading-5 text-[var(--on_surface)] ${isActive ? 'opacity-90' : 'opacity-70'}`}>
+              <div className={`mt-2 text-[11px] leading-relaxed text-[var(--on_surface)] ${isActive ? 'opacity-90' : 'opacity-70'}`}>
                 {isStep2Locked
                   ? t('common.lockedStep2')
                   : isStep3Locked
                     ? t('common.lockedStep3')
                   : isStep4Locked
                       ? t('common.lockedStep4')                  : isStepCRAAPLocked
-                      ? 'Complete Step 3 (Evidence Extraction) first.'
+                      ? t('steps.step5_source_selection.locked')
                   : isStepGlossaryLocked
-                      ? 'Complete Step 4 (Knowledge Structuring) first.'                    : isStep5Locked
+                      ? t('steps.step8.locked')                    : isStep5Locked
                       ? t('common.lockedStep5')
-                    : t(`workflow.${stepId}.description`) || step.description}
+                    : (t(`workflow.${stepId}.description`) || step.description)}
               </div>
               {iblMeta.isOptional && (
                 <span className="mt-3 inline-flex rounded-[var(--radius-md)] bg-[var(--secondary_container)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--on_secondary_container)]">
@@ -192,9 +196,9 @@ export default function Stage1Research() {
           <button
             type="button"
             onClick={() => setStage(2)}
-            className="rounded-[var(--radius-md)] bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-[var(--on_primary)] shadow transition hover:brightness-90 active:scale-95"
+            className="rounded-[var(--radius-md)] bg-[var(--primary)] px-8 py-3.5 text-sm font-semibold text-[var(--on_primary)] shadow-lg transition hover:brightness-95 active:scale-95 flex items-center gap-2"
           >
-            Continue to Stage 2 — Explain &amp; Create →
+            {t('steps.step1B.continueButton')} →
           </button>
         </div>
       )}

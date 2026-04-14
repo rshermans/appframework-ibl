@@ -226,6 +226,7 @@ export async function POST(req: Request) {
       {
         ok: false,
         error: isTimeout ? 'Request timeout' : getMessage(safeLocale, 'api.genericFailure'),
+        errorType,
         details: errorMsg,
         responseTime,
       },

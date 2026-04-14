@@ -2,13 +2,14 @@
 
 import { useWizardStore } from '@/store/wizardStore'
 import Stage1Research from '@/components/Stage1Research'
+import Stage2Multimodal from '@/components/Stage2Multimodal'
 import LocaleSwitcher from '@/components/LocaleSwitcher'
 import ArqusBrand from '@/components/ArqusBrand'
 import { useI18n } from '@/components/I18nProvider'
 import { useState, useEffect } from 'react'
 
 export default function Home() {
-  const { projectId, setProject } = useWizardStore()
+  const { projectId, stage, setProject } = useWizardStore()
   const { t } = useI18n()
   const [topic, setTopic] = useState('')
   const [isStarted, setIsStarted] = useState(false)
@@ -87,7 +88,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-transparent">
       <div className="mx-auto max-w-7xl p-6 md:p-8">
-        <Stage1Research />
+        {stage === 2 ? <Stage2Multimodal /> : <Stage1Research />}
       </div>
     </main>
   )
