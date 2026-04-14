@@ -16,6 +16,8 @@ import Step3Evidence from './Step3Evidence'
 import Step4Structure from './Step4Structure'
 import Step5Explanation from './Step5Explanation'
 import Step0 from './steps/Step0'
+import Step5SourceSelection from './Step5SourceSelection'
+import Step8Glossary from './Step8Glossary'
 
 const ACTIVE_WORKFLOW_STEPS = [
   'step0_generate',
@@ -24,7 +26,9 @@ const ACTIVE_WORKFLOW_STEPS = [
   'step1b_synthesize',
   'step2_search_design',
   'step3_evidence_extraction',
+  'step5_source_selection',
   'step4_knowledge_structure',
+  'step8_glossary',
   'step5_explanation',
 ] as const satisfies readonly IBLStepKey[]
 
@@ -42,8 +46,12 @@ function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
       return <Step2Search />
     case 'step3_evidence_extraction':
       return <Step3Evidence />
+    case 'step5_source_selection':
+      return <Step5SourceSelection />
     case 'step4_knowledge_structure':
       return <Step4Structure />
+    case 'step8_glossary':
+      return <Step8Glossary />
     case 'step5_explanation':
       return <Step5Explanation />
     default:
@@ -55,6 +63,7 @@ export default function Stage1Research() {
   const { t } = useI18n()
   const {
     evidenceRecords,
+    explanationDraft,
     knowledgeStructure,
     finalResearchQuestion,
     searchArticles,
@@ -62,6 +71,7 @@ export default function Stage1Research() {
     step0OptionalCompleted,
     stage,
     workflowStep,
+    setStage,
     setWorkflowStep,
   } = useWizardStore()
 
@@ -113,9 +123,11 @@ export default function Stage1Research() {
           const isStep3Locked =
             stepId === 'step3_evidence_extraction' && (!searchDesign || searchArticles.length === 0)
           const isStep4Locked = stepId === 'step4_knowledge_structure' && evidenceRecords.length === 0
+          const isStepCRAAPLocked = stepId === 'step5_source_selection' && evidenceRecords.length === 0
+          const isStepGlossaryLocked = stepId === 'step8_glossary' && !knowledgeStructure
           const isStep5Locked =
             stepId === 'step5_explanation' && (!knowledgeStructure || evidenceRecords.length === 0)
-          const isLocked = isStep2Locked || isStep3Locked || isStep4Locked || isStep5Locked
+          const isLocked = isStep2Locked || isStep3Locked || isStep4Locked || isStepCRAAPLocked || isStepGlossaryLocked || isStep5Locked
 
           return (
             <button
@@ -152,8 +164,10 @@ export default function Stage1Research() {
                   : isStep3Locked
                     ? t('common.lockedStep3')
                   : isStep4Locked
-                      ? t('common.lockedStep4')
-                    : isStep5Locked
+                      ? t('common.lockedStep4')                  : isStepCRAAPLocked
+                      ? 'Complete Step 3 (Evidence Extraction) first.'
+                  : isStepGlossaryLocked
+                      ? 'Complete Step 4 (Knowledge Structuring) first.'                    : isStep5Locked
                       ? t('common.lockedStep5')
                     : t(`workflow.${stepId}.description`) || step.description}
               </div>
@@ -172,6 +186,18 @@ export default function Stage1Research() {
           {renderStep(activeStep)}
         </div>
       </div>
+
+      {explanationDraft && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setStage(2)}
+            className="rounded-[var(--radius-md)] bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-[var(--on_primary)] shadow transition hover:brightness-90 active:scale-95"
+          >
+            Continue to Stage 2 — Explain &amp; Create →
+          </button>
+        </div>
+      )}
     </div>
   )
 }

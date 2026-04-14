@@ -5,6 +5,8 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { CandidateResearchQuestion } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
+import EthicalTip from '@/components/EthicalTip'
+import { getIblEthicalTip } from '@/lib/iblFramework'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -151,6 +153,12 @@ export default function Step0() {
       <StepHeader
         stepId="step0_generate"
         title={t('steps.step0.title')}
+      />
+
+      <EthicalTip
+        title={isPortuguese ? 'Dica Ética — Integridade da Investigação' : 'Ethical Tip — Research Integrity'}
+        tip={getIblEthicalTip('step0_generate')}
+        className="mb-2"
       />
 
       <div>

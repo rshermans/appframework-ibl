@@ -7,7 +7,9 @@ export type IBLStepKey =
   | 'step1b_synthesize'
   | 'step2_search_design'
   | 'step3_evidence_extraction'
+  | 'step5_source_selection'
   | 'step4_knowledge_structure'
+  | 'step8_glossary'
   | 'step5_explanation'
   | 'step6_multimodal'
   | 'step7_reflection'
@@ -84,12 +86,26 @@ export const IBL_STEP_META: Record<IBLStepKey, IBLStepMeta> = {
     title: 'Evidence Extractor',
     shortTitle: 'Evidence',
   },
+  step5_source_selection: {
+    id: 'step5_source_selection',
+    stage: 'stage1',
+    badge: 'Step 5',
+    title: 'Source Selection & CRAAP Analysis',
+    shortTitle: 'CRAAP Analysis',
+  },
   step4_knowledge_structure: {
     id: 'step4_knowledge_structure',
     stage: 'stage1',
     badge: 'Steps 6-7',
     title: 'Topic/Subtopic Mapper + Mind Map Generator',
     shortTitle: 'Structure',
+  },
+  step8_glossary: {
+    id: 'step8_glossary',
+    stage: 'stage1',
+    badge: 'Step 8',
+    title: 'Scientific Glossary Builder',
+    shortTitle: 'Glossary',
   },
   step5_explanation: {
     id: 'step5_explanation',
@@ -135,8 +151,12 @@ export const IBL_ETHICAL_TIPS: Record<IBLStageKey | IBLStepKey, string> = {
     'Test each search string manually. Simplify strings that return fewer than 5 or more than 500 results.',
   step3_evidence_extraction:
     'AI extracts only from provided text. If evidence is ambiguous, the paper interpretation has priority.',
+  step5_source_selection:
+    'CRAAP evaluates source credibility — but relevance to your specific RQ is always your judgment. Cross-check at least 2 sources using Scimago or Sherpa Romeo. Exclude: Wikipedia, Studocu, SlideShare.',
   step4_knowledge_structure:
     'Each topic and map node must be anchored to at least one source already reviewed by the team.',
+  step8_glossary:
+    'Include only terms from your reviewed sources. Remove AI-generated jargon that does not appear in your topic literature.',
   step5_explanation:
     'Scientific explanation must remain evidence-faithful. Revise AI scaffolds before publication.',
   step6_multimodal:
