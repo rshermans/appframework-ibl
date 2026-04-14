@@ -71,9 +71,9 @@ export default function StepReflection({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="S3-Reflect"
-        label={pt ? 'Diário de Reflexão' : 'Reflection Journal'}
-        description={pt
+        stepId="step7_reflection"
+        title={pt ? 'Diário de Reflexão' : 'Reflection Journal'}
+        subtitle={pt
           ? 'Micro-prompts de metacognição gerados pela IA. As respostas são tuas.'
           : 'AI-generated metacognition micro-prompts. The answers are yours.'}
       />

@@ -83,9 +83,9 @@ export default function StepPeerReview({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="S3-Peer"
-        label={pt ? 'Revisão por Pares' : 'Peer Review'}
-        description={pt
+        stepId="step7_reflection"
+        title={pt ? 'Revisão por Pares' : 'Peer Review'}
+        subtitle={pt
           ? 'Feedback orientado por rúbrica com apoio de IA e anonimato opcional.'
           : 'Rubric-guided feedback with AI support and optional anonymity.'}
       />

@@ -73,9 +73,9 @@ export default function StepSelfAssessment({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="S3-Self"
-        label={pt ? 'Auto-Avaliação' : 'Self-Assessment'}
-        description={pt
+        stepId="step7_reflection"
+        title={pt ? 'Auto-Avaliação' : 'Self-Assessment'}
+        subtitle={pt
           ? 'Mapeamento do trabalho contra as dimensões da rúbrica IBL R1–R8.'
           : 'Map your work against IBL rubric dimensions R1–R8.'}
       />

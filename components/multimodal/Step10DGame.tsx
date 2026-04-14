@@ -62,9 +62,9 @@ export default function Step10DGame({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="Step 10D"
-        label={pt ? 'Jogo de Ciência' : 'Science Game'}
-        description={pt
+        stepId="step6_multimodal"
+        title={pt ? 'Jogo de Ciência' : 'Science Game'}
+        subtitle={pt
           ? 'Jogo de decisão com ramificações narrativas baseadas em evidência.'
           : 'Decision-based game with evidence-grounded branching narrative.'}
       />

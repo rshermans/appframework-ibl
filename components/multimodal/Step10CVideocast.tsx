@@ -61,9 +61,9 @@ export default function Step10CVideocast({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="Step 10C"
-        label={pt ? 'Storyboard de Videocast' : 'Videocast Storyboard'}
-        description={pt
+        stepId="step6_multimodal"
+        title={pt ? 'Storyboard de Videocast' : 'Videocast Storyboard'}
+        subtitle={pt
           ? 'Storyboard por cenas com notas visuais e âncoras de evidência.'
           : 'Scene-by-scene storyboard with visual notes and evidence anchors.'}
       />

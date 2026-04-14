@@ -64,9 +64,9 @@ export default function Step10APoster({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="Step 10A"
-        label={pt ? 'Poster / Infográfico' : 'Poster / Infographic'}
-        description={pt
+        stepId="step6_multimodal"
+        title={pt ? 'Poster / Infográfico' : 'Poster / Infographic'}
+        subtitle={pt
           ? 'Scaffolding de poster científico com âncoras de evidência por secção.'
           : 'Scientific poster scaffold with per-section evidence anchors.'}
       />

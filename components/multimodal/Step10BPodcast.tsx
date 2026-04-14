@@ -62,9 +62,9 @@ export default function Step10BPodcast({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="Step 10B"
-        label={pt ? 'Script de Podcast' : 'Podcast Script'}
-        description={pt
+        stepId="step6_multimodal"
+        title={pt ? 'Script de Podcast' : 'Podcast Script'}
+        subtitle={pt
           ? 'Script por segmentos com marcadores de tempo e âncoras de evidência.'
           : 'Segmented script with timestamps and evidence anchors.'}
       />

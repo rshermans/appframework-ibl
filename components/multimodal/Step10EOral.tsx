@@ -64,9 +64,9 @@ export default function Step10EOral({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="Step 10E"
-        label={pt ? 'Apresentação Oral' : 'Oral Presentation'}
-        description={pt
+        stepId="step6_multimodal"
+        title={pt ? 'Apresentação Oral' : 'Oral Presentation'}
+        subtitle={pt
           ? 'Outline de slides com notas de orador e âncoras de evidência.'
           : 'Slide outline with speaker notes and evidence anchors.'}
       />

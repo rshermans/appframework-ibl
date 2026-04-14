@@ -67,9 +67,9 @@ export default function StepExtension({ onBack }: Props) {
   return (
     <div className="space-y-6">
       <StepHeader
-        badge="S3-Extend"
-        label={pt ? 'Planeador de Extensão' : 'Inquiry Extension Planner'}
-        description={pt
+        stepId="step7_reflection"
+        title={pt ? 'Planeador de Extensão' : 'Inquiry Extension Planner'}
+        subtitle={pt
           ? 'Deteta lacunas na investigação e propõe 3 caminhos distintos de extensão.'
           : 'Detects research gaps and proposes 3 distinct extension paths.'}
       />
