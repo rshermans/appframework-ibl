@@ -269,6 +269,7 @@ const messages: Record<Locale, MessageTree> = {
         expert: 'Especialista',
         general: 'Geral',
         continueButton: 'Continuar',
+        redoButton: 'Refazer explicação',
       },
     },
     progress: {
@@ -555,6 +556,7 @@ const messages: Record<Locale, MessageTree> = {
         expert: 'Expert',
         general: 'General',
         continueButton: 'Continue',
+        redoButton: 'Redo explanation',
       },
     },
     progress: {

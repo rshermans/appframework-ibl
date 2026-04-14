@@ -108,6 +108,13 @@ async function searchSemanticScholar(
         const retryDetails = await safeReadText(response)
         throw new Error(`Semantic Scholar search failed (${response.status}): ${retryDetails}`)
       }
+    } else if (response.status === 500 || response.status === 400) {
+      const simplifiedQuery = simplifySemanticScholarQuery(query)
+      if (simplifiedQuery && simplifiedQuery !== query) {
+        console.warn(`[Search API] Semantic Scholar failed, retrying with simplified query: ${simplifiedQuery}`)
+        return searchSemanticScholar(simplifiedQuery, pageSize, page)
+      }
+      throw new Error(`Semantic Scholar search failed (${response.status}): ${details}`)
     } else {
       throw new Error(`Semantic Scholar search failed (${response.status}): ${details}`)
     }
@@ -418,6 +425,26 @@ function extractFirstUrl(item: { instances?: Array<{ urls?: string[] }> }): stri
 
 function stripMarkup(value: string): string {
   return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function simplifySemanticScholarQuery(query: string): string {
+  const cleaned = query
+    .replace(/[()"]/g, ' ')
+    .replace(/\b(AND|OR|NOT)\b/gi, ' ')
+    .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!cleaned) {
+    return query
+  }
+
+  const terms = cleaned
+    .split(' ')
+    .map((term) => term.trim())
+    .filter((term) => term.length >= 3)
+
+  return Array.from(new Set(terms)).slice(0, 10).join(' ')
 }
 
 function simplifyPortalQuery(query: string): string {
