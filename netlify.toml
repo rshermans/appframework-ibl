@@ -2,6 +2,11 @@
 command = "npm run build"
 functions = ".next/server"
 
+# Secrets scanning: omit non-secret env vars that appear legitimately in docs/config
+# OPENAI_MODEL is a model name (not a secret); NEXT_PUBLIC_APP_URL is intentionally public
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "OPENAI_MODEL,NEXT_PUBLIC_APP_URL"
+
 [functions]
 node_bundler = "nft"
 # Netlify timeout limits: 30s (basic) or 60s (pro)
