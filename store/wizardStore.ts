@@ -1,13 +1,16 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import { WizardState, Stage, InteractionRecord } from '@/types/wizard'
 import { resolveWorkflowStepId, toLegacyStepId } from '@/lib/workflow'
+import { clearSessionProjectCookie, setSessionProjectCookie } from '@/lib/sessionClient'
 
 export const useWizardStore = create<WizardState>()(
   persist(
     (set) => ({
   projectId: '',
   topic: '',
+  aiConsentAccepted: false,
+  aiConsentAcceptedAt: null,
   stage: 1,
   step: 'step0',
   workflowStep: 'step0_generate',
@@ -37,7 +40,18 @@ export const useWizardStore = create<WizardState>()(
   interactions: [],
 
   setProject: (id: string, topic: string) =>
-    set({ projectId: id, topic }),
+    set(() => {
+      if (id) {
+        setSessionProjectCookie(id)
+      }
+      return { projectId: id, topic }
+    }),
+
+  setAiConsent: (accepted: boolean) =>
+    set({
+      aiConsentAccepted: accepted,
+      aiConsentAcceptedAt: accepted ? new Date().toISOString() : null,
+    }),
 
   setStage: (stage: Stage) =>
     set({ stage }),
@@ -173,13 +187,74 @@ export const useWizardStore = create<WizardState>()(
     set((state) => ({
       interactions: [...state.interactions, record],
     })),
+
+  resetSession: () =>
+    set(() => {
+      clearSessionProjectCookie()
+      return {
+        projectId: '',
+        topic: '',
+        aiConsentAccepted: false,
+        aiConsentAcceptedAt: null,
+        stage: 1,
+        step: 'step0',
+        workflowStep: 'step0_generate',
+        step0OptionalCompleted: false,
+        currentInput: '',
+        currentOutput: '',
+        currentMode: 'standard',
+        rqCandidates: [],
+        candidateResearchQuestions: [],
+        selectedRQs: [],
+        analysis: '',
+        rqAnalysis: '',
+        comparisonResult: null,
+        finalResearchQuestion: null,
+        searchDesign: null,
+        searchArticles: [],
+        selectedSearchArticleIds: [],
+        evidenceRecords: [],
+        knowledgeStructure: null,
+        explanationDraft: null,
+        multimodalOutputs: {},
+        evidenceFidelityScore: null,
+        peerReviews: [],
+        selfAssessment: null,
+        reflectionJournal: [],
+        extensionPlan: null,
+        interactions: [],
+      }
+    }),
     }),
     {
       name: 'ibl-step0-memory',
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
+        projectId: state.projectId,
+        aiConsentAccepted: state.aiConsentAccepted,
+        aiConsentAcceptedAt: state.aiConsentAcceptedAt,
+        stage: state.stage,
+        step: state.step,
+        workflowStep: state.workflowStep,
         topic: state.topic,
         rqCandidates: state.rqCandidates,
         candidateResearchQuestions: state.candidateResearchQuestions,
+        selectedRQs: state.selectedRQs,
+        comparisonResult: state.comparisonResult,
+        finalResearchQuestion: state.finalResearchQuestion,
+        searchDesign: state.searchDesign,
+        searchArticles: state.searchArticles,
+        selectedSearchArticleIds: state.selectedSearchArticleIds,
+        evidenceRecords: state.evidenceRecords,
+        knowledgeStructure: state.knowledgeStructure,
+        explanationDraft: state.explanationDraft,
+        multimodalOutputs: state.multimodalOutputs,
+        evidenceFidelityScore: state.evidenceFidelityScore,
+        peerReviews: state.peerReviews,
+        selfAssessment: state.selfAssessment,
+        reflectionJournal: state.reflectionJournal,
+        extensionPlan: state.extensionPlan,
+        interactions: state.interactions,
         step0OptionalCompleted: state.step0OptionalCompleted,
       }),
     }

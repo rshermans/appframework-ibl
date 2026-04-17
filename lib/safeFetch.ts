@@ -7,7 +7,8 @@ export async function safeFetch(
   url: string,
   options: RequestInit
 ): Promise<{ response: Response; json: any }> {
-  const response = await fetch(url, options)
+  const nextOptions = appendAiConsent(url, options)
+  const response = await fetch(url, nextOptions)
 
   const contentType = response.headers.get('content-type') || ''
 
@@ -21,4 +22,35 @@ export async function safeFetch(
 
   const json = await response.json()
   return { response, json }
+}
+
+function appendAiConsent(url: string, options: RequestInit): RequestInit {
+  if (!url.includes('/api/ai')) {
+    return options
+  }
+
+  if (typeof window === 'undefined' || typeof options.body !== 'string') {
+    return options
+  }
+
+  try {
+    const payload = JSON.parse(options.body) as Record<string, unknown>
+    if (typeof payload.aiConsentAccepted === 'boolean') {
+      return options
+    }
+
+    const persisted = window.sessionStorage.getItem('ibl-step0-memory')
+    const parsedPersisted = persisted ? (JSON.parse(persisted) as { state?: { aiConsentAccepted?: boolean } }) : null
+    const aiConsentAccepted = parsedPersisted?.state?.aiConsentAccepted === true
+
+    return {
+      ...options,
+      body: JSON.stringify({
+        ...payload,
+        aiConsentAccepted,
+      }),
+    }
+  } catch {
+    return options
+  }
 }

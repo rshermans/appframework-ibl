@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/lib/auth'
 import jsPDF from 'jspdf'
+
+export const runtime = 'nodejs'
 
 export async function GET(req: Request, { params }: { params: { projectId: string } }) {
   try {
     const { projectId } = params
+    const session = await auth()
+    const sessionUserId = (session?.user as { id?: string } | undefined)?.id
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, userId: true },
+    })
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+
+    if (project.userId && project.userId !== sessionUserId) {
+      return NextResponse.json({ error: 'Not authorized for this export' }, { status: 403 })
+    }
 
     // Get all interactions
     const interactions = await prisma.projectInteraction.findMany({
@@ -25,7 +43,7 @@ export async function GET(req: Request, { params }: { params: { projectId: strin
 
     // Title
     pdf.setFontSize(18)
-    pdf.text('Research Wizard Export', 10, yPosition)
+    pdf.text('IBL-AI Export', 10, yPosition)
     yPosition += 10
 
     // Metadata
@@ -55,7 +73,7 @@ export async function GET(req: Request, { params }: { params: { projectId: strin
       pdf.text('Input:', 10, yPosition)
       yPosition += 2
 
-      const inputLines = pdf.splitTextToSize(interaction.userInput, 190)
+      const inputLines = pdf.splitTextToSize(interaction.userInput || '-', 190)
       pdf.text(inputLines, 10, yPosition)
       yPosition += inputLines.length * 3 + 2
 
@@ -63,7 +81,7 @@ export async function GET(req: Request, { params }: { params: { projectId: strin
       pdf.text('Output:', 10, yPosition)
       yPosition += 2
 
-      const outputLines = pdf.splitTextToSize(interaction.aiOutput, 190)
+      const outputLines = pdf.splitTextToSize(interaction.aiOutput || '-', 190)
       pdf.text(outputLines, 10, yPosition)
       yPosition += outputLines.length * 3 + 3
 

@@ -5,7 +5,8 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { ExplanationDraft, EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
-import { parseAiJson } from '@/lib/parseAiJson'
+import QualityRating from '@/components/QualityRating'
+import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { retryWithBackoff } from '@/lib/retryHelper'
 import { safeFetch } from '@/lib/safeFetch'
 
@@ -144,6 +145,7 @@ function buildFallbackArgumentCore(
 export default function Step5Explanation() {
   const { locale, t } = useI18n()
   const {
+    addInteraction,
     evidenceRecords,
     explanationDraft,
     finalResearchQuestion,
@@ -156,6 +158,7 @@ export default function Step5Explanation() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [audience, setAudience] = useState<'expert' | 'general'>('expert')
+  const [qualityRating, setQualityRating] = useState<number | null>(null)
   const isPortuguese = locale === 'pt-PT'
   const reviewedReferences = buildReviewedReferences(evidenceRecords, searchArticles)
 
@@ -185,8 +188,8 @@ export default function Step5Explanation() {
         projectId,
         stage: 2,
         promptId: 'step9',
-        stepId: 'step5_explanation',
-        stepLabel: t('workflow.step5_explanation.label'),
+        stepId: 'step9_explanation',
+        stepLabel: t('workflow.step9_explanation.label'),
         topic,
         rq: finalResearchQuestion.question,
         finalResearchQuestion,
@@ -214,7 +217,7 @@ export default function Step5Explanation() {
         throw new Error((payload?.details || payload?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = parseAiJson<{
+      const parsed = parseAiJsonWithOptions<{
         outline?: string[]
         argument_core?: string
         argumentCore?: string
@@ -223,7 +226,17 @@ export default function Step5Explanation() {
         bibliography?: string[]
         open_issues?: string[]
         openIssues?: string[]
-      }>(data.output)
+      }>(data.output, {
+        validate: (value) => {
+          const outline = Array.isArray(value?.outline) ? value.outline.filter(Boolean) : []
+          const argumentCore = value?.argument_core || value?.argumentCore || ''
+          const bibliography = Array.isArray(value?.bibliography) ? value.bibliography.filter(Boolean) : []
+          return outline.length > 0 && typeof argumentCore === 'string' && argumentCore.trim().length > 0 && bibliography.length > 0
+        },
+        errorMessage: isPortuguese
+          ? 'A IA devolveu uma explicação incompleta. O resultado precisa de incluir estrutura, tese central e bibliografia.'
+          : 'AI returned an incomplete explanation. The result must include an outline, a central argument, and bibliography.',
+      })
 
       const normalizedOutline = Array.isArray(parsed?.outline) ? parsed.outline.filter(Boolean) : []
       const normalizedArgumentCore = parsed?.argument_core || parsed?.argumentCore || ''
@@ -260,10 +273,91 @@ export default function Step5Explanation() {
       }
 
       setExplanationDraft(nextDraft)
+      addInteraction({
+        id: `interaction-${Date.now()}`,
+        stage: 2,
+        stepId: 'step9_explanation',
+        stepLabel: t('workflow.step9_explanation.label'),
+        promptId: 'step9',
+        eventType: explanationDraft ? 'redo' : 'generate',
+        userInput: `${finalResearchQuestion.question} | audience:${audience}`,
+        aiOutput: JSON.stringify(nextDraft),
+        mode: 'standard',
+        success: true,
+        metadata: {
+          outlineItems: nextDraft.outline.length,
+          bibliographyItems: nextDraft.bibliography.length,
+          audience,
+        },
+        createdAt: new Date().toISOString(),
+      })
     } catch (err) {
+      addInteraction({
+        id: `interaction-${Date.now()}`,
+        stage: 2,
+        stepId: 'step9_explanation',
+        stepLabel: t('workflow.step9_explanation.label'),
+        promptId: 'step9',
+        eventType: explanationDraft ? 'redo' : 'generate',
+        userInput: `${finalResearchQuestion.question} | audience:${audience}`,
+        aiOutput: err instanceof Error ? err.message : t('api.genericFailure'),
+        mode: 'standard',
+        success: false,
+        metadata: {
+          audience,
+        },
+        createdAt: new Date().toISOString(),
+      })
       setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleQualityRating = (rating: number) => {
+    setQualityRating(rating)
+    if (!explanationDraft || !finalResearchQuestion?.question) return
+
+    addInteraction({
+      id: `interaction-${Date.now()}`,
+      stage: 2,
+      stepId: 'step9_explanation',
+      stepLabel: t('workflow.step9_explanation.label'),
+      promptId: 'step9',
+      eventType: 'rate',
+      userInput: finalResearchQuestion.question,
+      aiOutput: explanationDraft.argumentCore,
+      mode: 'standard',
+      success: true,
+      metadata: {
+        rating,
+        audience,
+        bibliographyItems: explanationDraft.bibliography.length,
+      },
+      createdAt: new Date().toISOString(),
+    })
+
+    if (projectId) {
+      void fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          stage: 2,
+          stepId: 'step9_explanation',
+          stepLabel: t('workflow.step9_explanation.label'),
+          userInput: finalResearchQuestion.question,
+          aiOutput: JSON.stringify({
+            eventType: 'rate',
+            rating,
+            audience,
+            bibliographyItems: explanationDraft.bibliography.length,
+          }),
+          topic,
+          mode: 'standard',
+          locale,
+        }),
+      }).catch(() => null)
     }
   }
 
@@ -271,7 +365,7 @@ export default function Step5Explanation() {
     <div className="space-y-6">
       <div>
         <StepHeader
-          stepId="step5_explanation"
+          stepId="step9_explanation"
           title={t('steps.step5.title')}
           subtitle={t('steps.step5.intro')}
         />
@@ -311,6 +405,13 @@ export default function Step5Explanation() {
 
       {explanationDraft && (
         <div className="space-y-5 ai-user-decided rq-active-accent p-5">
+          <QualityRating
+            label={isPortuguese ? 'Como avalias esta explicação?' : 'How do you rate this explanation?'}
+            helperText={isPortuguese ? 'Usa esta nota para registar se o scaffold está utilizável ou precisa de refazer.' : 'Use this to record whether the scaffold is usable or needs another pass.'}
+            value={qualityRating}
+            onChange={handleQualityRating}
+          />
+
           <div>
             <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step5.outline')}

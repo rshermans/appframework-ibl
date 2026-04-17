@@ -1,15 +1,15 @@
-# 📚 AppFramework IBL - Research Intelligence Platform
+# 📚 IBL-AI - Research Intelligence Platform
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14+-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue)](https://www.typescriptlang.org/)
 
-> **AppFramework IBL** é uma plataforma inteligente de pesquisa baseada em Inquiry-Based Learning (IBL), combinando Inteligência Artificial com metodologias de investigação avançadas.
+> **IBL-AI** é uma plataforma inteligente de pesquisa baseada em Inquiry-Based Learning (IBL), combinando Inteligência Artificial com metodologias de investigação avançadas.
 
 ## 🎯 Sobre o Projeto
 
-O **AppFramework IBL** é um framework completo para investigação e pesquisa educacional, desenvolvido para a Universidade do Minho. Integra:
+O **IBL-AI** é um framework completo para investigação e pesquisa educacional, desenvolvido para a Universidade do Minho. Integra:
 
 - 🤖 **IA Avançada** com OpenAI para geração e análise de conteúdo
 - 📊 **Gestão de Dados** com Prisma e Supabase
@@ -45,7 +45,7 @@ O **AppFramework IBL** é um framework completo para investigação e pesquisa e
 ## 📁 Estrutura do Projeto
 
 ```
-AppFramework-IBL/
+IBL-AI/
 ├── 📄 package.json              # Dependências e scripts
 ├── 📄 tsconfig.json             # Configuração TypeScript
 ├── 📄 next.config.js            # Configuração Next.js
@@ -274,7 +274,7 @@ Este projeto está licenciado sob a **MIT License** - veja ficheiro [LICENSE](LI
 ## 👥 Autores & Créditos
 
 **Desenvolvido para:** Universidade do Minho  
-**Framework:** AppFramework  
+**Framework:** IBL-AI  
 **Versão:** 1.0.0  
 **Data:** Abril 2026
 
@@ -288,7 +288,7 @@ Este projeto está licenciado sob a **MIT License** - veja ficheiro [LICENSE](LI
 
 <div align="center">
 
-**[⬆ voltar ao topo](#-appframework-ibl---research-intelligence-platform)**
+**[⬆ voltar ao topo](#-ibl-ai---research-intelligence-platform)**
 
 Made with ❤️ for the IBL Research Community
 

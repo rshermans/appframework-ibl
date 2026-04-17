@@ -1,6 +1,6 @@
 # 🚀 Deployment Guide
 
-Guia completo para fazer deploy da aplicação AppFramework IBL em diferentes ambientes.
+Guia completo para fazer deploy da aplicação IBL-AI em diferentes ambientes.
 
 ## 📋 Pré-requisitos
 

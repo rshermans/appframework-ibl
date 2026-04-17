@@ -47,7 +47,7 @@ const HEAVY_STEPS = new Set([
   'step3_evidence_extraction',
   'step4_knowledge_structure',
   'step1a_compare',
-  'step5_explanation',
+  'step9_explanation',
 ])
 
 /**

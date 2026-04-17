@@ -153,11 +153,12 @@ export default function Step0() {
       <StepHeader
         stepId="step0_generate"
         title={t('steps.step0.title')}
+        showEthicalTip={false}
       />
 
       <EthicalTip
         title={isPortuguese ? 'Dica Ética — Integridade da Investigação' : 'Ethical Tip — Research Integrity'}
-        tip={getIblEthicalTip('step0_generate')}
+        tip={getIblEthicalTip('step0_generate', locale)}
         className="mb-2"
       />
 

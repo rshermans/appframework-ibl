@@ -23,6 +23,10 @@ export default function StepSelfAssessment({ onBack }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const pt = locale === 'pt-PT'
+  const canGenerate = Boolean(finalResearchQuestion?.question)
+  const missingPrereqLabel = pt
+    ? 'Este passo requer uma questão final aprovada no Stage 1.'
+    : 'This step requires an approved final question in Stage 1.'
 
   const generate = async () => {
     setLoading(true)
@@ -38,7 +42,9 @@ export default function StepSelfAssessment({ onBack }: Props) {
               stage: 3, promptId: 'self_assessment',
               stepId: 'step7_reflection', stepLabel: 'Self-Assessment',
               rq: finalResearchQuestion?.question ?? '',
+              finalResearchQuestion,
               evidence: JSON.stringify(evidenceRecords.slice(0, 8), null, 2),
+              explanationDraft,
               explanation: explanationDraft?.argumentCore ?? '',
             }),
           }),
@@ -85,9 +91,16 @@ export default function StepSelfAssessment({ onBack }: Props) {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_240px]">
         <div className="space-y-4">
+          {!canGenerate && (
+            <div className="rounded-[var(--radius-md)] border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
+              {missingPrereqLabel}
+            </div>
+          )}
+
           <button
             type="button"
-            disabled={loading}
+            title={!canGenerate ? missingPrereqLabel : undefined}
+            disabled={loading || !canGenerate}
             onClick={generate}
             className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--on_primary)] transition hover:opacity-90 disabled:opacity-50"
           >

@@ -1,6 +1,6 @@
 # Guia de Contribuição
 
-Obrigado por considerar contribuir para o **AppFramework IBL**! Este documento fornece guidelines e instruções para contribuir com código, documentação ou reports de bugs.
+Obrigado por considerar contribuir para o **IBL-AI**! Este documento fornece guidelines e instruções para contribuir com código, documentação ou reports de bugs.
 
 ## 📋 Código de Conduta
 
@@ -221,4 +221,4 @@ Use o template de Issue no GitHub:
 
 ---
 
-Obrigado por contribuir para melhorar o AppFramework IBL! 🎉
+Obrigado por contribuir para melhorar o IBL-AI! 🎉

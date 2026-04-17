@@ -85,6 +85,8 @@ export interface WizardState {
   // Project
   projectId: string
   topic: string
+  aiConsentAccepted: boolean
+  aiConsentAcceptedAt: string | null
   
   // Navigation
   stage: Stage
@@ -131,6 +133,7 @@ export interface WizardState {
   
   // Actions
   setProject: (id: string, topic: string) => void
+  setAiConsent: (accepted: boolean) => void
   setStage: (stage: Stage) => void
   setStep: (step: string | number) => void
   setWorkflowStep: (step: WorkflowStepId) => void
@@ -168,14 +171,20 @@ export interface WizardState {
   setReflectionJournal: (entries: ReflectionEntry[]) => void
   setExtensionPlan: (paths: ExtensionPath[] | null) => void
   addInteraction: (record: InteractionRecord) => void
+  resetSession: () => void
 }
 
 export interface InteractionRecord {
+  id: string
   stage: Stage
   stepId: string
   stepLabel: string
+  promptId?: string
+  eventType: 'generate' | 'redo' | 'analyze' | 'retrieve' | 'approve' | 'rate'
   userInput: string
   aiOutput: string
   mode?: string
-  createdAt: Date
+  success: boolean
+  metadata?: Record<string, string | number | boolean | null>
+  createdAt: string
 }

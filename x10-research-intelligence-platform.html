@@ -594,7 +594,7 @@ select option { background: #131929; }
     <div class="logo-glyph">X</div>
     <div class="logo-text">
       <div class="logo-title">X10 Research Intelligence Platform</div>
-      <div class="logo-sub">IBL + AI Automation · Arqus Alliance Framework</div>
+      <div class="logo-sub">IBL + AI Automation · IBL-AI Framework</div>
     </div>
   </div>
   <div class="stage-pills">
@@ -1357,7 +1357,7 @@ async function runCopilot() {
     ? `Current Step: ${STAGES[currentStage].steps.find(s => s.id === currentStep)?.label || currentStep}`
     : `Stage ${currentStage}: ${STAGES[currentStage].label} (no specific step selected)`;
 
-  const system = `You are an expert IBL (Inquiry-Based Learning) research coach embedded in the Arqus Alliance IBL+AI Framework. You support both teachers and students through a structured 4-stage research process (Stage 0: Team Setup → Stage 1: Ask & Research → Stage 2: Explain & Create → Stage 3: Reflect & Improve).
+  const system = `You are an expert IBL (Inquiry-Based Learning) research coach embedded in the IBL-AI Framework. You support both teachers and students through a structured 4-stage research process (Stage 0: Team Setup → Stage 1: Ask & Research → Stage 2: Explain & Create → Stage 3: Reflect & Improve).
 
 Your role: Generate precise, actionable, framework-aligned guidance. Be concrete, not vague. Use structured output with clear sections. Match the cognitive demands of the specific step. The user is a ${role}.`;
 
@@ -1414,7 +1414,7 @@ async function runRubric() {
   const r = RUBRIC_DATA[rubricNum];
   const criteriaStr = r.criteria.map((c,i) => `C${i+1}: ${c}`).join('\n');
 
-  const system = `You are an expert academic assessor trained in the Arqus Alliance IBL+AI Framework. You use a 1–4 scoring rubric where: 1=Beginning, 2=Developing, 3=Good, 4=Excellent. You score student work against specific criteria with evidence-based justification. Be fair, specific, and constructive. Always base scores on what is actually present in the submitted work.`;
+  const system = `You are an expert academic assessor trained in the IBL-AI Framework. You use a 1–4 scoring rubric where: 1=Beginning, 2=Developing, 3=Good, 4=Excellent. You score student work against specific criteria with evidence-based justification. Be fair, specific, and constructive. Always base scores on what is actually present in the submitted work.`;
 
   const user = `Score this student work against Rubric ${rubricNum}: ${r.name}.
 
@@ -1700,7 +1700,7 @@ async function runMonitor() {
   btn.disabled = true;
   thinking.classList.add('active');
 
-  const system = `You are an academic integrity and AI ethics specialist trained in the Arqus Alliance IBL+AI Framework Rubric 8 (Ethical AI Use). You audit student and teacher AI prompts for compliance with ethical AI use standards. Be honest, direct, and constructive. Output valid JSON only.`;
+  const system = `You are an academic integrity and AI ethics specialist trained in the IBL-AI Framework Rubric 8 (Ethical AI Use). You audit student and teacher AI prompts for compliance with ethical AI use standards. Be honest, direct, and constructive. Output valid JSON only.`;
 
   const user = `Audit this AI prompt for ethical compliance against Rubric 8 of the IBL Framework.
 

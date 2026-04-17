@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
-import { parseAiJson } from '@/lib/parseAiJson'
+import ExportToNotebookButton from '@/components/ExportToNotebookButton'
+import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { retryWithBackoff } from '@/lib/retryHelper'
 import { safeFetch } from '@/lib/safeFetch'
+import { isValidMultimodalArtifact } from '@/lib/multimodalContract'
 import type { GameScenario } from '@/types/research-workflow'
 
 interface Props {
@@ -24,6 +26,9 @@ export default function Step10DGame({ onBack }: Props) {
   const [activeBranch, setActiveBranch] = useState(0)
   const draft = multimodalOutputs.game
   const pt = locale === 'pt-PT'
+  const generationSoonLabel = pt
+    ? 'Geração direta no app em breve. Use "Exportar para NotebookLM".'
+    : 'Direct generation in-app is coming soon. Use "Export to NotebookLM".'
 
   const generate = async () => {
     setLoading(true)
@@ -47,7 +52,10 @@ export default function Step10DGame({ onBack }: Props) {
       )
       if (!response.ok || !payload?.ok) throw new Error((payload?.details || payload?.error || 'API error') as string)
       const data = payload?.data ?? payload
-      const parsed = parseAiJson<GameScenario>(data.output)
+      const parsed = parseAiJsonWithOptions<GameScenario>(data.output, {
+        validate: (value) => isValidMultimodalArtifact('game', value),
+        errorMessage: pt ? 'Resposta invalida para o contrato de jogo.' : 'Invalid game contract response.',
+      })
       if (!parsed?.branches?.length) throw new Error(pt ? 'Resposta inválida da IA.' : 'Invalid AI response.')
       setMultimodalGame(parsed)
       if (typeof parsed.fidelityScore === 'number') setEvidenceFidelityScore(parsed.fidelityScore)
@@ -72,15 +80,26 @@ export default function Step10DGame({ onBack }: Props) {
         ← {pt ? 'Voltar ao hub' : 'Back to hub'}
       </button>
 
-      <div>
-        <button
-          type="button"
-          disabled={loading || !finalResearchQuestion?.approvedByUser}
-          onClick={generate}
-          className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--on_primary)] transition hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? (pt ? 'A gerar…' : 'Generating…') : draft ? (pt ? 'Regenerar' : 'Regenerate') : (pt ? 'Gerar jogo' : 'Generate game')}
-        </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <span title={generationSoonLabel} className="inline-flex cursor-not-allowed">
+          <button
+            type="button"
+            onClick={generate}
+            disabled
+            className="rounded-[var(--radius-md)] bg-[var(--surface_container_high)] px-4 py-2 text-sm font-medium text-[var(--on_surface_variant)] opacity-80"
+          >
+            {pt ? 'Em breve' : 'Coming soon'}
+          </button>
+        </span>
+        <ExportToNotebookButton
+          projectId={projectId}
+          topic={topic}
+          researchQuestion={finalResearchQuestion?.question ?? ''}
+          evidenceRecords={evidenceRecords}
+          artifactType="game"
+          variant="secondary"
+          size="sm"
+        />
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

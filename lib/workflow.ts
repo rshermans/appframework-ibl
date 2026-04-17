@@ -39,7 +39,7 @@ export const WORKFLOW_STEP_ORDER: WorkflowStepId[] = [
   'step5_source_selection',
   'step4_knowledge_structure',
   'step8_glossary',
-  'step5_explanation',
+  'step9_explanation',
   'step6_multimodal',
   'step7_reflection',
 ]
@@ -69,7 +69,7 @@ export const LEGACY_WORKFLOW_STEP_ALIASES: Record<string, WorkflowStepId> = {
   step7: 'step4_knowledge_structure',
   step8a: 'step8_glossary',
   step8b: 'step8_glossary',
-  step9: 'step5_explanation',
+  step9: 'step9_explanation',
   step10: 'step6_multimodal',
   step10a: 'step6_multimodal',
   step10b: 'step6_multimodal',
@@ -91,7 +91,7 @@ export const WORKFLOW_TO_LEGACY_STEP: Record<WorkflowStepId, string> = {
   step5_source_selection: 'step5',
   step4_knowledge_structure: 'step6',
   step8_glossary: 'step8a',
-  step5_explanation: 'step9',
+  step9_explanation: 'step9',
   step6_multimodal: 'step10',
   step7_reflection: 's3-reflect',
 }
@@ -259,11 +259,11 @@ export const WORKFLOW_STEP_CONTRACTS: Record<WorkflowStepId, WorkflowStepContrac
       field('knowledgeStructure', 'object', true, 'user', 'Knowledge structure with the human-curated glossary.'),
     ],
     storeWrites: ['knowledgeStructure'],
-    nextSteps: ['step5_explanation'],
+    nextSteps: ['step9_explanation'],
     humanDecisionRequired: true,
   },
-  step5_explanation: {
-    id: 'step5_explanation',
+  step9_explanation: {
+    id: 'step9_explanation',
     label: 'Build Scientific Explanation',
     stage: 'communication',
     promptId: 'step9',

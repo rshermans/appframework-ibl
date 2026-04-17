@@ -160,6 +160,12 @@ Selected research questions:
 Comparative analysis:
 [CONTENT]
 
+Rules:
+- Preserve the disciplinary focus already present in the selected questions.
+- Do not widen the scope beyond what is feasible for a 3-6 week inquiry.
+- Prefer precise wording over ambitious wording.
+- If there is a tradeoff between novelty and feasibility, prefer feasibility.
+
 Respond with valid JSON only:
 {
   "final_question": "One final research question",
@@ -244,6 +250,11 @@ Research Question: [RQ]
 
 IMPORTANT: You MUST include ALL of the following fields in your JSON response. The "boolean_query" and "search_strings" fields are MANDATORY — omitting them will cause a system error.
 
+Execution context:
+- The search strategy will be executed immediately across Crossref, OpenAIRE, Semantic Scholar, and RCAAP.
+- Prefer queries that are robust across academic databases.
+- Avoid over-narrow expressions that only work in one provider.
+
 Respond with valid JSON only using EXACTLY this structure:
 {
   "keywords": ["keyword 1", "keyword 2", "keyword 3"],
@@ -260,9 +271,14 @@ Respond with valid JSON only using EXACTLY this structure:
 
 Rules:
 - "boolean_query" must be a non-empty string with AND/OR operators connecting the main concepts.
-- "search_strings" must be a non-empty array with at least 2 database-specific queries.
+- "boolean_query" should usually contain 2-4 grouped concept clusters.
+- "search_strings" must be a non-empty array with at least 4 database-specific queries.
 - Extract 3-6 keywords and their synonyms from the research question.
-- Use parentheses to group related terms in boolean expressions.`,
+- Use parentheses to group related terms in boolean expressions.
+- Keep provider-specific strings executable. Do not include explanations inside the query field.
+- Include one string each for RCAAP, Crossref, Semantic Scholar, and OpenAIRE.
+- If the question is broad, simplify terms rather than adding more operators.
+- Filters should be realistic and database-agnostic when possible.`,
   },
   step4: {
     id: 'step4',
@@ -271,10 +287,18 @@ Rules:
 Research Question: [RQ]
 Source: [SOURCE]
 
+Rules:
+- Work only with the source provided.
+- Do not invent findings that are not explicitly supported by the source text.
+- If the source is weak or incomplete, say so in limitations.
+- The claim must describe the source's central contribution, not your own conclusion.
+- Findings must be concrete and evidence-based, not generic summaries.
+
 Respond with valid JSON only:
 {
   "title": "Source title if identifiable",
   "source_type": "paper | report | website | book | unknown",
+  "evidence_provenance": "Short note identifying where the evidence came from in the source",
   "claim": "Main hypothesis or claim",
   "methodology": "Methodology used",
   "findings": ["Finding 1", "Finding 2"],
@@ -290,6 +314,13 @@ Respond with valid JSON only:
 Research Question: [RQ]
 Evidence Summary: [EVIDENCE]
 Audience: [AUDIENCE]
+
+Rules:
+- Build the explanation only from the supplied evidence.
+- Every major section of the outline must be supportable by at least one evidence record.
+- The central argument must stay faithful to the evidence rather than overselling certainty.
+- Include tensions, limitations, or open issues when the evidence is incomplete.
+- Bibliography must include every reviewed source supplied by the system.
 
 Include every reviewed source in the bibliography list.
 
@@ -339,6 +370,13 @@ Audience: [AUDIENCE]
 
 Generate a structured poster scaffold. Every section must reference at least one evidence record anchor.
 
+Rules:
+- Do not invent visuals that imply evidence not present in the record.
+- Keep wording concise and presentation-ready.
+- Prefer 4-6 sections rather than an overloaded poster.
+- Each section must include at least one anchor.
+- If a claim is tentative, the section content must signal uncertainty.
+
 Respond with valid JSON only:
 {
   "title": "Poster title",
@@ -364,6 +402,12 @@ Evidence Summary: [EVIDENCE]
 Audience: [AUDIENCE]
 Target duration (minutes): [DURATION]
 
+Rules:
+- Keep the script oral, natural, and evidence-grounded.
+- Every segment should contribute to one coherent scientific thread.
+- Avoid dramatic claims not justified by the evidence.
+- Use anchors whenever a factual claim is made.
+
 Respond with valid JSON only:
 {
   "title": "Podcast episode title",
@@ -388,6 +432,12 @@ Respond with valid JSON only:
 Research Question: [RQ]
 Evidence Summary: [EVIDENCE]
 Audience: [AUDIENCE]
+
+Rules:
+- Each scene must have a clear scientific purpose.
+- Visual notes must not imply observations that are absent from the evidence.
+- Maintain one central argument across the whole storyboard.
+- Anchor factual scenes to evidence records.
 
 Respond with valid JSON only:
 {
@@ -415,6 +465,12 @@ Audience: [AUDIENCE]
 
 Create a branching narrative game where players make scientific decisions. Consequences must be grounded in evidence.
 
+Rules:
+- Use the evidence to shape consequences, not to decorate the scenario.
+- Keep branches intelligible and limited; prefer 3-6 meaningful decision points.
+- Avoid fantasy mechanics that detach the game from the scientific topic.
+- The objective should remain educational and inquiry-oriented.
+
 Respond with valid JSON only:
 {
   "title": "Game title",
@@ -440,6 +496,12 @@ Research Question: [RQ]
 Evidence Summary: [EVIDENCE]
 Audience: [AUDIENCE]
 Duration (minutes): [DURATION]
+
+Rules:
+- Match slide density to the requested duration.
+- Speaker notes should help a student explain evidence, not read paragraphs aloud.
+- Each substantive slide must remain anchored to evidence.
+- Keep the presentation argumentative, not just descriptive.
 
 Respond with valid JSON only:
 {
@@ -470,6 +532,11 @@ Work Sample: [WORK_SAMPLE]
 
 Generate guiding prompts to help the reviewer provide constructive rubric-aligned feedback.
 
+Rules:
+- Prompts must require human judgement.
+- Do not write the feedback itself; write prompts that elicit it.
+- Keep the prompts specific to the rubric dimension.
+
 Respond with valid JSON only:
 {
   "strengths_prompt": "Question to help reviewer articulate what is strong",
@@ -487,6 +554,11 @@ Evidence Summary: [EVIDENCE]
 Explanation Draft: [EXPLANATION]
 
 Map the work against IBL rubric dimensions R1–R8 and generate self-assessment prompts.
+
+Rules:
+- Scores must be plausible and justified from the supplied work.
+- Improvement hints must be specific and actionable.
+- Avoid inflated scoring when the evidence is incomplete.
 
 Respond with valid JSON only:
 {
@@ -512,6 +584,11 @@ Context: [CONTEXT]
 Generate 3 short reflective micro-prompts to trigger authentic metacognition.
 One prompt per epistemic dimension: what was learned, what was difficult, what would be done differently.
 
+Rules:
+- Prompts must invite authentic personal reflection rather than generic summaries.
+- Avoid asking for factual recall only.
+- Keep each prompt short enough to answer in 3-6 sentences.
+
 Respond with valid JSON only:
 {
   "prompts": [
@@ -531,6 +608,12 @@ Evidence Summary: [EVIDENCE]
 Open Issues: [OPEN_ISSUES]
 
 Identify gaps and propose 3 distinct extension paths with complexity estimates.
+
+Rules:
+- Extension paths must be genuinely distinct from one another.
+- Base gaps on the supplied knowledge structure and open issues, not speculation alone.
+- Suggested methodologies should match the proposed path.
+- Prefer realistic next steps over ambitious but vague ideas.
 
 Respond with valid JSON only:
 {

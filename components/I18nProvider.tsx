@@ -8,7 +8,8 @@ import {
   type Locale,
 } from '@/lib/i18n'
 
-const LOCALE_STORAGE_KEY = 'relia.locale'
+const LOCALE_STORAGE_KEY = 'ibl-ai.locale'
+const LEGACY_LOCALE_STORAGE_KEY = 'relia.locale'
 
 interface I18nContextValue {
   locale: Locale
@@ -22,7 +23,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE)
 
   useEffect(() => {
-    const savedLocale = normalizeLocale(window.localStorage.getItem(LOCALE_STORAGE_KEY))
+    const savedLocale = normalizeLocale(
+      window.localStorage.getItem(LOCALE_STORAGE_KEY)
+      ?? window.localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY)
+    )
     setLocaleState(savedLocale)
   }, [])
 

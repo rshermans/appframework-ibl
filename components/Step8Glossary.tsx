@@ -14,7 +14,7 @@ interface GlossaryEntry {
 }
 
 export default function Step8Glossary() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const { knowledgeStructure, setKnowledgeStructure, setWorkflowStep } = useWizardStore()
 
   const initialEntries: GlossaryEntry[] = knowledgeStructure?.glossary ?? []
@@ -68,7 +68,7 @@ export default function Step8Glossary() {
     if (!knowledgeStructure) return
     const updated: KnowledgeStructure = { ...knowledgeStructure, glossary: entries }
     setKnowledgeStructure(updated)
-    setWorkflowStep('step5_explanation')
+    setWorkflowStep('step9_explanation')
   }
 
   return (
@@ -77,11 +77,12 @@ export default function Step8Glossary() {
         stepId="step8_glossary"
         title={t('steps.step8.title')}
         subtitle={t('steps.step8.intro')}
+        showEthicalTip={false}
       />
 
       <EthicalTip
         title={t('steps.step8.ethicalTip')}
-        tip={getIblEthicalTip('step8_glossary')}
+        tip={getIblEthicalTip('step8_glossary', locale)}
         className="mb-2"
       />
 

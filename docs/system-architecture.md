@@ -2,31 +2,36 @@
 
 ## Central Position
 
-RELIA Wizard is not an AI-first product.
+IBL-AI is not an AI-first product.
 It is a workflow-first system where AI is one module inside a cognitive process.
 
 ## Layered Model
 
 1. User Interface
+
 - Wizard flow
 - Step-by-step decisions
 - Progressive disclosure
 
 2. Workflow Orchestrator
+
 - Step contracts
 - Transition rules
 - Human decision checkpoints
 
 3. State Layer
+
 - Zustand for active session state
 - Prisma/DB for persistence
 
 4. AI Engine
+
 - Prompt registry
 - API route
 - Structured responses
 
 5. External Knowledge Layer
+
 - NotebookLM
 - Papers
 - Search databases

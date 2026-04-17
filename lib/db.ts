@@ -19,7 +19,8 @@ export async function saveInteraction(
   aiOutput: string,
   topic?: string,
   mode?: string,
-  tokens: number = 0
+  tokens: number = 0,
+  userId?: string
 ) {
   // Ensure the parent project exists before writing interaction rows.
   await prisma.project.upsert({
@@ -28,12 +29,14 @@ export async function saveInteraction(
       topic: topic || 'Untitled project',
       stage,
       step: stepId,
+      ...(userId ? { userId } : {}),
     },
     create: {
       id: projectId,
       topic: topic || 'Untitled project',
       stage,
       step: stepId,
+      ...(userId ? { userId } : {}),
     },
   })
 

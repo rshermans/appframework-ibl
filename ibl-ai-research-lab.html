@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>IBL · AI Research Lab — ARQUS</title>
+<title>IBL · AI Research Lab — IBL-AI</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;0,700;1,300;1,500&family=Figtree:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -385,7 +385,7 @@ hr.gold { border:none; border-top:1px solid var(--border-gold); margin:28px 0; }
     <div class="stage-dot" onclick="scrollTo('stage3')" title="Stage 3 — Reflect & Improve">S3</div>
     <div class="stage-dot" onclick="scrollTo('rubrics')" title="Assessment Lab">R</div>
   </div>
-  <div class="topbar-badge">✦ ARQUS Innovation Fund</div>
+  <div class="topbar-badge">✦ IBL-AI Innovation Lab</div>
 </header>
 
 <!-- ─── SIDEBAR ─── -->
@@ -429,7 +429,7 @@ hr.gold { border:none; border-top:1px solid var(--border-gold); margin:28px 0; }
   <!-- INTRO HERO -->
   <section id="intro" style="margin-bottom:36px;">
     <div class="stage-hero">
-      <div class="stage-hero-tag">ARQUS Alliance · IBL + AI Methodology</div>
+      <div class="stage-hero-tag">IBL-AI · IBL + AI Methodology</div>
       <h1>Scientific Research Lab<br><em style="color:var(--gold);font-style:italic;">Powered by AI</em></h1>
       <p>This is the <strong style="color:var(--text-bright)">X10 automated version</strong> of the IBL framework. Every stage has a live Claude AI co-pilot embedded directly here — no copy-pasting, no switching tabs. Research, analyse, create and assess in one unified environment.</p>
       <div class="stage-hero-meta">
@@ -1256,7 +1256,7 @@ async function callClaude(systemPrompt, userContent, contentId, responseId) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
-        system: `You are an expert AI co-pilot embedded in the ARQUS IBL (Inquiry-Based Learning) Research Lab. 
+        system: `You are an expert AI co-pilot embedded in the IBL-AI (Inquiry-Based Learning) Research Lab. 
 You help students and teachers with scientific inquiry projects. 
 Always respond in clear, structured markdown with headers (##), bold key terms, and bullet points where appropriate.
 Be academically rigorous but accessible. Never do the work FOR the student — scaffold, guide, and model.

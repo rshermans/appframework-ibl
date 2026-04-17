@@ -48,7 +48,7 @@ function sourceSummary(record: EvidenceRecord, articles: SearchArticle[]): strin
 }
 
 export default function Step5SourceSelection() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const {
     evidenceRecords,
     searchArticles,
@@ -122,11 +122,12 @@ export default function Step5SourceSelection() {
         stepId="step5_source_selection"
         title={t('steps.step5_source_selection.title')}
         subtitle={t('steps.step5_source_selection.intro')}
+        showEthicalTip={false}
       />
 
       <EthicalTip
         title={t('steps.step5_source_selection.ethicalTip')}
-        tip={getIblEthicalTip('step5_source_selection')}
+        tip={getIblEthicalTip('step5_source_selection', locale)}
         className="mb-2"
       />
 

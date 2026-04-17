@@ -17,7 +17,7 @@ export type WorkflowStepId =
   | 'step5_source_selection'
   | 'step4_knowledge_structure'
   | 'step8_glossary'
-  | 'step5_explanation'
+  | 'step9_explanation'
   | 'step6_multimodal'
   | 'step7_reflection'
 

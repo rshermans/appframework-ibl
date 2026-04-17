@@ -2,9 +2,9 @@
   "name": "appframework-ibl",
   "version": "1.0.0",
   "private": false,
-  "description": "AppFramework IBL - Research Intelligence Platform with AI-powered Inquiry-Based Learning framework",
+  "description": "IBL-AI - Research Intelligence Platform with AI-powered Inquiry-Based Learning framework",
   "author": {
-    "name": "AppFramework Contributors",
+    "name": "IBL-AI Contributors",
     "url": "https://github.com/rshermans/appframework-ibl"
   },
   "license": "MIT",
@@ -47,6 +47,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.7.4",
     "@prisma/client": "^5.7.0",
     "autoprefixer": "^10.4.16",
     "class-variance-authority": "^0.7.0",
@@ -59,7 +60,9 @@
     "markmap-lib": "^0.18.12",
     "markmap-view": "^0.18.12",
     "next": "^14.0.0",
+    "next-auth": "^5.0.0-beta.29",
     "next-i18next": "^13.2.4",
+    "nextjs-toploader": "^3.9.17",
     "openai": "^6.34.0",
     "postcss": "^8.4.31",
     "prisma": "^5.7.0",

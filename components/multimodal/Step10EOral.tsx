@@ -5,9 +5,11 @@ import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
 import EvidenceWatermark from './EvidenceWatermark'
-import { parseAiJson } from '@/lib/parseAiJson'
+import ExportToNotebookButton from '@/components/ExportToNotebookButton'
+import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { retryWithBackoff } from '@/lib/retryHelper'
 import { safeFetch } from '@/lib/safeFetch'
+import { isValidMultimodalArtifact } from '@/lib/multimodalContract'
 import type { OralPresentation } from '@/types/research-workflow'
 
 interface Props {
@@ -26,6 +28,9 @@ export default function Step10EOral({ onBack }: Props) {
   const [activeSlide, setActiveSlide] = useState(0)
   const draft = multimodalOutputs.oral
   const pt = locale === 'pt-PT'
+  const generationSoonLabel = pt
+    ? 'Geração direta no app em breve. Use "Exportar para NotebookLM".'
+    : 'Direct generation in-app is coming soon. Use "Export to NotebookLM".'
 
   const generate = async () => {
     setLoading(true)
@@ -49,7 +54,10 @@ export default function Step10EOral({ onBack }: Props) {
       )
       if (!response.ok || !payload?.ok) throw new Error((payload?.details || payload?.error || 'API error') as string)
       const data = payload?.data ?? payload
-      const parsed = parseAiJson<OralPresentation>(data.output)
+      const parsed = parseAiJsonWithOptions<OralPresentation>(data.output, {
+        validate: (value) => isValidMultimodalArtifact('oral', value),
+        errorMessage: pt ? 'Resposta invalida para o contrato de apresentacao oral.' : 'Invalid oral contract response.',
+      })
       if (!parsed?.slides?.length) throw new Error(pt ? 'Resposta inválida da IA.' : 'Invalid AI response.')
       setMultimodalOral(parsed)
       if (typeof parsed.fidelityScore === 'number') setEvidenceFidelityScore(parsed.fidelityScore)
@@ -85,14 +93,25 @@ export default function Step10EOral({ onBack }: Props) {
         >
           {['5', '10', '15', '20', '30'].map((d) => <option key={d} value={d}>{d} min</option>)}
         </select>
-        <button
-          type="button"
-          disabled={loading || !finalResearchQuestion?.approvedByUser}
-          onClick={generate}
-          className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--on_primary)] transition hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? (pt ? 'A gerar…' : 'Generating…') : draft ? (pt ? 'Regenerar' : 'Regenerate') : (pt ? 'Gerar apresentação' : 'Generate presentation')}
-        </button>
+        <span title={generationSoonLabel} className="inline-flex cursor-not-allowed">
+          <button
+            type="button"
+            onClick={generate}
+            disabled
+            className="rounded-[var(--radius-md)] bg-[var(--surface_container_high)] px-4 py-2 text-sm font-medium text-[var(--on_surface_variant)] opacity-80"
+          >
+            {pt ? 'Em breve' : 'Coming soon'}
+          </button>
+        </span>
+        <ExportToNotebookButton
+          projectId={projectId}
+          topic={topic}
+          researchQuestion={finalResearchQuestion?.question ?? ''}
+          evidenceRecords={evidenceRecords}
+          artifactType="presentation"
+          variant="secondary"
+          size="sm"
+        />
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

@@ -5,12 +5,13 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
-import { parseAiJson } from '@/lib/parseAiJson'
+import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
+import { persistInteractionEvent } from '@/lib/interactionClient'
 
 type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
 
-const PROVIDER_SEQUENCE: Provider[] = ['rcaap', 'crossref', 'semantic_scholar', 'openaire']
+const PROVIDER_SEQUENCE: Provider[] = ['crossref', 'openaire', 'semantic_scholar', 'rcaap']
 
 function buildSourcePayload(article: SearchArticle): string {
   return [
@@ -69,6 +70,7 @@ export default function Step3Evidence() {
   const { locale, t } = useI18n()
   const {
     addEvidenceRecord,
+    addInteraction,
     evidenceRecords,
     finalResearchQuestion,
     projectId,
@@ -86,7 +88,7 @@ export default function Step3Evidence() {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null)
   const [analyzedSourceIds, setAnalyzedSourceIds] = useState<Set<string>>(new Set())
   const [relatedLoading, setRelatedLoading] = useState(false)
-  const [relatedProvider, setRelatedProvider] = useState<Provider>('rcaap')
+  const [relatedProvider, setRelatedProvider] = useState<Provider>('crossref')
   const [relatedPageByProvider, setRelatedPageByProvider] = useState<Record<Provider, number>>({
     semantic_scholar: 1,
     crossref: 1,
@@ -180,7 +182,7 @@ export default function Step3Evidence() {
         throw new Error((json?.details || json?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = parseAiJson<{
+      const parsed = parseAiJsonWithOptions<{
         title?: string
         source_type?: string
         claim?: string
@@ -189,7 +191,15 @@ export default function Step3Evidence() {
         limitations?: string[]
         relevance_score?: number
         citation?: string
-      }>(payload.output)
+      }>(payload.output, {
+        validate: (value) => {
+          const findings = Array.isArray(value?.findings) ? value.findings.filter(Boolean) : []
+          return Boolean(value?.claim?.trim()) && findings.length > 0
+        },
+        errorMessage: isPortuguese
+          ? 'A IA devolveu uma extração de evidência incompleta. É obrigatório incluir uma tese e pelo menos um resultado.'
+          : 'AI returned an incomplete evidence extraction. It must include a claim and at least one finding.',
+      })
       const sourceType =
         parsed?.source_type === 'paper' ||
         parsed?.source_type === 'report' ||
@@ -219,6 +229,42 @@ export default function Step3Evidence() {
       }
 
       addEvidenceRecord(nextEvidenceRecord)
+      addInteraction({
+        id: `interaction-${Date.now()}`,
+        stage: 1,
+        stepId: 'step3_evidence_extraction',
+        stepLabel: t('workflow.step3_evidence_extraction.label'),
+        promptId: 'step4',
+        eventType: sourceId === 'manual' ? 'generate' : 'analyze',
+        userInput: sourceArticle?.title || source.slice(0, 300),
+        aiOutput: JSON.stringify(nextEvidenceRecord),
+        mode: 'standard',
+        success: true,
+        metadata: {
+          sourceType,
+          findingsCount: nextEvidenceRecord.findings.length,
+          provider: sourceArticle?.provider || 'manual',
+        },
+        createdAt: new Date().toISOString(),
+      })
+      if (projectId) {
+        void persistInteractionEvent({
+          projectId,
+          stage: 1,
+          stepId: 'step3_evidence_extraction',
+          stepLabel: t('workflow.step3_evidence_extraction.label'),
+          userInput: sourceArticle?.title || source.slice(0, 300),
+          aiOutput: JSON.stringify({
+            eventType: sourceId === 'manual' ? 'generate' : 'analyze',
+            claim: nextEvidenceRecord.claim,
+            findingsCount: nextEvidenceRecord.findings.length,
+            provider: sourceArticle?.provider || 'manual',
+          }),
+          topic,
+          mode: 'standard',
+          locale,
+        }).catch(() => null)
+      }
       if (sourceId === 'manual') {
         setSourceText('')
       } else {
@@ -229,6 +275,35 @@ export default function Step3Evidence() {
         })
       }
     } catch (err) {
+      addInteraction({
+        id: `interaction-${Date.now()}`,
+        stage: 1,
+        stepId: 'step3_evidence_extraction',
+        stepLabel: t('workflow.step3_evidence_extraction.label'),
+        promptId: 'step4',
+        eventType: sourceId === 'manual' ? 'generate' : 'analyze',
+        userInput: sourceArticle?.title || source.slice(0, 300),
+        aiOutput: err instanceof Error ? err.message : t('api.genericFailure'),
+        mode: 'standard',
+        success: false,
+        createdAt: new Date().toISOString(),
+      })
+      if (projectId) {
+        void persistInteractionEvent({
+          projectId,
+          stage: 1,
+          stepId: 'step3_evidence_extraction',
+          stepLabel: t('workflow.step3_evidence_extraction.label'),
+          userInput: sourceArticle?.title || source.slice(0, 300),
+          aiOutput: JSON.stringify({
+            eventType: sourceId === 'manual' ? 'generate' : 'analyze',
+            error: err instanceof Error ? err.message : t('api.genericFailure'),
+          }),
+          topic,
+          mode: 'standard',
+          locale,
+        }).catch(() => null)
+      }
       setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
@@ -287,20 +362,33 @@ export default function Step3Evidence() {
         searchArticles
       )
       const existingIds = new Set(searchArticles.map((article) => article.id))
+      const providerStatus: string[] = []
       let addedArticles: SearchArticle[] = []
-      let successfulProvider: Provider | null = null
-      let usedFallbackQuery = false
 
       for (const providerCandidate of providerCandidates) {
+        let providerAddedCount = 0
+        let providerSucceeded = false
+
         for (let queryIndex = 0; queryIndex < queryCandidates.length; queryIndex += 1) {
           let pageToTry = relatedPageByProvider[providerCandidate] ?? 1
 
           for (let attempt = 0; attempt < 2; attempt += 1) {
-            const result = await requestRelatedCandidates(
-              providerCandidate,
-              queryCandidates[queryIndex],
-              pageToTry
-            )
+            let result: { page: number; hasNextPage: boolean; articles: SearchArticle[] }
+            try {
+              result = await requestRelatedCandidates(
+                providerCandidate,
+                queryCandidates[queryIndex],
+                pageToTry
+              )
+              providerSucceeded = true
+            } catch {
+              providerStatus.push(
+                isPortuguese
+                  ? `${providerCandidate}: falha de chamada`
+                  : `${providerCandidate}: request failed`
+              )
+              break
+            }
 
             setRelatedPageByProvider((current) => ({
               ...current,
@@ -309,10 +397,9 @@ export default function Step3Evidence() {
 
             const deduped = result.articles.filter((article) => !existingIds.has(article.id))
             if (deduped.length > 0) {
-              addedArticles = deduped
-              successfulProvider = providerCandidate
-              usedFallbackQuery = queryIndex > 0
-              break
+              providerAddedCount += deduped.length
+              deduped.forEach((article) => existingIds.add(article.id))
+              addedArticles = [...addedArticles, ...deduped]
             }
 
             if (!result.hasNextPage) {
@@ -322,13 +409,21 @@ export default function Step3Evidence() {
             pageToTry = result.page + 1
           }
 
-          if (addedArticles.length > 0) {
-            break
-          }
+          if (providerAddedCount > 0) break
         }
 
-        if (addedArticles.length > 0) {
-          break
+        if (providerAddedCount > 0) {
+          providerStatus.push(
+            isPortuguese
+              ? `${providerCandidate}: +${providerAddedCount}`
+              : `${providerCandidate}: +${providerAddedCount}`
+          )
+        } else if (providerSucceeded) {
+          providerStatus.push(
+            isPortuguese
+              ? `${providerCandidate}: sem novos resultados`
+              : `${providerCandidate}: no new results`
+          )
         }
       }
 
@@ -337,19 +432,83 @@ export default function Step3Evidence() {
         setSelectedSearchArticleIds(
           Array.from(new Set([...selectedSearchArticleIds, ...addedArticles.map((article) => article.id)]))
         )
+        addInteraction({
+          id: `interaction-${Date.now()}`,
+          stage: 1,
+          stepId: 'step3_evidence_extraction',
+          stepLabel: t('workflow.step3_evidence_extraction.label'),
+          eventType: 'retrieve',
+          userInput: queryCandidates.join(' || '),
+          aiOutput: providerStatus.join(' | '),
+          success: true,
+          metadata: {
+            addedArticles: addedArticles.length,
+            preferredProvider: relatedProvider,
+          },
+          createdAt: new Date().toISOString(),
+        })
+        if (projectId) {
+          void persistInteractionEvent({
+            projectId,
+            stage: 1,
+            stepId: 'step3_evidence_extraction',
+            stepLabel: t('workflow.step3_evidence_extraction.label'),
+            userInput: queryCandidates.join(' || '),
+            aiOutput: JSON.stringify({
+              eventType: 'retrieve',
+              providerStatus,
+              addedArticles: addedArticles.length,
+              preferredProvider: relatedProvider,
+            }),
+            topic,
+            mode: 'standard',
+            locale,
+          }).catch(() => null)
+        }
         setRelatedFeedback(
           isPortuguese
-            ? `${addedArticles.length} novo(s) artigo(s) relacionado(s) adicionado(s) via ${successfulProvider}${usedFallbackQuery ? ' com pesquisa simplificada' : ''}.`
-            : `${addedArticles.length} new related article(s) added via ${successfulProvider}${usedFallbackQuery ? ' using a simplified query' : ''}.`
+            ? `${addedArticles.length} novo(s) artigo(s) relacionado(s) adicionado(s). ${providerStatus.join(' | ')}`
+            : `${addedArticles.length} new related article(s) added. ${providerStatus.join(' | ')}`
         )
       } else {
         setRelatedFeedback(
           isPortuguese
-            ? 'Nao encontrei novos artigos reutilizaveis. Tenta mudar o fornecedor ou adicionar palavras complementares.'
-            : 'No reusable new articles were found. Try changing provider or adding complementary keywords.'
+            ? `Nao encontrei novos artigos reutilizaveis. ${providerStatus.join(' | ')}`
+            : `No reusable new articles were found. ${providerStatus.join(' | ')}`
         )
       }
     } catch (err) {
+      addInteraction({
+        id: `interaction-${Date.now()}`,
+        stage: 1,
+        stepId: 'step3_evidence_extraction',
+        stepLabel: t('workflow.step3_evidence_extraction.label'),
+        eventType: 'retrieve',
+        userInput: searchDesign.booleanQuery,
+        aiOutput: err instanceof Error ? err.message : t('api.searchFailure'),
+        success: false,
+        metadata: {
+          preferredProvider: relatedProvider,
+        },
+        createdAt: new Date().toISOString(),
+      })
+      if (projectId) {
+        void persistInteractionEvent({
+          projectId,
+          stage: 1,
+          stepId: 'step3_evidence_extraction',
+          stepLabel: t('workflow.step3_evidence_extraction.label'),
+          userInput: searchDesign.booleanQuery,
+          aiOutput: JSON.stringify({
+            eventType: 'retrieve',
+            error: err instanceof Error ? err.message : t('api.searchFailure'),
+            preferredProvider: relatedProvider,
+          }),
+          topic,
+          mode: 'standard',
+          locale,
+        }).catch(() => null)
+      }
       setError(err instanceof Error ? err.message : t('api.searchFailure'))
     } finally {
       setRelatedLoading(false)
@@ -475,10 +634,10 @@ export default function Step3Evidence() {
               onChange={(event) => setRelatedProvider(event.target.value as Provider)}
               className="ml-2 ghost-input inline-block w-auto"
             >
-              <option value="rcaap">RCAAP</option>
-              <option value="semantic_scholar">Semantic Scholar</option>
               <option value="crossref">Crossref</option>
               <option value="openaire">OpenAIRE Graph</option>
+              <option value="semantic_scholar">Semantic Scholar</option>
+              <option value="rcaap">RCAAP</option>
             </select>
           </label>
           <button

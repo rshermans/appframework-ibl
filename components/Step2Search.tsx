@@ -5,10 +5,13 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { SearchArticle, SearchDesign } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
-import { parseAiJson } from '@/lib/parseAiJson'
+import QualityRating from '@/components/QualityRating'
+import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
 type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
+
+const PROVIDER_SEQUENCE: Provider[] = ['crossref', 'openaire', 'semantic_scholar', 'rcaap']
 
 function mergeUniqueArticles(existing: SearchArticle[], incoming: SearchArticle[]): SearchArticle[] {
   const byId = new Map<string, SearchArticle>()
@@ -20,6 +23,7 @@ function mergeUniqueArticles(existing: SearchArticle[], incoming: SearchArticle[
 export default function Step2Search() {
   const { locale, t } = useI18n()
   const {
+    addInteraction,
     finalResearchQuestion,
     projectId,
     searchDesign,
@@ -35,7 +39,7 @@ export default function Step2Search() {
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
-  const [provider, setProvider] = useState<Provider>('rcaap')
+  const [provider, setProvider] = useState<Provider>('crossref')
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -44,6 +48,7 @@ export default function Step2Search() {
   const [bulkLoading, setBulkLoading] = useState(false)
   const [userRefinementPrompt, setUserRefinementPrompt] = useState('')
   const [userRefinementKeywords, setUserRefinementKeywords] = useState('')
+  const [qualityRating, setQualityRating] = useState<number | null>(null)
   const articlesRef = useRef<SearchArticle[]>(searchArticles)
 
   useEffect(() => {
@@ -112,6 +117,71 @@ export default function Step2Search() {
     }
   }
 
+  const runRetrievalAcrossProviders = async (
+    query: string,
+    requestedPage: number = 1,
+    options: { replaceExisting?: boolean } = {}
+  ): Promise<void> => {
+    setSearchLoading(true)
+    setError('')
+
+    try {
+      let mergedArticles = options.replaceExisting ? [] : articlesRef.current
+      const providerErrors: string[] = []
+
+      for (const providerCandidate of PROVIDER_SEQUENCE) {
+        const { response, json: payload } = await safeFetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query,
+            limit: pageSize,
+            page: requestedPage,
+            provider: providerCandidate,
+            locale,
+          }),
+        })
+
+        const data = payload?.data ?? payload
+        if (!response.ok || !payload?.ok) {
+          providerErrors.push(providerLabel(providerCandidate))
+          continue
+        }
+
+        const incomingArticles = Array.isArray(data.articles) ? data.articles : []
+        mergedArticles = mergeUniqueArticles(mergedArticles, incomingArticles)
+      }
+
+      setSearchArticles(mergedArticles)
+      articlesRef.current = mergedArticles
+      setPage(requestedPage)
+      setHasNextPage(false)
+      setTotalResults(mergedArticles.length)
+
+      if (providerErrors.length === PROVIDER_SEQUENCE.length) {
+        throw new Error(
+          isPortuguese
+            ? 'Todos os fornecedores falharam nesta tentativa.'
+            : 'All providers failed in this attempt.'
+        )
+      }
+
+      if (providerErrors.length > 0) {
+        setError(
+          isPortuguese
+            ? `Alguns fornecedores falharam: ${providerErrors.join(', ')}.`
+            : `Some providers failed: ${providerErrors.join(', ')}.`
+        )
+      }
+    } catch (err) {
+      setTotalResults(undefined)
+      setHasNextPage(false)
+      setError(err instanceof Error ? err.message : t('api.searchFailure'))
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
   const runSearchDesign = async () => {
     if (!finalResearchQuestion?.question) {
       setError(t('steps.step2.locked'))
@@ -163,7 +233,7 @@ export default function Step2Search() {
         throw new Error((json?.details || json?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = parseAiJson<{
+      const parsed = parseAiJsonWithOptions<{
         keywords?: string[]
         synonyms?: string[]
         boolean_query?: string
@@ -176,7 +246,20 @@ export default function Step2Search() {
         recommended_databases?: string[]
         recommendedDatabases?: string[]
         filters?: string[]
-      }>(payload.output)
+      }>(payload.output, {
+        validate: (value) => {
+          const booleanQuery = value?.boolean_query || value?.booleanQuery || value?.search_query || value?.query || ''
+          const searchStrings =
+            (Array.isArray(value?.search_strings) && value.search_strings) ||
+            (Array.isArray(value?.searchStrings) && value.searchStrings) ||
+            (Array.isArray(value?.strings) && value.strings) ||
+            []
+          return typeof booleanQuery === 'string' && booleanQuery.trim().length > 0 && searchStrings.length > 0
+        },
+        errorMessage: isPortuguese
+          ? 'A IA devolveu um desenho de pesquisa incompleto. O resultado precisa de incluir boolean_query e search_strings utilizáveis.'
+          : 'AI returned an incomplete search design. The result must include usable boolean_query and search_strings.',
+      })
 
       const normalizedSearchStrings =
         (Array.isArray(parsed?.search_strings) && parsed.search_strings) ||
@@ -223,8 +306,38 @@ export default function Step2Search() {
 
       setSearchDesign(nextSearchDesign)
       clearSearchArticleSelection()
-      await runRetrieval(nextSearchDesign.booleanQuery, 1, undefined, { replaceExisting: true })
+      addInteraction({
+        id: `interaction-${Date.now()}`,
+        stage: 1,
+        stepId: 'step2_search_design',
+        stepLabel: t('workflow.step2_search_design.label'),
+        promptId: 'step2',
+        eventType: searchDesign ? 'redo' : 'generate',
+        userInput: refinementBlock || finalResearchQuestion.question,
+        aiOutput: JSON.stringify(nextSearchDesign),
+        mode: 'standard',
+        success: true,
+        metadata: {
+          keywordCount: nextSearchDesign.keywords.length,
+          searchStringCount: nextSearchDesign.searchStrings.length,
+        },
+        createdAt: new Date().toISOString(),
+      })
+      await runRetrievalAcrossProviders(nextSearchDesign.booleanQuery, 1, { replaceExisting: true })
     } catch (err) {
+      addInteraction({
+        id: `interaction-${Date.now()}`,
+        stage: 1,
+        stepId: 'step2_search_design',
+        stepLabel: t('workflow.step2_search_design.label'),
+        promptId: 'step2',
+        eventType: searchDesign ? 'redo' : 'generate',
+        userInput: refinementBlock || finalResearchQuestion.question,
+        aiOutput: err instanceof Error ? err.message : t('api.genericFailure'),
+        mode: 'standard',
+        success: false,
+        createdAt: new Date().toISOString(),
+      })
       setError(err instanceof Error ? err.message : t('api.genericFailure'))
     } finally {
       setLoading(false)
@@ -268,6 +381,52 @@ export default function Step2Search() {
 
   const proceedToEvidence = () => {
     setWorkflowStep('step3_evidence_extraction')
+  }
+
+  const handleQualityRating = (rating: number) => {
+    setQualityRating(rating)
+    if (!searchDesign) return
+
+    addInteraction({
+      id: `interaction-${Date.now()}`,
+      stage: 1,
+      stepId: 'step2_search_design',
+      stepLabel: t('workflow.step2_search_design.label'),
+      promptId: 'step2',
+      eventType: 'rate',
+      userInput: finalResearchQuestion?.question || topic,
+      aiOutput: searchDesign.booleanQuery,
+      mode: 'standard',
+      success: true,
+      metadata: {
+        rating,
+        searchStringCount: searchDesign.searchStrings.length,
+      },
+      createdAt: new Date().toISOString(),
+    })
+
+    if (projectId) {
+      void fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          stage: 1,
+          stepId: 'step2_search_design',
+          stepLabel: t('workflow.step2_search_design.label'),
+          userInput: finalResearchQuestion?.question || topic,
+          aiOutput: JSON.stringify({
+            eventType: 'rate',
+            rating,
+            booleanQuery: searchDesign.booleanQuery,
+            searchStringCount: searchDesign.searchStrings.length,
+          }),
+          topic,
+          mode: 'standard',
+          locale,
+        }),
+      }).catch(() => null)
+    }
   }
 
   return (
@@ -342,6 +501,13 @@ export default function Step2Search() {
 
       {searchDesign && (
         <div className="tonal-card space-y-6 p-6">
+          <QualityRating
+            label={isPortuguese ? 'Como avalias este desenho de pesquisa?' : 'How do you rate this search design?'}
+            helperText={isPortuguese ? '1 = refazer quase tudo, 5 = pronto para usar.' : '1 = needs a major redo, 5 = ready to use.'}
+            value={qualityRating}
+            onChange={handleQualityRating}
+          />
+
           <div>
             <div className="font-label mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--secondary)]">
               {t('steps.step2.keywords')}
@@ -395,10 +561,10 @@ export default function Step2Search() {
                   onChange={(event) => void changeProvider(event.target.value as Provider)}
                   className="ghost-input ml-2 inline-block w-auto"
                 >
-                  <option value="rcaap">{providerLabel('rcaap')}</option>
-                  <option value="semantic_scholar">{providerLabel('semantic_scholar')}</option>
                   <option value="crossref">{providerLabel('crossref')}</option>
                   <option value="openaire">{providerLabel('openaire')}</option>
+                  <option value="semantic_scholar">{providerLabel('semantic_scholar')}</option>
+                  <option value="rcaap">{providerLabel('rcaap')}</option>
                 </select>
               </label>
               <button

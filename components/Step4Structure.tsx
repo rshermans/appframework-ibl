@@ -464,7 +464,7 @@ export default function Step4Structure() {
 
           <div className="flex justify-end">
             <button
-              onClick={() => setWorkflowStep('step5_explanation')}
+              onClick={() => setWorkflowStep('step9_explanation')}
               className="primary-gradient rounded-[var(--radius-md)] px-4 py-3 text-[var(--on_primary)] transition hover:brightness-110"
             >
               {t('steps.step4.continueButton')}

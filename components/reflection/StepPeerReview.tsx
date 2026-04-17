@@ -28,6 +28,10 @@ export default function StepPeerReview({ onBack }: Props) {
   const [anonymous, setAnonymous] = useState(true)
   const [aiGuide, setAiGuide] = useState<{ strengths_prompt: string; improvements_prompt: string; evidence_check: string; ethical_note: string } | null>(null)
   const pt = locale === 'pt-PT'
+  const canGenerate = Boolean(finalResearchQuestion?.question)
+  const missingPrereqLabel = pt
+    ? 'Este passo requer uma questão final aprovada no Stage 1.'
+    : 'This step requires an approved final question in Stage 1.'
 
   const generateGuide = async () => {
     if (!workSample.trim()) return
@@ -44,6 +48,7 @@ export default function StepPeerReview({ onBack }: Props) {
               stage: 3, promptId: 'peer_review_guide',
               stepId: 'step7_reflection', stepLabel: 'Peer Review',
               rq: finalResearchQuestion?.question ?? '',
+              finalResearchQuestion,
               reviewer: reviewerTeam,
               dimension,
               work_sample: workSample,
@@ -95,6 +100,12 @@ export default function StepPeerReview({ onBack }: Props) {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_240px]">
         <div className="space-y-4">
+          {!canGenerate && (
+            <div className="rounded-[var(--radius-md)] border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
+              {missingPrereqLabel}
+            </div>
+          )}
+
           {/* Setup */}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -138,7 +149,8 @@ export default function StepPeerReview({ onBack }: Props) {
             />
             <button
               type="button"
-              disabled={loading || !workSample.trim()}
+              title={!canGenerate ? missingPrereqLabel : undefined}
+              disabled={loading || !workSample.trim() || !canGenerate}
               onClick={generateGuide}
               className="mt-2 rounded-[var(--radius-sm)] bg-[var(--secondary_container)] px-4 py-1.5 text-xs font-medium text-[var(--on_secondary_container)] transition hover:opacity-90 disabled:opacity-50"
             >

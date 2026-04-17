@@ -26,7 +26,7 @@ Stage 2 transforma evidência validada (Stage 1) em outputs multimodais de comun
 
 ```
 +----------------------------------------------------------------------------------+
-| arQus Alliance                          Stage 2 — Explain & Create               |
+| IBL-AI                                  Stage 2 — Explain & Create               |
 |----------------------------------------------------------------------------------|
 | Evidence Integrity Gauge 92 %        Scientific Thread                           |
 | [Gold signal based on citation depth]| Step 9 → 10A → 10B → 10C → 10D          |

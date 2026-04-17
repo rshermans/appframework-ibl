@@ -7,7 +7,7 @@ import { useI18n } from '@/components/I18nProvider'
 import LocaleSwitcher from '@/components/LocaleSwitcher'
 import InfoTooltip from '@/components/InfoTooltip'
 import EthicalTip from '@/components/EthicalTip'
-import ArqusBrand from '@/components/ArqusBrand'
+import AppBrand from '@/components/AppBrand'
 import StepSelect from './StepSelect'
 import Step1A from './Step1A'
 import Step1B from './Step1B'
@@ -29,7 +29,7 @@ const ACTIVE_WORKFLOW_STEPS = [
   'step5_source_selection',
   'step4_knowledge_structure',
   'step8_glossary',
-  'step5_explanation',
+  'step9_explanation',
 ] as const satisfies readonly IBLStepKey[]
 
 function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
@@ -52,7 +52,7 @@ function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
       return <Step4Structure />
     case 'step8_glossary':
       return <Step8Glossary />
-    case 'step5_explanation':
+    case 'step9_explanation':
       return <Step5Explanation />
     default:
       return <Step0 />
@@ -60,7 +60,7 @@ function renderStep(stepId: ReturnType<typeof resolveWorkflowStepId>) {
 }
 
 export default function Stage1Research() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const {
     evidenceRecords,
     explanationDraft,
@@ -89,12 +89,12 @@ export default function Stage1Research() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(27,38,59,0.12)_0%,rgba(27,38,59,0.03)_52%,rgba(120,89,27,0.12)_100%)]" />
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-3">
-            <ArqusBrand />
+            <AppBrand />
             <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--on_surface)] md:text-4xl">
               {t('stage1.title')}
             </h2>
             <p className="max-w-3xl text-slate-700">{t('stage1.intro')}</p>
-            <EthicalTip title={t('common.stageEthicalTip')} tip={getIblEthicalTip('stage1')} />
+            <EthicalTip title={t('common.stageEthicalTip')} tip={getIblEthicalTip('stage1', locale)} />
           </div>
           <LocaleSwitcher compact />
         </div>
@@ -126,7 +126,7 @@ export default function Stage1Research() {
           const isStepCRAAPLocked = stepId === 'step5_source_selection' && evidenceRecords.length === 0
           const isStepGlossaryLocked = stepId === 'step8_glossary' && !knowledgeStructure
           const isStep5Locked =
-            stepId === 'step5_explanation' && (!knowledgeStructure || evidenceRecords.length === 0)
+            stepId === 'step9_explanation' && (!knowledgeStructure || evidenceRecords.length === 0)
           const isLocked = isStep2Locked || isStep3Locked || isStep4Locked || isStepCRAAPLocked || isStepGlossaryLocked || isStep5Locked
 
           return (

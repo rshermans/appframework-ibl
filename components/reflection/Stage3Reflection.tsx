@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
-import ArqusBrand from '@/components/ArqusBrand'
+import AppBrand from '@/components/AppBrand'
 import EthicalTip from '@/components/EthicalTip'
 import LocaleSwitcher from '@/components/LocaleSwitcher'
 import StepPeerReview from './StepPeerReview'
@@ -29,10 +29,11 @@ const STEPS: Array<{
 ]
 
 export default function Stage3Reflection() {
-  const { t } = useI18n()
-  const { setStage, peerReviews, selfAssessment, reflectionJournal, extensionPlan } =
+  const { locale, t } = useI18n()
+  const { setStage, peerReviews, selfAssessment, reflectionJournal, extensionPlan, finalResearchQuestion } =
     useWizardStore()
   const [activeSubStep, setActiveSubStep] = useState<ReflectionSubStep>('hub')
+  const isPortuguese = locale === 'pt-PT'
 
   const isDone: Record<ReflectionSubStep, boolean> = {
     hub:     false,
@@ -53,6 +54,7 @@ export default function Stage3Reflection() {
   }
 
   const completedCount = STEPS.filter((s) => isDone[s.id]).length
+  const hasFinalQuestion = Boolean(finalResearchQuestion?.question)
 
   return (
     <div className="space-y-6">
@@ -61,16 +63,20 @@ export default function Stage3Reflection() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(27,38,59,0.12)_0%,rgba(27,38,59,0.03)_52%,rgba(120,89,27,0.12)_100%)]" />
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-3">
-            <ArqusBrand />
+            <AppBrand />
             <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--on_surface)] md:text-4xl">
               Stage 3 — Reflect &amp; Improve
             </h2>
             <p className="max-w-3xl text-slate-700">
-              Fecha o ciclo IBL com reflexão metacognitiva, revisão por pares e extensão da investigação.
+              {isPortuguese
+                ? 'Fecha o ciclo IBL com reflexão metacognitiva, revisão por pares e extensão da investigação.'
+                : 'Close the IBL cycle with metacognitive reflection, peer review, and inquiry extension.'}
             </p>
             <EthicalTip
               title={t('common.stageEthicalTip')}
-              tip="A reflexão é trabalho humano. A IA convida à metacognição — as respostas verdadeiras são do estudante."
+              tip={isPortuguese
+                ? 'A reflexão é trabalho humano. A IA convida à metacognição, mas as respostas verdadeiras são do estudante.'
+                : 'Reflection is human work. AI can invite metacognition, but authentic answers must come from the student.'}
             />
           </div>
           <LocaleSwitcher compact />
@@ -84,12 +90,20 @@ export default function Stage3Reflection() {
           onClick={() => setStage(2)}
           className="rounded-[var(--radius-md)] bg-[var(--surface_container)] px-4 py-2 text-sm font-medium text-[var(--on_surface)] transition hover:bg-[var(--surface_container_low)]"
         >
-          ← Voltar ao Stage 2
+          {isPortuguese ? '← Voltar ao Stage 2' : '← Back to Stage 2'}
         </button>
         <span className="text-xs text-[var(--on_surface_variant)]">
-          {completedCount}/{STEPS.length} completos
+          {isPortuguese ? `${completedCount}/${STEPS.length} completos` : `${completedCount}/${STEPS.length} completed`}
         </span>
       </div>
+
+      {!hasFinalQuestion && (
+        <div className="rounded-[var(--radius-md)] border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
+          {isPortuguese
+            ? 'Para gerar apoio de IA no Stage 3, finalize primeiro a questão de investigação no Stage 1.'
+            : 'To generate AI support in Stage 3, first finalize the research question in Stage 1.'}
+        </div>
+      )}
 
       {/* Progress thread */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -133,15 +147,15 @@ export default function Stage3Reflection() {
               </span>
             </div>
             <div>
-              <p className="font-semibold text-[var(--on_surface)]">{step.labelPt}</p>
-              <p className="mt-1 text-xs text-[var(--on_surface_variant)]">{step.descPt}</p>
+              <p className="font-semibold text-[var(--on_surface)]">{isPortuguese ? step.labelPt : step.labelEn}</p>
+              <p className="mt-1 text-xs text-[var(--on_surface_variant)]">{isPortuguese ? step.descPt : step.descEn}</p>
             </div>
             {isDone[step.id] && (
-              <span className="mt-auto text-xs font-semibold text-green-700">✓ Concluído</span>
+              <span className="mt-auto text-xs font-semibold text-green-700">{isPortuguese ? '✓ Concluído' : '✓ Completed'}</span>
             )}
             {!isDone[step.id] && (
               <span className="mt-auto text-xs text-[var(--on_surface_variant)] transition group-hover:text-[var(--primary)]">
-                Começar →
+                {isPortuguese ? 'Começar →' : 'Start →'}
               </span>
             )}
           </button>

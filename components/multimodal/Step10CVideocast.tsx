@@ -5,9 +5,11 @@ import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
 import EvidenceWatermark from './EvidenceWatermark'
-import { parseAiJson } from '@/lib/parseAiJson'
+import ExportToNotebookButton from '@/components/ExportToNotebookButton'
+import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { retryWithBackoff } from '@/lib/retryHelper'
 import { safeFetch } from '@/lib/safeFetch'
+import { isValidMultimodalArtifact } from '@/lib/multimodalContract'
 import type { VideostoryBoard } from '@/types/research-workflow'
 
 interface Props {
@@ -24,6 +26,9 @@ export default function Step10CVideocast({ onBack }: Props) {
   const [error, setError] = useState('')
   const draft = multimodalOutputs.videocast
   const pt = locale === 'pt-PT'
+  const generationSoonLabel = pt
+    ? 'Geração direta no app em breve. Use "Exportar para NotebookLM".'
+    : 'Direct generation in-app is coming soon. Use "Export to NotebookLM".'
 
   const generate = async () => {
     setLoading(true)
@@ -47,7 +52,10 @@ export default function Step10CVideocast({ onBack }: Props) {
       )
       if (!response.ok || !payload?.ok) throw new Error((payload?.details || payload?.error || 'API error') as string)
       const data = payload?.data ?? payload
-      const parsed = parseAiJson<VideostoryBoard>(data.output)
+      const parsed = parseAiJsonWithOptions<VideostoryBoard>(data.output, {
+        validate: (value) => isValidMultimodalArtifact('video', value),
+        errorMessage: pt ? 'Resposta invalida para o contrato de videocast.' : 'Invalid videocast contract response.',
+      })
       if (!parsed?.scenes?.length) throw new Error(pt ? 'Resposta inválida da IA.' : 'Invalid AI response.')
       setMultimodalVideocast(parsed)
       if (typeof parsed.fidelityScore === 'number') setEvidenceFidelityScore(parsed.fidelityScore)
@@ -71,15 +79,26 @@ export default function Step10CVideocast({ onBack }: Props) {
         ← {pt ? 'Voltar ao hub' : 'Back to hub'}
       </button>
 
-      <div>
-        <button
-          type="button"
-          disabled={loading || !finalResearchQuestion?.approvedByUser}
-          onClick={generate}
-          className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--on_primary)] transition hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? (pt ? 'A gerar…' : 'Generating…') : draft ? (pt ? 'Regenerar' : 'Regenerate') : (pt ? 'Gerar storyboard' : 'Generate storyboard')}
-        </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <span title={generationSoonLabel} className="inline-flex cursor-not-allowed">
+          <button
+            type="button"
+            onClick={generate}
+            disabled
+            className="rounded-[var(--radius-md)] bg-[var(--surface_container_high)] px-4 py-2 text-sm font-medium text-[var(--on_surface_variant)] opacity-80"
+          >
+            {pt ? 'Em breve' : 'Coming soon'}
+          </button>
+        </span>
+        <ExportToNotebookButton
+          projectId={projectId}
+          topic={topic}
+          researchQuestion={finalResearchQuestion?.question ?? ''}
+          evidenceRecords={evidenceRecords}
+          artifactType="video"
+          variant="secondary"
+          size="sm"
+        />
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

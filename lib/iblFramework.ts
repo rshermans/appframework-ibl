@@ -10,7 +10,7 @@ export type IBLStepKey =
   | 'step5_source_selection'
   | 'step4_knowledge_structure'
   | 'step8_glossary'
-  | 'step5_explanation'
+  | 'step9_explanation'
   | 'step6_multimodal'
   | 'step7_reflection'
 
@@ -107,8 +107,8 @@ export const IBL_STEP_META: Record<IBLStepKey, IBLStepMeta> = {
     title: 'Scientific Glossary Builder',
     shortTitle: 'Glossary',
   },
-  step5_explanation: {
-    id: 'step5_explanation',
+  step9_explanation: {
+    id: 'step9_explanation',
     stage: 'stage2',
     badge: 'Step 9',
     title: 'Scientific Explanation Scaffolder',
@@ -130,7 +130,7 @@ export const IBL_STEP_META: Record<IBLStepKey, IBLStepMeta> = {
   },
 }
 
-export const IBL_ETHICAL_TIPS: Record<IBLStageKey | IBLStepKey, string> = {
+export const IBL_ETHICAL_TIPS_EN: Record<IBLStageKey | IBLStepKey, string> = {
   stage0:
     'AI role assignments are proposals, not mandates. Final task distribution must be decided collaboratively.',
   stage1:
@@ -157,7 +157,7 @@ export const IBL_ETHICAL_TIPS: Record<IBLStageKey | IBLStepKey, string> = {
     'Each topic and map node must be anchored to at least one source already reviewed by the team.',
   step8_glossary:
     'Include only terms from your reviewed sources. Remove AI-generated jargon that does not appear in your topic literature.',
-  step5_explanation:
+  step9_explanation:
     'Scientific explanation must remain evidence-faithful. Revise AI scaffolds before publication.',
   step6_multimodal:
     'AI visuals can distort structures. Cross-check with peer-reviewed references before finalizing outputs.',
@@ -165,10 +165,48 @@ export const IBL_ETHICAL_TIPS: Record<IBLStageKey | IBLStepKey, string> = {
     'Use AI prompts only as triggers. Reflection statements must be authentic and authored by the team.',
 }
 
+export const IBL_ETHICAL_TIPS_PT: Record<IBLStageKey | IBLStepKey, string> = {
+  stage0:
+    'As atribuicoes de papeis por IA sao propostas, nao ordens. A distribuicao final de tarefas deve ser decidida em equipa.',
+  stage1:
+    'Valida sempre cada saida face ao objetivo da investigacao e aos criterios de qualidade das fontes.',
+  stage2:
+    'Todas as explicacoes e outputs devem manter fidelidade a evidencia validada no Stage 1.',
+  stage3:
+    'A reflexao e trabalho humano. A IA pode sugerir, mas as conclusoes honestas devem ser escritas pela equipa.',
+  step0_generate:
+    'As perguntas geradas por IA sao pontos de partida. A avaliacao e selecao continuam a ser decisoes humanas.',
+  step1_select:
+    'Classifica as perguntas candidatas de forma independente antes de ver recomendacoes da IA para reduzir enviesamento de ancoragem.',
+  step1a_compare:
+    'Usa a comparacao da IA para testar alternativas, nao para substituir o raciocinio disciplinar.',
+  step1b_synthesize:
+    'A IA pode sugerir sinteses, mas a validade da pergunta final depende do teu julgamento metodologico.',
+  step2_search_design:
+    'Testa manualmente cada string de pesquisa. Simplifica as strings que devolvem menos de 5 ou mais de 500 resultados.',
+  step3_evidence_extraction:
+    'A IA extrai apenas do texto fornecido. Se a evidencia for ambigua, a interpretacao do artigo tem prioridade.',
+  step5_source_selection:
+    'O CRAAP avalia credibilidade, mas a relevancia para a tua pergunta continua a ser teu julgamento. Cruza pelo menos 2 fontes com Scimago ou Sherpa Romeo. Exclui: Wikipedia, Studocu, SlideShare.',
+  step4_knowledge_structure:
+    'Cada topico e cada no do mapa deve estar ancorado em pelo menos uma fonte ja revista pela equipa.',
+  step8_glossary:
+    'Inclui apenas termos presentes nas fontes revistas. Remove jargao gerado por IA que nao aparece na literatura do topico.',
+  step9_explanation:
+    'A explicacao cientifica deve manter fidelidade a evidencia. Revise os rascunhos da IA antes de publicar.',
+  step6_multimodal:
+    'Elementos visuais gerados por IA podem distorcer estruturas. Cruza sempre com referencias revistas por pares antes de finalizar.',
+  step7_reflection:
+    'Usa prompts de IA apenas como gatilhos. As declaracoes de reflexao devem ser autenticas e escritas pela equipa.',
+}
+
 export function getIblStepMeta(stepId: IBLStepKey): IBLStepMeta {
   return IBL_STEP_META[stepId]
 }
 
-export function getIblEthicalTip(key: IBLStageKey | IBLStepKey): string {
-  return IBL_ETHICAL_TIPS[key]
+export function getIblEthicalTip(
+  key: IBLStageKey | IBLStepKey,
+  locale: 'pt-PT' | 'en' = 'en'
+): string {
+  return locale === 'pt-PT' ? IBL_ETHICAL_TIPS_PT[key] : IBL_ETHICAL_TIPS_EN[key]
 }

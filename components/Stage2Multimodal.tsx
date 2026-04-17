@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
-import ArqusBrand from '@/components/ArqusBrand'
+import AppBrand from '@/components/AppBrand'
 import EthicalTip from '@/components/EthicalTip'
 import LocaleSwitcher from '@/components/LocaleSwitcher'
 import { getIblEthicalTip } from '@/lib/iblFramework'
@@ -31,12 +31,12 @@ const OUTPUTS: Array<{
 ]
 
 export default function Stage2Multimodal() {
-  const { knowledgeStructure, evidenceRecords, explanationDraft, multimodalOutputs, setStage } =
+  const { locale, t } = useI18n()
+  const { knowledgeStructure, evidenceRecords, explanationDraft, finalResearchQuestion, multimodalOutputs, setStage } =
     useWizardStore()
-  const { t } = useI18n()
   const [activeSubStep, setActiveSubStep] = useState<MultimodalSubStep>('hub')
 
-  const portuguese = true // component-level language heuristic; locale from store TBD
+  const portuguese = locale === 'pt-PT'
 
   const finalisedCount = Object.values(multimodalOutputs).filter(Boolean).length
 
@@ -60,7 +60,7 @@ export default function Stage2Multimodal() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(27,38,59,0.12)_0%,rgba(27,38,59,0.03)_52%,rgba(120,89,27,0.12)_100%)]" />
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-3">
-            <ArqusBrand />
+            <AppBrand />
             <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--on_surface)] md:text-4xl">
               Stage 2 — Explain &amp; Create
             </h2>
@@ -71,7 +71,7 @@ export default function Stage2Multimodal() {
             </p>
             <EthicalTip
               title={t('common.stageEthicalTip')}
-              tip={getIblEthicalTip('stage2' as Parameters<typeof getIblEthicalTip>[0]) ?? 'AI visuals may misrepresent findings. Always cross-check with source evidence before publishing.'}
+              tip={getIblEthicalTip('stage2', locale)}
             />
           </div>
           <LocaleSwitcher compact />
@@ -103,7 +103,7 @@ export default function Stage2Multimodal() {
             {portuguese ? 'Pergunta de investigação' : 'Research question'}:
           </span>
           <p className="mt-1 text-[var(--on_surface_variant)]">
-            {explanationDraft?.argumentCore ?? (portuguese ? '—' : '—')}
+            {finalResearchQuestion?.question || (portuguese ? 'Não disponível' : 'Not available')}
           </p>
         </div>
         <div className="text-sm">
@@ -118,13 +118,24 @@ export default function Stage2Multimodal() {
         </div>
         <div className="text-sm">
           <span className="font-semibold text-[var(--on_surface)]">
-            {portuguese ? 'Outputs finalizados' : 'Outputs finalised'}:
+            {portuguese ? 'Outputs finalizados' : 'Outputs finalized'}:
           </span>
           <p className="mt-1 text-[var(--on_surface_variant)]">
             {finalisedCount}/5
           </p>
         </div>
       </div>
+
+      {explanationDraft && (
+        <div className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] bg-[var(--surface_container_low)] p-4 text-sm text-[var(--on_surface)]">
+          <div className="mb-2 font-semibold">
+            {portuguese ? 'Ponte do Step 9 para o Stage 2' : 'Step 9 to Stage 2 bridge'}
+          </div>
+          <div className="text-[var(--on_surface_variant)]">
+            {explanationDraft.argumentCore}
+          </div>
+        </div>
+      )}
 
       {isLocked && (
         <div className="rounded-[var(--radius-md)] border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">

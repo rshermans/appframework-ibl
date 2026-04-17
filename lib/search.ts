@@ -20,7 +20,7 @@ interface SearchOutput {
 }
 
 export async function searchScientificArticles(input: SearchInput): Promise<SearchOutput> {
-  const provider = input.provider ?? 'rcaap'
+  const provider = input.provider ?? 'crossref'
   const pageSize = clampLimit(input.limit)
   const page = clampPage(input.page)
 
@@ -63,7 +63,7 @@ async function searchSemanticScholar(
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
-    'User-Agent': 'RELIA-Research-Wizard/1.0',
+    'User-Agent': 'IBL-AI/1.0',
   }
 
   const apiKey = process.env.SEMANTIC_SCHOLAR_API_KEY || process.env.S2_API_KEY || ''
@@ -182,7 +182,7 @@ async function searchCrossref(
     method: 'GET',
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'RELIA-Research-Wizard/1.0 (mailto:support@example.com)',
+      'User-Agent': 'IBL-AI/1.0 (mailto:support@example.com)',
     },
     cache: 'no-store',
   })
@@ -260,7 +260,7 @@ async function searchOpenAIRE(
     method: 'GET',
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'RELIA-Research-Wizard/1.0',
+      'User-Agent': 'IBL-AI/1.0',
     },
     cache: 'no-store',
   })
@@ -354,7 +354,7 @@ async function searchRCAAP(
     method: 'GET',
     headers: {
       Accept: 'text/html,application/xhtml+xml',
-      'User-Agent': 'RELIA-Research-Wizard/1.0',
+      'User-Agent': 'IBL-AI/1.0',
     },
     cache: 'no-store',
   })

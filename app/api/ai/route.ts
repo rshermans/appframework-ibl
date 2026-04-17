@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { callChatGPT } from '@/lib/ai'
 import { buildDefaultUserMessage, getPrompt, resolvePromptId, type PromptMode } from '@/lib/prompts'
 import { saveInteraction } from '@/lib/db'
+import { auth } from '@/lib/auth'
 import { getMissingRequiredFields, resolveWorkflowStepId } from '@/lib/workflow'
 import { getMessage, normalizeLocale, type Locale } from '@/lib/i18n'
 import { withTimeout, TimeoutError, isAbortedError } from '@/lib/timeoutHelper'
@@ -40,7 +41,19 @@ export async function POST(req: Request) {
       content,
       locale,
       mode = 'standard',
+      aiConsentAccepted,
     } = body
+
+    if (aiConsentAccepted !== true) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: getMessage(safeLocale, 'api.aiConsentRequired'),
+          details: getMessage(safeLocale, 'api.aiConsentRequired'),
+        },
+        { status: 403 }
+      )
+    }
 
     const parsedStage = typeof stage === 'number' ? stage : Number(stage) || 0
     const safeStepId = stepId || 'unknown-step'
@@ -164,6 +177,8 @@ export async function POST(req: Request) {
     let dbSaved = false
     let dbError: string | null = null
     if (projectId) {
+      const session = await auth()
+      const userId = (session?.user as { id?: string } | undefined)?.id
       dbSaved = true
       // Fire and forget - don't await database save to avoid timeout
       saveInteraction(
@@ -175,7 +190,8 @@ export async function POST(req: Request) {
         aiOutput,
         topic,
         safeMode,
-        tokens
+        tokens,
+        userId
       )
         .then(() => {
           console.log('[API] Background: saved interaction to database')

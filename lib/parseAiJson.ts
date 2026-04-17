@@ -133,8 +133,22 @@ function normalizeJsonText(value: string): string {
 }
 
 export function parseAiJson<T>(input: unknown): T {
+  return parseAiJsonWithOptions<T>(input)
+}
+
+export function parseAiJsonWithOptions<T>(
+  input: unknown,
+  options: {
+    validate?: (value: T) => boolean
+    errorMessage?: string
+  } = {}
+): T {
   if (input && typeof input === 'object') {
-    return input as T
+    const parsed = input as T
+    if (options.validate && !options.validate(parsed)) {
+      throw new Error(options.errorMessage || 'AI returned invalid JSON for this step.')
+    }
+    return parsed
   }
 
   if (typeof input !== 'string') {
@@ -148,7 +162,11 @@ export function parseAiJson<T>(input: unknown): T {
     if (!attempt) continue
 
     try {
-      return JSON.parse(attempt) as T
+      const parsed = JSON.parse(attempt) as T
+      if (options.validate && !options.validate(parsed)) {
+        throw new Error(options.errorMessage || 'AI returned invalid JSON for this step.')
+      }
+      return parsed
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
     }

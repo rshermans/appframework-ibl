@@ -5,9 +5,11 @@ import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
 import EvidenceWatermark from './EvidenceWatermark'
-import { parseAiJson } from '@/lib/parseAiJson'
+import ExportToNotebookButton from '@/components/ExportToNotebookButton'
+import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { retryWithBackoff } from '@/lib/retryHelper'
 import { safeFetch } from '@/lib/safeFetch'
+import { isValidMultimodalArtifact } from '@/lib/multimodalContract'
 import type { PosterDraft } from '@/types/research-workflow'
 
 interface Props {
@@ -25,6 +27,9 @@ export default function Step10APoster({ onBack }: Props) {
   const [audience, setAudience] = useState('general')
   const draft = multimodalOutputs.poster
   const pt = locale === 'pt-PT'
+  const generationSoonLabel = pt
+    ? 'Geração direta no app em breve. Use "Exportar para NotebookLM".'
+    : 'Direct generation in-app is coming soon. Use "Export to NotebookLM".'
 
   const generate = async () => {
     setLoading(true)
@@ -50,7 +55,10 @@ export default function Step10APoster({ onBack }: Props) {
         throw new Error((payload?.details || payload?.error || 'API error') as string)
       }
       const data = payload?.data ?? payload
-      const parsed = parseAiJson<PosterDraft>(data.output)
+      const parsed = parseAiJsonWithOptions<PosterDraft>(data.output, {
+        validate: (value) => isValidMultimodalArtifact('poster', value),
+        errorMessage: pt ? 'Resposta invalida para o contrato de poster.' : 'Invalid poster contract response.',
+      })
       if (!parsed?.sections?.length) throw new Error(pt ? 'Resposta inválida da IA.' : 'Invalid AI response.')
       setMultimodalPoster(parsed)
       if (typeof parsed.fidelityScore === 'number') setEvidenceFidelityScore(parsed.fidelityScore)
@@ -88,14 +96,25 @@ export default function Step10APoster({ onBack }: Props) {
           <option value="academic">{pt ? 'Académico' : 'Academic'}</option>
           <option value="school">{pt ? 'Escola (12-18 anos)' : 'School (12-18 yrs)'}</option>
         </select>
-        <button
-          type="button"
-          disabled={loading || !finalResearchQuestion?.approvedByUser}
-          onClick={generate}
-          className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--on_primary)] transition hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? (pt ? 'A gerar…' : 'Generating…') : draft ? (pt ? 'Regenerar' : 'Regenerate') : (pt ? 'Gerar poster' : 'Generate poster')}
-        </button>
+        <span title={generationSoonLabel} className="inline-flex cursor-not-allowed">
+          <button
+            type="button"
+            onClick={generate}
+            disabled
+            className="rounded-[var(--radius-md)] bg-[var(--surface_container_high)] px-4 py-2 text-sm font-medium text-[var(--on_surface_variant)] opacity-80"
+          >
+            {pt ? 'Em breve' : 'Coming soon'}
+          </button>
+        </span>
+        <ExportToNotebookButton
+          projectId={projectId}
+          topic={topic}
+          researchQuestion={finalResearchQuestion?.question ?? ''}
+          evidenceRecords={evidenceRecords}
+          artifactType="poster"
+          variant="secondary"
+          size="sm"
+        />
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

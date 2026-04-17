@@ -10,10 +10,11 @@ interface StepHeaderProps {
   stepId: IBLStepKey
   title: string
   subtitle?: string
+  showEthicalTip?: boolean
 }
 
-export default function StepHeader({ stepId, title, subtitle }: StepHeaderProps) {
-  const { t } = useI18n()
+export default function StepHeader({ stepId, title, subtitle, showEthicalTip = true }: StepHeaderProps) {
+  const { t, locale } = useI18n()
   const meta = getIblStepMeta(stepId)
 
   return (
@@ -25,7 +26,9 @@ export default function StepHeader({ stepId, title, subtitle }: StepHeaderProps)
         <InfoTooltip label={title} description={meta.title} />
       </div>
       {subtitle && <p className="max-w-3xl text-sm leading-7 text-[var(--on_surface)] opacity-70">{subtitle}</p>}
-      <EthicalTip title={t('common.ethicalTip')} tip={getIblEthicalTip(stepId)} />
+      {showEthicalTip && (
+        <EthicalTip title={t('common.ethicalTip')} tip={getIblEthicalTip(stepId, locale)} />
+      )}
     </div>
   )
 }
