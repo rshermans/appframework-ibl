@@ -352,7 +352,6 @@ export default function Home() {
       <div className="mx-auto max-w-7xl p-6 md:p-8">
         <section className="mb-4 flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface_container_low)] p-3">
           <AuthControls />
-          <LocaleSwitcher compact />
           <Link
             href="/privacy"
             className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"

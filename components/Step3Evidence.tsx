@@ -9,9 +9,9 @@ import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 import { persistInteractionEvent } from '@/lib/interactionClient'
 
-type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
+type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'arxiv' | 'pubmed'
 
-const PROVIDER_SEQUENCE: Provider[] = ['crossref', 'openaire', 'semantic_scholar', 'rcaap']
+const PROVIDER_SEQUENCE: Provider[] = ['crossref', 'openaire', 'semantic_scholar', 'arxiv', 'pubmed']
 
 function buildSourcePayload(article: SearchArticle): string {
   return [
@@ -93,7 +93,8 @@ export default function Step3Evidence() {
     semantic_scholar: 1,
     crossref: 1,
     openaire: 1,
-    rcaap: 1,
+    arxiv: 1,
+    pubmed: 1,
   })
   const [relatedFeedback, setRelatedFeedback] = useState('')
 
@@ -110,14 +111,16 @@ export default function Step3Evidence() {
         article.provider === 'semantic_scholar' ||
         article.provider === 'crossref' ||
         article.provider === 'openaire' ||
-        article.provider === 'rcaap'
+        article.provider === 'arxiv' ||
+        article.provider === 'pubmed'
     )?.provider
 
     if (
       firstProvider === 'semantic_scholar' ||
       firstProvider === 'crossref' ||
       firstProvider === 'openaire' ||
-      firstProvider === 'rcaap'
+      firstProvider === 'arxiv' ||
+      firstProvider === 'pubmed'
     ) {
       setRelatedProvider(firstProvider)
     }
@@ -128,7 +131,8 @@ export default function Step3Evidence() {
       semantic_scholar: searchArticles.some((article) => article.provider === 'semantic_scholar') ? 2 : 1,
       crossref: searchArticles.some((article) => article.provider === 'crossref') ? 2 : 1,
       openaire: searchArticles.some((article) => article.provider === 'openaire') ? 2 : 1,
-      rcaap: searchArticles.some((article) => article.provider === 'rcaap') ? 2 : 1,
+      arxiv: searchArticles.some((article) => article.provider === 'arxiv') ? 2 : 1,
+      pubmed: searchArticles.some((article) => article.provider === 'pubmed') ? 2 : 1,
     })
     setRelatedFeedback('')
   }, [searchArticles, searchDesign?.booleanQuery])

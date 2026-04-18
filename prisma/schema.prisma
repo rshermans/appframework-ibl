@@ -43,12 +43,23 @@ model ProjectInteraction {
   
   mode      String?  // "quick", "advanced", etc
   tokens    Int      @default(0)
+
+  // -- Telemetry Layer (Interaction Layer) --
+  sessionId   String?
+  metadata    Json?    // { device, version, app_url, etc }
   
-  createdAt DateTime @default(now())
+  // -- Analytical Layers (JSONB) --
+  cognitiveFeatures Json? // { bloom_level, complexity, argumentation, autonomy }
+  affectiveFeatures Json? // { sentiment, confidence, frustration, engagement }
+  learningMetrics   Json? // { progression, skill_trend, etc }
+
+  processedAt DateTime? // When enrichment was completed
+  createdAt   DateTime @default(now())
   
   @@index([projectId])
   @@index([stage])
   @@index([stepId])
+  @@index([sessionId])
 }
 
 model User {

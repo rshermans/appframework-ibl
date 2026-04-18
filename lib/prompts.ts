@@ -195,18 +195,36 @@ Respond with valid JSON only:
   knowledge_structure: {
     id: 'knowledge_structure',
     aliases: ['step6', 'step7', 'step8a', 'step8b'],
-    template: `You are a research synthesis architect. Build a structured knowledge model from evidence records.
+    template: `You are a research synthesis architect for an IBL (Inquiry-Based Learning) project.
 
-Research Question: [RQ]
+Research Question (RQ): [RQ]
 
-Evidence Records (JSON):
+Evidence Records (JSON) — use ONLY this data, do not invent:
 [EVIDENCE]
 
-MANDATORY FIELDS — your response will be rejected if any of these are missing or empty:
-- "topics": non-empty array of 3-8 main topic strings extracted from the evidence
-- "concept_map_nodes": non-empty array of concept node strings (include topics and subtopics)
+Your goal is to build a structured knowledge model anchored to the evidence above.
 
-All other fields below are also required but may be shorter if evidence is limited.
+═══ FEW-SHOT EXAMPLE (format reference only — your content must come from the evidence data):
+{
+  "topics": ["Biodiversity Loss", "Climate Impact", "Conservation Policy"],
+  "subtopics": ["Habitat Fragmentation", "Temperature Rise", "Protected Areas"],
+  "concept_map_nodes": ["Biodiversity Loss", "Climate Impact", "Habitat Fragmentation", "Conservation Policy", "Ecosystem Services"],
+  "concept_map_edges": [
+    { "from": "Climate Impact", "to": "Biodiversity Loss", "relation": "causes" },
+    { "from": "Habitat Fragmentation", "to": "Biodiversity Loss", "relation": "extends" },
+    { "from": "Conservation Policy", "to": "Biodiversity Loss", "relation": "mitigates" }
+  ],
+  "mind_map_markdown": "- Biodiversity Loss and Climate Change\\n  - Climate Impact\\n    - Temperature Rise\\n    - Extreme Events\\n  - Biodiversity Loss\\n    - Habitat Fragmentation\\n    - Species Threat Index\\n  - Conservation Responses\\n    - Protected Areas\\n    - Policy Frameworks",
+  "glossary": [
+    { "term": "Ecosystem Services", "definition": "Benefits that ecosystems provide to humans, including food, water regulation, and climate stability." }
+  ]
+}
+═══
+
+MANDATORY FIELDS (response rejected if missing or empty):
+- "topics": non-empty array of 3-8 main topic strings extracted from the evidence
+- "concept_map_nodes": non-empty array (minimum 4 nodes, all from evidence)
+- "mind_map_markdown": MUST use "- " bullet prefix with 2-space indentation per level. The FIRST root node MUST be a short version of the Research Question.
 
 Respond with valid JSON only using EXACTLY this structure:
 {
@@ -217,17 +235,18 @@ Respond with valid JSON only using EXACTLY this structure:
     { "from": "Concept A", "to": "Concept B", "relation": "supports" },
     { "from": "Concept B", "to": "Concept C", "relation": "extends" }
   ],
-  "mind_map_markdown": "- Topic 1\\n  - Subtopic 1\\n    - Detail\\n- Topic 2\\n  - Subtopic 2",
+  "mind_map_markdown": "- [Short form of RQ]\\n  - [Topic 1]\\n    - [Subtopic]\\n    - [Detail from evidence]\\n  - [Topic 2]\\n    - [Subtopic]",
   "glossary": [
-    { "term": "Key term", "definition": "Short definition from the evidence" }
+    { "term": "Key term", "definition": "Short definition drawn from the evidence" }
   ]
 }
 
 Rules:
-- "topics" MUST have at least 3 items. Derive them from the evidence claims and findings.
+- "topics" MUST have at least 3 items derived from evidence claims and findings.
 - "concept_map_nodes" MUST include all topics and key subtopics (minimum 4 nodes).
-- "concept_map_edges" should express relationships between nodes using: supports, contrasts, extends, depends_on, causes.
-- "mind_map_markdown" uses "- " bullet prefix with 2-space indentation per level.`,
+- "concept_map_edges" should use: supports, contrasts, extends, depends_on, causes, mitigates.
+- "mind_map_markdown" root node (level 1) = condensed RQ. Level 2 = main topics. Level 3 = key subtopics or evidence findings. Max 3 levels.
+- Every glossary term must appear in at least one evidence record.`,
   },
   's0-form': {
     id: 's0-form',
@@ -251,7 +270,7 @@ Research Question: [RQ]
 IMPORTANT: You MUST include ALL of the following fields in your JSON response. The "boolean_query" and "search_strings" fields are MANDATORY — omitting them will cause a system error.
 
 Execution context:
-- The search strategy will be executed immediately across Crossref, OpenAIRE, Semantic Scholar, and RCAAP.
+- The search strategy will be executed immediately across Crossref, OpenAIRE, Semantic Scholar, arXiv, and PubMed.
 - Prefer queries that are robust across academic databases.
 - Avoid over-narrow expressions that only work in one provider.
 
@@ -261,11 +280,12 @@ Respond with valid JSON only using EXACTLY this structure:
   "synonyms": ["synonym 1", "synonym 2"],
   "boolean_query": "(keyword1 OR synonym1) AND (keyword2 OR synonym2)",
   "search_strings": [
-    { "database": "RCAAP", "query": "complete query string for RCAAP" },
+    { "database": "PubMed", "query": "complete query string for PubMed" },
+    { "database": "arXiv", "query": "complete query string for arXiv (use all:term syntax)" },
     { "database": "Google Scholar", "query": "complete query string for Google Scholar" },
     { "database": "Semantic Scholar", "query": "complete query string for Semantic Scholar" }
   ],
-  "recommended_databases": ["RCAAP", "Google Scholar", "Semantic Scholar"],
+  "recommended_databases": ["PubMed", "arXiv", "Semantic Scholar", "Crossref"],
   "filters": ["peer reviewed", "last 5 years"]
 }
 
@@ -276,7 +296,7 @@ Rules:
 - Extract 3-6 keywords and their synonyms from the research question.
 - Use parentheses to group related terms in boolean expressions.
 - Keep provider-specific strings executable. Do not include explanations inside the query field.
-- Include one string each for RCAAP, Crossref, Semantic Scholar, and OpenAIRE.
+- Include one string each for PubMed, arXiv, Semantic Scholar, and Crossref/OpenAIRE.
 - If the question is broad, simplify terms rather than adding more operators.
 - Filters should be realistic and database-agnostic when possible.`,
   },

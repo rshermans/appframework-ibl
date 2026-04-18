@@ -1,6 +1,6 @@
 import type { SearchArticle, SearchPagination } from '@/types/research-workflow'
 
-export type SearchProvider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
+export type SearchProvider = 'semantic_scholar' | 'crossref' | 'openaire' | 'arxiv' | 'pubmed'
 
 const SEMANTIC_SCHOLAR_MIN_INTERVAL_MS = 1100
 let semanticScholarNextSlotAt = 0
@@ -32,8 +32,12 @@ export async function searchScientificArticles(input: SearchInput): Promise<Sear
     return searchOpenAIRE(input.query, pageSize, page)
   }
 
-  if (provider === 'rcaap') {
-    return searchRCAAP(input.query, pageSize, page)
+  if (provider === 'arxiv') {
+    return searchArXiv(input.query, pageSize, page)
+  }
+
+  if (provider === 'pubmed') {
+    return searchPubMed(input.query, pageSize, page)
   }
 
   return searchSemanticScholar(input.query, pageSize, page)
@@ -338,22 +342,24 @@ async function searchOpenAIRE(
   }
 }
 
-async function searchRCAAP(
+// ── arXiv ────────────────────────────────────────────────────────────────────
+async function searchArXiv(
   query: string,
   pageSize: number,
   page: number
 ): Promise<SearchOutput> {
-  const normalizedQuery = simplifyPortalQuery(query)
-  const url = new URL('https://www.rcaap.pt/search')
-  url.searchParams.set('formname', 'TAGCLOUD')
-  url.searchParams.set('includeAll', 'yes')
-  url.searchParams.set('text', normalizedQuery)
-  url.searchParams.set('page', String(page))
+  const start = (page - 1) * pageSize
+  const url = new URL('https://export.arxiv.org/api/query')
+  url.searchParams.set('search_query', `all:${query}`)
+  url.searchParams.set('start', String(start))
+  url.searchParams.set('max_results', String(pageSize))
+  url.searchParams.set('sortBy', 'relevance')
+  url.searchParams.set('sortOrder', 'descending')
 
   const response = await fetch(url.toString(), {
     method: 'GET',
     headers: {
-      Accept: 'text/html,application/xhtml+xml',
+      Accept: 'application/atom+xml',
       'User-Agent': 'IBL-AI/1.0',
     },
     cache: 'no-store',
@@ -361,25 +367,175 @@ async function searchRCAAP(
 
   if (!response.ok) {
     const details = await safeReadText(response)
-    throw new Error(`RCAAP search failed (${response.status}): ${details}`)
+    throw new Error(`arXiv search failed (${response.status}): ${details}`)
   }
 
-  const html = await response.text()
-  const detailUrls = extractRcaapDetailUrls(html)
-  const plainText = normalizeHtmlToText(html)
-  const parsed = parseRcaapPlainText(plainText, detailUrls)
+  const xml = await response.text()
+
+  // Parse total results
+  const totalMatch = xml.match(/<opensearch:totalResults[^>]*>(\d+)<\/opensearch:totalResults>/)
+  const totalResults = totalMatch ? Number(totalMatch[1]) : undefined
+
+  // Parse entries
+  const entryMatches = Array.from(xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g))
+
+  const articles = entryMatches
+    .map((match, index) => {
+      const entry = match[1] ?? ''
+      const idMatch = entry.match(/<id>([^<]+)<\/id>/)
+      const titleMatch = entry.match(/<title>([\s\S]*?)<\/title>/)
+      const summaryMatch = entry.match(/<summary>([\s\S]*?)<\/summary>/)
+      const publishedMatch = entry.match(/<published>(\d{4})/)
+      const doiMatch = entry.match(/<arxiv:doi[^>]*>([^<]+)<\/arxiv:doi>/)
+      const authorMatches = Array.from(entry.matchAll(/<author>[\s\S]*?<name>([^<]+)<\/name>[\s\S]*?<\/author>/g))
+
+      const arxivId = idMatch?.[1]?.trim()
+      const title = titleMatch?.[1]?.replace(/\s+/g, ' ').trim() || 'Untitled'
+      const abstract = summaryMatch?.[1]?.replace(/\s+/g, ' ').trim() || 'No abstract available.'
+      const year = publishedMatch ? Number(publishedMatch[1]) : undefined
+      const doi = doiMatch?.[1]?.trim()
+      const authors = authorMatches.map(m => m[1]?.trim()).filter(Boolean) as string[]
+
+      return {
+        id: `arxiv:${arxivId || `arxiv-${Date.now()}-${index}`}`,
+        provider: 'arxiv' as const,
+        title,
+        abstract,
+        year,
+        authors,
+        doi,
+        url: arxivId ?? undefined,
+      }
+    })
+    .filter(a => a.title && a.title !== 'Untitled' || a.abstract !== 'No abstract available.')
 
   return {
-    provider: 'rcaap',
-    articles: parsed.articles.slice(0, pageSize),
+    provider: 'arxiv',
+    articles,
     pagination: {
       page,
       pageSize,
-      totalResults: parsed.totalResults,
+      totalResults,
       hasNextPage:
-        typeof parsed.totalResults === 'number'
-          ? page * pageSize < parsed.totalResults
-          : parsed.articles.length >= pageSize,
+        totalResults !== undefined
+          ? page * pageSize < totalResults
+          : articles.length === pageSize,
+    },
+  }
+}
+
+// ── PubMed / NCBI ────────────────────────────────────────────────────────────
+async function searchPubMed(
+  query: string,
+  pageSize: number,
+  page: number
+): Promise<SearchOutput> {
+  const retStart = (page - 1) * pageSize
+  const baseUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
+
+  // Step 1 — ESearch: get PMIDs
+  const searchUrl = new URL(`${baseUrl}/esearch.fcgi`)
+  searchUrl.searchParams.set('db', 'pubmed')
+  searchUrl.searchParams.set('term', query)
+  searchUrl.searchParams.set('retmax', String(pageSize))
+  searchUrl.searchParams.set('retstart', String(retStart))
+  searchUrl.searchParams.set('retmode', 'json')
+  searchUrl.searchParams.set('tool', 'IBL-AI')
+  searchUrl.searchParams.set('email', 'support@ibl-ai.app')
+
+  const searchResponse = await fetch(searchUrl.toString(), {
+    method: 'GET',
+    headers: { Accept: 'application/json', 'User-Agent': 'IBL-AI/1.0' },
+    cache: 'no-store',
+  })
+
+  if (!searchResponse.ok) {
+    throw new Error(`PubMed ESearch failed (${searchResponse.status})`)
+  }
+
+  const searchPayload = await searchResponse.json() as {
+    esearchresult?: {
+      count?: string
+      idlist?: string[]
+    }
+  }
+
+  const idList = searchPayload.esearchresult?.idlist ?? []
+  const totalResults = searchPayload.esearchresult?.count
+    ? Number(searchPayload.esearchresult.count)
+    : undefined
+
+  if (idList.length === 0) {
+    return {
+      provider: 'pubmed',
+      articles: [],
+      pagination: { page, pageSize, totalResults: totalResults ?? 0, hasNextPage: false },
+    }
+  }
+
+  // Step 2 — ESummary: fetch metadata for each PMID
+  const summaryUrl = new URL(`${baseUrl}/esummary.fcgi`)
+  summaryUrl.searchParams.set('db', 'pubmed')
+  summaryUrl.searchParams.set('id', idList.join(','))
+  summaryUrl.searchParams.set('retmode', 'json')
+  summaryUrl.searchParams.set('tool', 'IBL-AI')
+  summaryUrl.searchParams.set('email', 'support@ibl-ai.app')
+
+  const summaryResponse = await fetch(summaryUrl.toString(), {
+    method: 'GET',
+    headers: { Accept: 'application/json', 'User-Agent': 'IBL-AI/1.0' },
+    cache: 'no-store',
+  })
+
+  if (!summaryResponse.ok) {
+    throw new Error(`PubMed ESummary failed (${summaryResponse.status})`)
+  }
+
+  const summaryPayload = await summaryResponse.json() as {
+    result?: Record<string, {
+      uid?: string
+      title?: string
+      source?: string
+      pubdate?: string
+      authors?: Array<{ name?: string }>
+      elocationid?: string
+      articleids?: Array<{ idtype?: string; value?: string }>
+    }>
+  }
+
+  const articles = idList
+    .map((pmid, index) => {
+      const record = summaryPayload.result?.[pmid]
+      if (!record) return null
+
+      const year = record.pubdate ? Number(record.pubdate.slice(0, 4)) || undefined : undefined
+      const doi = record.articleids?.find(a => a.idtype === 'doi')?.value
+      const authors = (record.authors ?? []).map(a => a.name || '').filter(Boolean)
+
+      return {
+        id: `pubmed:${pmid || `pm-${Date.now()}-${index}`}`,
+        provider: 'pubmed' as const,
+        title: record.title?.trim() || 'Untitled',
+        abstract: `[PubMed - ${record.source || 'Unknown journal'}]`,
+        year,
+        authors,
+        doi,
+        url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+      }
+    })
+    .filter((a): a is NonNullable<typeof a> => a !== null)
+
+  return {
+    provider: 'pubmed',
+    articles,
+    pagination: {
+      page,
+      pageSize,
+      totalResults,
+      hasNextPage:
+        totalResults !== undefined
+          ? page * pageSize < totalResults
+          : articles.length === pageSize,
     },
   }
 }
@@ -571,7 +727,7 @@ function parseRcaapPlainText(
 
     articles.push({
       id: `rcaap:${url || `${title}-${year || 'n.d.'}`}`.slice(0, 240),
-      provider: 'rcaap',
+      provider: 'crossref',
       title,
       abstract,
       year,

@@ -30,7 +30,7 @@ function useProgressSteps(): ProgressStep[] {
 
 export default function ProgressDashboard() {
   const { t, locale } = useI18n()
-  const { stage, multimodalOutputs, peerReviews, selfAssessment, reflectionJournal, extensionPlan } = useWizardStore()
+  const { stage, multimodalOutputs, peerReviews, selfAssessment, reflectionJournal, extensionPlan, explanationDraft } = useWizardStore()
   const pt = locale === 'pt-PT'
   const stage1Steps = useProgressSteps()
   const stage1Completed = stage1Steps.filter((s) => s.done).length
@@ -38,6 +38,7 @@ export default function ProgressDashboard() {
   const stage1Pct = Math.round((stage1Completed / stage1Total) * 100)
 
   const stage2Done = [
+    Boolean(explanationDraft),  // Step 9 — Scientific Explanation (prerequisite)
     Boolean(multimodalOutputs.poster),
     Boolean(multimodalOutputs.podcast),
     Boolean(multimodalOutputs.videocast),
@@ -65,7 +66,7 @@ export default function ProgressDashboard() {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="fixed bottom-0 right-0 left-0 sm:left-auto sm:w-80 glass-panel ambient-shadow z-50">
+    <div className="fixed bottom-0 left-0 w-72 sm:w-80 sm:left-6 sm:bottom-6 glass-panel ambient-shadow z-50 rounded-tr-xl sm:rounded-xl overflow-hidden">
       <button
         type="button"
         className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
@@ -133,6 +134,7 @@ export default function ProgressDashboard() {
           {stage === 2 && (
             <div className="space-y-1">
               {[
+                { id: 'explanation', done: Boolean(explanationDraft), labelPt: 'Explicação Científica (Etapa 9)', labelEn: 'Scientific Explanation (Step 9)' },
                 { id: 'poster', done: Boolean(multimodalOutputs.poster), labelPt: 'Poster', labelEn: 'Poster' },
                 { id: 'podcast', done: Boolean(multimodalOutputs.podcast), labelPt: 'Podcast', labelEn: 'Podcast' },
                 { id: 'video', done: Boolean(multimodalOutputs.videocast), labelPt: 'Videocast', labelEn: 'Videocast' },

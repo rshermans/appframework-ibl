@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { saveInteraction } from '@/lib/db'
 import { getMessage, normalizeLocale, type Locale } from '@/lib/i18n'
+import { enrichInteraction } from '@/lib/telemetry/processor'
 
 export async function POST(req: Request) {
   let locale: Locale = 'pt-PT'
@@ -17,6 +18,12 @@ export async function POST(req: Request) {
     const aiOutput = String(body?.aiOutput || '')
     const topic = typeof body?.topic === 'string' ? body.topic : undefined
     const mode = typeof body?.mode === 'string' ? body.mode : undefined
+    const tokens = Number(body?.tokens || 0)
+    
+    // Telemetry fields
+    const userId = body?.userId ? String(body.userId) : undefined
+    const sessionId = body?.sessionId ? String(body.sessionId) : undefined
+    const metadata = body?.metadata || {}
 
     if (!projectId || !stepId || !stepLabel) {
       return NextResponse.json(
@@ -29,9 +36,28 @@ export async function POST(req: Request) {
       )
     }
 
-    await saveInteraction(projectId, stage, stepId, stepLabel, userInput, aiOutput, topic, mode, 0)
+    const interaction = await saveInteraction(
+      projectId, 
+      stage, 
+      stepId, 
+      stepLabel, 
+      userInput, 
+      aiOutput, 
+      topic, 
+      mode, 
+      tokens,
+      userId,
+      sessionId,
+      metadata
+    )
 
-    return NextResponse.json({ ok: true })
+    // Trigger asynchronous enrichment (Cognitive/Affective layers)
+    // We do not await this to return the response immediately to the user.
+    void enrichInteraction(interaction.id).catch(err => {
+      console.error(`[Telemetry API] Background enrichment error:`, err)
+    })
+
+    return NextResponse.json({ ok: true, id: interaction.id })
   } catch (error) {
     return NextResponse.json(
       {

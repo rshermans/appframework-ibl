@@ -78,7 +78,7 @@ export interface SearchStringSet {
 
 export interface SearchArticle {
   id: string
-  provider: 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap' | 'core'
+  provider: 'semantic_scholar' | 'crossref' | 'openaire' | 'arxiv' | 'pubmed' | 'core'
   title: string
   abstract: string
   year?: number

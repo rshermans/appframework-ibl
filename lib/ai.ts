@@ -137,6 +137,65 @@ export async function callChatGPT(
   )
 }
 
+/**
+ * Prose variant: does NOT force JSON format or inject JSON instructions.
+ * Use for conversational assistant responses where natural text is expected.
+ */
+export async function callChatGPTText(
+  systemPrompt: string,
+  userMessage: string,
+  stepId: string = 'assistant_help',
+  maxOutputTokens: number = 250
+): Promise<{ content: string; tokens: number; model: string }> {
+  const startTime = Date.now()
+  const failedModels = new Set<string>()
+
+  let selection = chooseModel(stepId)
+  console.log(`🤖 [ChatGPTText] Step: ${stepId} → Model: ${modelLogTag(selection)}`)
+
+  while (true) {
+    const { model } = selection
+    try {
+      const response = await withTimeout(
+        openai.responses.create({
+          model,
+          instructions: systemPrompt,
+          input: userMessage,
+          max_output_tokens: maxOutputTokens,
+          // No json_object format — plain text response
+        }),
+        { timeoutMs: 12000 }
+      )
+
+      const content = extractResponseText(response)
+      const tokens = response.usage?.total_tokens || 0
+
+      if (content) {
+        console.log(`[ChatGPTText] ✅ ${modelLogTag(selection)} — ${content.length} chars, ${tokens} tokens, ${Date.now() - startTime}ms`)
+        return { content, tokens, model }
+      }
+
+      console.warn(`[ChatGPTText] ${model} returned empty content`)
+      failedModels.add(model)
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error)
+      console.warn(`[ChatGPTText] ${model} failed: ${errMsg}`)
+      failedModels.add(model)
+    }
+
+    if (!canContinueProcessing(startTime, 4000)) break
+
+    const next = getNextFallbackModel(stepId, failedModels)
+    if (!next) break
+
+    selection = next
+    console.log(`[ChatGPTText] 🔄 Switching to fallback: ${modelLogTag(selection)}`)
+  }
+
+  throw new Error(`ChatGPTText failed: all models exhausted. Step: ${stepId}`)
+}
+
+
 export async function streamChatGPT(
   systemPrompt: string,
   userMessage: string,

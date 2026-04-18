@@ -20,7 +20,9 @@ export async function saveInteraction(
   topic?: string,
   mode?: string,
   tokens: number = 0,
-  userId?: string
+  userId?: string,
+  sessionId?: string,
+  metadata?: any
 ) {
   // Ensure the parent project exists before writing interaction rows.
   await prisma.project.upsert({
@@ -50,6 +52,8 @@ export async function saveInteraction(
       aiOutput,
       mode,
       tokens,
+      sessionId,
+      metadata: metadata || undefined,
     },
   })
 }

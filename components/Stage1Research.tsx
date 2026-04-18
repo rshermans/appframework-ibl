@@ -4,7 +4,6 @@ import { useWizardStore } from '@/store/wizardStore'
 import { getStepContract, resolveWorkflowStepId } from '@/lib/workflow'
 import { getIblEthicalTip, getIblStepMeta, type IBLStepKey } from '@/lib/iblFramework'
 import { useI18n } from '@/components/I18nProvider'
-import LocaleSwitcher from '@/components/LocaleSwitcher'
 import InfoTooltip from '@/components/InfoTooltip'
 import EthicalTip from '@/components/EthicalTip'
 import AppBrand from '@/components/AppBrand'
@@ -96,7 +95,6 @@ export default function Stage1Research() {
             <p className="max-w-3xl text-slate-700">{t('stage1.intro')}</p>
             <EthicalTip title={t('common.stageEthicalTip')} tip={getIblEthicalTip('stage1', locale)} />
           </div>
-          <LocaleSwitcher compact />
         </div>
       </section>
 
@@ -158,7 +156,7 @@ export default function Stage1Research() {
                 </span>
                 <InfoTooltip
                   label=""
-                  description={iblMeta.title}
+                  description={t(`workflow.${stepId}.description`) || iblMeta.title}
                   className="mt-0.5 flex-shrink-0"
                 />
               </div>

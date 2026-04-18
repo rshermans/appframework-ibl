@@ -9,9 +9,9 @@ import QualityRating from '@/components/QualityRating'
 import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 
-type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'rcaap'
+type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'arxiv' | 'pubmed'
 
-const PROVIDER_SEQUENCE: Provider[] = ['crossref', 'openaire', 'semantic_scholar', 'rcaap']
+const PROVIDER_SEQUENCE: Provider[] = ['crossref', 'openaire', 'semantic_scholar', 'arxiv', 'pubmed']
 
 function mergeUniqueArticles(existing: SearchArticle[], incoming: SearchArticle[]): SearchArticle[] {
   const byId = new Map<string, SearchArticle>()
@@ -59,7 +59,8 @@ export default function Step2Search() {
   const isPortuguese = locale === 'pt-PT'
 
   const providerLabel = (value: Provider) => {
-    if (value === 'rcaap') return 'RCAAP'
+    if (value === 'arxiv') return 'arXiv'
+    if (value === 'pubmed') return 'PubMed / NCBI'
     if (value === 'openaire') return 'OpenAIRE Graph'
     if (value === 'crossref') return 'Crossref'
     return 'Semantic Scholar'
@@ -564,7 +565,8 @@ export default function Step2Search() {
                   <option value="crossref">{providerLabel('crossref')}</option>
                   <option value="openaire">{providerLabel('openaire')}</option>
                   <option value="semantic_scholar">{providerLabel('semantic_scholar')}</option>
-                  <option value="rcaap">{providerLabel('rcaap')}</option>
+                  <option value="arxiv">{providerLabel('arxiv')}</option>
+                  <option value="pubmed">{providerLabel('pubmed')}</option>
                 </select>
               </label>
               <button

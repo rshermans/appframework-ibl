@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const query = String(body?.query || '').trim()
-    const provider = (body?.provider || 'rcaap') as SearchProvider
+    const provider = (body?.provider || 'crossref') as SearchProvider
     const limit = Number(body?.limit || body?.pageSize || 20)
     const page = Number(body?.page || 1)
     locale = normalizeLocale(body?.locale)
