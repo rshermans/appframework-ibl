@@ -234,7 +234,7 @@ export default function Home() {
         <div className="glass-panel w-full max-w-3xl p-1">
           <div className="bg-[var(--surface_container_lowest)] p-6 md:p-10">
             <div className="mb-6 flex items-start justify-between gap-4">
-              <AppBrand compact />
+              <AppBrand />
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <AuthControls />
                 <LocaleSwitcher compact />
@@ -243,12 +243,9 @@ export default function Home() {
 
             <div className="mb-8 grid gap-6 md:grid-cols-[1.15fr_0.85fr]">
               <div>
-                <h1 className="font-display text-4xl font-semibold text-[var(--on_surface)] md:text-5xl">
-                  {t('home.title')}
-                </h1>
-                <p className="mt-3 text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <h1 className="font-display text-3xl font-semibold uppercase tracking-[0.14em] text-[var(--on_surface)] md:text-4xl">
                   {t('home.subtitle')}
-                </p>
+                </h1>
                 <p className="mt-5 max-w-xl text-sm leading-7 text-slate-700">{t('home.intro')}</p>
               </div>
               <div className="bg-[var(--surface_container_low)] p-5">
