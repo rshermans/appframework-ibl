@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 
@@ -13,8 +14,8 @@ export default async function TelemetryDashboardPage() {
   const interactions = await prisma.projectInteraction.findMany({
     where: {
       OR: [
-        { cognitiveFeatures: { not: null } },
-        { affectiveFeatures: { not: null } },
+        { cognitiveFeatures: { not: Prisma.DbNull } },
+        { affectiveFeatures: { not: Prisma.DbNull } },
       ],
     },
     orderBy: { createdAt: 'desc' },
