@@ -84,6 +84,7 @@ export const STAGES: Record<Stage, StageInfo> = {
 export interface WizardState {
   // Project
   projectId: string
+  sessionId: string
   topic: string
   aiConsentAccepted: boolean
   aiConsentAcceptedAt: string | null

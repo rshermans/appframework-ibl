@@ -2,12 +2,13 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { WizardState, Stage, InteractionRecord } from '@/types/wizard'
 import { resolveWorkflowStepId, toLegacyStepId } from '@/lib/workflow'
-import { clearSessionProjectCookie, setSessionProjectCookie } from '@/lib/sessionClient'
+import { clearSessionProjectCookie, setSessionProjectCookie, generateProjectId } from '@/lib/sessionClient'
 
 export const useWizardStore = create<WizardState>()(
   persist(
     (set) => ({
   projectId: '',
+  sessionId: typeof window !== 'undefined' ? generateProjectId() : '',
   topic: '',
   aiConsentAccepted: false,
   aiConsentAcceptedAt: null,
@@ -193,6 +194,7 @@ export const useWizardStore = create<WizardState>()(
       clearSessionProjectCookie()
       return {
         projectId: '',
+        sessionId: typeof window !== 'undefined' ? generateProjectId() : '',
         topic: '',
         aiConsentAccepted: false,
         aiConsentAcceptedAt: null,
@@ -231,6 +233,7 @@ export const useWizardStore = create<WizardState>()(
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         projectId: state.projectId,
+        sessionId: state.sessionId,
         aiConsentAccepted: state.aiConsentAccepted,
         aiConsentAcceptedAt: state.aiConsentAcceptedAt,
         stage: state.stage,

@@ -24,22 +24,27 @@ export async function enrichInteraction(interactionId: string) {
       User Input: "${interaction.userInput}"
       AI Output: "${interaction.aiOutput}"
       
-      Extract the following analytical layers in JSON format:
-      1. Cognitive Layer:
-         - bloom_level: (remembering, understanding, applying, analyzing, evaluating, creating)
-         - complexity_score: (0.0 to 1.0)
-         - argumentation_level: (low, medium, high)
-         - autonomy_index: (0.0 to 1.0)
-      2. Affective Layer:
-         - sentiment: (positive, neutral, negative)
-         - confidence: (0.0 to 1.0)
-         - frustration_index: (0.0 to 1.0)
-         - engagement_signal: (0.0 to 1.0)
-      3. Learning Layer:
-         - progression_score: (0.0 to 1.0)
-         - skill_evolution_trend: (increasing, stable, decreasing)
+      Extract the analytical layers and RESPOND WITH VALID JSON ONLY, strictly using the following exact structure:
+      {
+        "cognitive": {
+          "bloom_level": "remembering|understanding|applying|analyzing|evaluating|creating",
+           "complexity_score": 0.5,
+           "argumentation_level": "low|medium|high",
+           "autonomy_index": 0.5
+        },
+        "affective": {
+           "sentiment": "positive|neutral|negative",
+           "confidence": 0.5,
+           "frustration_index": 0.1,
+           "engagement_signal": 0.8
+        },
+        "learning": {
+           "progression_score": 0.5,
+           "skill_evolution_trend": "increasing|stable|decreasing"
+        }
+      }
       
-      Respond with valid JSON ONLY.
+      Do not include markdown tags like \`\`\`json. Return only the parsable JSON output object.
     `
 
     const userMessage = `Process interaction ${interactionId}.`

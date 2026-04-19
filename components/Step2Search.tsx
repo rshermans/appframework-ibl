@@ -8,6 +8,7 @@ import StepHeader from '@/components/StepHeader'
 import QualityRating from '@/components/QualityRating'
 import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
+import { persistInteractionEvent } from '@/lib/interactionClient'
 
 type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'arxiv' | 'pubmed'
 
@@ -407,25 +408,21 @@ export default function Step2Search() {
     })
 
     if (projectId) {
-      void fetch('/api/interactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          stage: 1,
-          stepId: 'step2_search_design',
-          stepLabel: t('workflow.step2_search_design.label'),
-          userInput: finalResearchQuestion?.question || topic,
-          aiOutput: JSON.stringify({
-            eventType: 'rate',
-            rating,
-            booleanQuery: searchDesign.booleanQuery,
-            searchStringCount: searchDesign.searchStrings.length,
-          }),
-          topic,
-          mode: 'standard',
-          locale,
+      void persistInteractionEvent({
+        projectId,
+        stage: 1,
+        stepId: 'step2_search_design',
+        stepLabel: t('workflow.step2_search_design.label'),
+        userInput: finalResearchQuestion?.question || topic,
+        aiOutput: JSON.stringify({
+          eventType: 'rate',
+          rating,
+          booleanQuery: searchDesign.booleanQuery,
+          searchStringCount: searchDesign.searchStrings.length,
         }),
+        topic,
+        mode: 'standard',
+        locale,
       }).catch(() => null)
     }
   }

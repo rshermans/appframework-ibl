@@ -27,11 +27,16 @@ function getDeviceMetadata(): PersistInteractionPayload['metadata'] {
   }
 }
 
+import { useWizardStore } from '@/store/wizardStore'
+
 export async function persistInteractionEvent(
   payload: PersistInteractionPayload
 ): Promise<void> {
+  const sessionId = payload.sessionId || useWizardStore.getState().sessionId
+
   const enrichedPayload = {
     ...payload,
+    sessionId,
     metadata: {
       ...getDeviceMetadata(),
       ...payload.metadata,
