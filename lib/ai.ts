@@ -72,7 +72,7 @@ export async function callChatGPT(
           model,
           instructions,
           input,
-          max_output_tokens: selection.complexity === 'fast' ? 1500 : 2000,
+          max_output_tokens: selection.complexity === 'heavy' ? 3000 : selection.complexity === 'fast' ? 1500 : 2000,
           text: { format: { type: 'json_object' } },
         }),
         { timeoutMs: selection.complexity === 'fast' ? 10000 : 15000 }
@@ -221,7 +221,7 @@ export async function streamChatGPT(
           model,
           instructions,
           input,
-          max_output_tokens: selection.complexity === 'fast' ? 1500 : 2000,
+          max_output_tokens: selection.complexity === 'heavy' ? 3000 : selection.complexity === 'fast' ? 1500 : 2000,
           text: { format: { type: 'json_object' } },
         }),
         { timeoutMs: selection.complexity === 'fast' ? 10000 : 15000 }

@@ -4,10 +4,10 @@
  *  2. Fallback rotation on errors (downgrade → alternate model)
  *
  * Model tiers:
- *  heavy  → gpt-5-mini   (deep analysis, evidence extraction, knowledge structure)
- *  medium → gpt-4o       (balanced: search design, explanations, multimodal)
- *  fast   → gpt-5-nano   (quick: topic generation, selection, chat-like tasks)
- *  default→ gpt-4o-mini  (ultimate fallback — cheap & reliable)
+ *  heavy  → gpt-4.1-mini  (deep analysis, evidence extraction, knowledge structure, step 9)
+ *  medium → gpt-4.1-mini  (balanced: search design, explanations, multimodal)
+ *  fast   → gpt-4o-mini   (quick: topic generation, selection, chat-like tasks)
+ *  default→ gpt-4o-mini   (ultimate fallback — cheap & reliable)
  */
 
 export type TaskComplexity = 'heavy' | 'medium' | 'fast'
@@ -21,8 +21,8 @@ export interface ModelSelection {
 
 // ─── Model tiers ────────────────────────────────────────────────────
 const MODEL_TIERS: Record<TaskComplexity, string> = {
-  heavy: 'gpt-4o',
-  medium: 'gpt-4o',
+  heavy: 'gpt-4.1-mini',
+  medium: 'gpt-4.1-mini',
   fast: 'gpt-4o-mini',
 }
 
@@ -33,8 +33,8 @@ const ULTIMATE_FALLBACK = 'gpt-4o-mini'
  * When a model fails we try the next one in the chain.
  */
 const FALLBACK_CHAINS: Record<TaskComplexity, string[]> = {
-  heavy: ['gpt-4o', 'gpt-4o-mini'],
-  medium: ['gpt-4o', 'gpt-4o-mini'],
+  heavy: ['gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini'],
+  medium: ['gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini'],
   fast: ['gpt-4o-mini'],
 }
 

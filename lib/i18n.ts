@@ -336,7 +336,7 @@ const messages: Record<Locale, MessageTree> = {
         },
       },
       step8: {
-        title: 'Passo 8 - Construtor de Glossário Científico',
+        title: 'Construtor de Glossário Científico',
         intro: 'Reveja o glossário gerado pela IA. Edite, remova ou adicione termos ancorados em fontes revistas.',
         ethicalTip: 'Dica ética — Integridade do Glossário',
         locked: 'Bloqueado até que exista uma estrutura de conhecimento.',
@@ -351,7 +351,7 @@ const messages: Record<Locale, MessageTree> = {
         continueButton: 'Continuar',
       },
       step5: {
-        title: 'Etapa 9 - Scientific Explanation Scaffolder',
+        title: 'Estruturador de Explicação Científica',
         intro:
           'Constrói um esboço de explicação rigoroso a partir da evidência estruturada e do mapa de conhecimento.',
         locked:
@@ -790,7 +790,7 @@ const messages: Record<Locale, MessageTree> = {
         },
       },
       step8: {
-        title: 'Step 8 - Scientific Glossary Builder',
+        title: 'Scientific Glossary Builder',
         intro: 'Review the AI-generated glossary. Edit, remove, or add terms anchored to reviewed sources.',
         ethicalTip: 'Ethical tip — Glossary Integrity',
         locked: 'Locked until a knowledge structure exists.',
@@ -805,7 +805,7 @@ const messages: Record<Locale, MessageTree> = {
         continueButton: 'Continue',
       },
       step5: {
-        title: 'Step 9 - Scientific Explanation Scaffolder',
+        title: 'Scientific Explanation Scaffolder',
         intro: 'Build a rigorous explanation draft from the structured evidence and knowledge map.',
         locked:
           'Step 5 is locked until the final question is approved and both evidence and knowledge structure are available.',
