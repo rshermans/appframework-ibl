@@ -19,11 +19,15 @@ export async function POST(req: Request) {
     const topic = typeof body?.topic === 'string' ? body.topic : undefined
     const mode = typeof body?.mode === 'string' ? body.mode : undefined
     const tokens = Number(body?.tokens || 0)
+    const eventType = typeof body?.eventType === 'string' ? body.eventType : undefined
     
     // Telemetry fields
     const userId = body?.userId ? String(body.userId) : undefined
     const sessionId = body?.sessionId ? String(body.sessionId) : undefined
-    const metadata = body?.metadata || {}
+    const metadata = {
+      ...(body?.metadata || {}),
+      ...(eventType ? { eventType } : {}),
+    }
 
     if (!projectId || !stepId || !stepLabel) {
       return NextResponse.json(

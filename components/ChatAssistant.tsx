@@ -112,7 +112,7 @@ function renderMarkdown(text: string): React.ReactNode {
 
 export default function ChatAssistant() {
   const { locale } = useI18n()
-  const { workflowStep, stage } = useWizardStore()
+  const { workflowStep, stage, userProfile } = useWizardStore()
 
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -124,7 +124,16 @@ export default function ChatAssistant() {
 
   // Derive step label for the header
   const stepKey = workflowStep ?? 'default'
-  const quickSuggestions = STEP_SUGGESTIONS[stepKey] ?? STEP_SUGGESTIONS.default
+  const baseSuggestions = STEP_SUGGESTIONS[stepKey] ?? STEP_SUGGESTIONS.default
+  const quickSuggestions = userProfile?.domain
+    ? [
+        {
+          label: `Como aplicar este passo em ${userProfile.domain}?`,
+          icon: <BookOpen className="w-3 h-3" />,
+        },
+        ...baseSuggestions.slice(0, 2),
+      ]
+    : baseSuggestions
 
   const stepDisplayName = workflowStep
     ? workflowStep.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -161,6 +170,7 @@ export default function ChatAssistant() {
           locale,
           currentStep: workflowStep,
           currentStage: stage,
+          userProfile,
         }),
       })
 
@@ -181,7 +191,7 @@ export default function ChatAssistant() {
     } finally {
       setIsLoading(false)
     }
-  }, [input, isLoading, messages, locale, workflowStep, stage])
+  }, [input, isLoading, messages, locale, workflowStep, stage, userProfile])
 
   const handleCopyMessage = (content: string, idx: number) => {
     navigator.clipboard.writeText(content).then(() => {

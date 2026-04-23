@@ -80,6 +80,8 @@ export default function Step5SourceSelection() {
   const [confirmed, setConfirmed] = useState<Set<string>>(
     () => new Set(selectedSearchArticleIds)
   )
+  const [sourceFilterText, setSourceFilterText] = useState('')
+  const [sourcePage, setSourcePage] = useState(1)
 
   function toggleDimension(sourceId: string, key: CraapKey) {
     setCraap((prev) => ({
@@ -113,6 +115,21 @@ export default function Step5SourceSelection() {
     sourceGroups[key].push(record)
   }
 
+  const ITEMS_PER_PAGE = 10
+  const isPortuguese = locale === 'pt-PT'
+  const filteredSourceIds = sourceIds.filter((id) => {
+    if (sourceFilterText.trim() === '') return true
+    const firstRecord = sourceGroups[id]?.[0]
+    if (!firstRecord) return true
+    const label = sourceSummary(firstRecord, searchArticles)
+    return label.toLowerCase().includes(sourceFilterText.toLowerCase())
+  })
+  const sourceTotalPages = Math.max(1, Math.ceil(filteredSourceIds.length / ITEMS_PER_PAGE))
+  const pagedSourceIds = filteredSourceIds.slice(
+    (sourcePage - 1) * ITEMS_PER_PAGE,
+    sourcePage * ITEMS_PER_PAGE
+  )
+
   const confirmed_count = confirmed.size
   const total_count = sourceIds.length
 
@@ -138,7 +155,15 @@ export default function Step5SourceSelection() {
       )}
 
       <div className="space-y-4">
-        {sourceIds.map((sourceId) => {
+        {sourceIds.length > 10 && (
+          <input
+            value={sourceFilterText}
+            onChange={(e) => { setSourceFilterText(e.target.value); setSourcePage(1) }}
+            placeholder={isPortuguese ? 'Filtrar fontes por título ou autor…' : 'Filter sources by title or author…'}
+            className="ghost-input w-full"
+          />
+        )}
+        {pagedSourceIds.map((sourceId) => {
           const records = sourceGroups[sourceId] ?? []
           const firstRecord = records[0]
           if (!firstRecord) return null
@@ -218,6 +243,31 @@ export default function Step5SourceSelection() {
             </div>
           )
         })}
+        {sourceTotalPages > 1 && (
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <button
+              type="button"
+              disabled={sourcePage === 1}
+              onClick={() => setSourcePage((p) => p - 1)}
+              className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
+            >
+              {isPortuguese ? '← Anterior' : '← Prev'}
+            </button>
+            <span className="text-xs text-[var(--on_surface_variant)]">
+              {isPortuguese
+                ? `Página ${sourcePage} de ${sourceTotalPages} · ${filteredSourceIds.length} fontes`
+                : `Page ${sourcePage} of ${sourceTotalPages} · ${filteredSourceIds.length} sources`}
+            </span>
+            <button
+              type="button"
+              disabled={sourcePage === sourceTotalPages}
+              onClick={() => setSourcePage((p) => p + 1)}
+              className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
+            >
+              {isPortuguese ? 'Seguinte →' : 'Next →'}
+            </button>
+          </div>
+        )}
       </div>
 
       {sourceIds.length > 0 && (

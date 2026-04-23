@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { searchScientificArticles, type SearchProvider } from '@/lib/search'
+import { searchScientificArticles, isSearchProvider, type SearchProvider } from '@/lib/search'
 import { getMessage, normalizeLocale, type Locale } from '@/lib/i18n'
 import { withTimeout, TimeoutError, isAbortedError } from '@/lib/timeoutHelper'
 
@@ -10,7 +10,20 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const query = String(body?.query || '').trim()
-    const provider = (body?.provider || 'crossref') as SearchProvider
+    const requestedProvider = String(body?.provider || 'crossref').trim().toLowerCase()
+    if (!isSearchProvider(requestedProvider)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: getMessage(locale, 'api.searchFailure'),
+          details: `Unsupported provider: ${requestedProvider}`,
+          supportedProviders: ['crossref', 'openaire', 'semantic_scholar', 'arxiv', 'pubmed'],
+        },
+        { status: 400 }
+      )
+    }
+
+    const provider: SearchProvider = requestedProvider
     const limit = Number(body?.limit || body?.pageSize || 20)
     const page = Number(body?.page || 1)
     locale = normalizeLocale(body?.locale)

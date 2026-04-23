@@ -10,6 +10,7 @@ export const useWizardStore = create<WizardState>()(
   projectId: '',
   sessionId: typeof window !== 'undefined' ? generateProjectId() : '',
   topic: '',
+  userProfile: null,
   aiConsentAccepted: false,
   aiConsentAcceptedAt: null,
   stage: 1,
@@ -47,6 +48,9 @@ export const useWizardStore = create<WizardState>()(
       }
       return { projectId: id, topic }
     }),
+
+  setUserProfile: (profile) =>
+    set({ userProfile: profile }),
 
   setAiConsent: (accepted: boolean) =>
     set({
@@ -196,6 +200,7 @@ export const useWizardStore = create<WizardState>()(
         projectId: '',
         sessionId: typeof window !== 'undefined' ? generateProjectId() : '',
         topic: '',
+        userProfile: null,
         aiConsentAccepted: false,
         aiConsentAcceptedAt: null,
         stage: 1,
@@ -240,6 +245,7 @@ export const useWizardStore = create<WizardState>()(
         step: state.step,
         workflowStep: state.workflowStep,
         topic: state.topic,
+        userProfile: state.userProfile,
         rqCandidates: state.rqCandidates,
         candidateResearchQuestions: state.candidateResearchQuestions,
         selectedRQs: state.selectedRQs,

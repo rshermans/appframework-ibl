@@ -86,6 +86,7 @@ export interface WizardState {
   projectId: string
   sessionId: string
   topic: string
+  userProfile: UserProfile | null
   aiConsentAccepted: boolean
   aiConsentAcceptedAt: string | null
   
@@ -134,6 +135,7 @@ export interface WizardState {
   
   // Actions
   setProject: (id: string, topic: string) => void
+  setUserProfile: (profile: UserProfile | null) => void
   setAiConsent: (accepted: boolean) => void
   setStage: (stage: Stage) => void
   setStep: (step: string | number) => void
@@ -181,11 +183,31 @@ export interface InteractionRecord {
   stepId: string
   stepLabel: string
   promptId?: string
-  eventType: 'generate' | 'redo' | 'analyze' | 'retrieve' | 'approve' | 'rate'
+  eventType:
+    | 'generate'
+    | 'redo'
+    | 'analyze'
+    | 'retrieve'
+    | 'approve'
+    | 'rate'
+    | 'onboarding'
+    | 'onboarding_viewed'
+    | 'onboarding_skipped'
+    | 'onboarding_completed'
+    | 'profile_edited'
+    | 'manual_opened'
+    | 'navigation'
   userInput: string
   aiOutput: string
   mode?: string
   success: boolean
   metadata?: Record<string, string | number | boolean | null>
   createdAt: string
+}
+
+export interface UserProfile {
+  educationLevel: string
+  researchExperience: string
+  domain: string
+  role: string
 }

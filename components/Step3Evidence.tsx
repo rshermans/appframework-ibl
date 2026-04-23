@@ -43,7 +43,8 @@ function uniqueProviders(preferred: Provider): Provider[] {
 function buildRelatedQueryCandidates(
   booleanQuery: string,
   finalQuestion: string | undefined,
-  searchArticles: SearchArticle[]
+  searchArticles: SearchArticle[],
+  customQuery?: string
 ): string[] {
   const titleTerms = searchArticles
     .slice(0, 3)
@@ -55,6 +56,7 @@ function buildRelatedQueryCandidates(
   return Array.from(
     new Set(
       [
+        customQuery || '',
         booleanQuery,
         simplifyRelatedQuery(booleanQuery),
         finalQuestion || '',
@@ -89,6 +91,7 @@ export default function Step3Evidence() {
   const [analyzedSourceIds, setAnalyzedSourceIds] = useState<Set<string>>(new Set())
   const [relatedLoading, setRelatedLoading] = useState(false)
   const [relatedProvider, setRelatedProvider] = useState<Provider>('crossref')
+  const [relatedQueryInput, setRelatedQueryInput] = useState('')
   const [relatedPageByProvider, setRelatedPageByProvider] = useState<Record<Provider, number>>({
     semantic_scholar: 1,
     crossref: 1,
@@ -97,6 +100,10 @@ export default function Step3Evidence() {
     pubmed: 1,
   })
   const [relatedFeedback, setRelatedFeedback] = useState('')
+  const [articleFilterText, setArticleFilterText] = useState('')
+  const [articlePage, setArticlePage] = useState(1)
+  const [evidenceFilterText, setEvidenceFilterText] = useState('')
+  const [evidencePage, setEvidencePage] = useState(1)
 
   const canRun = Boolean(finalResearchQuestion?.approvedByUser && searchDesign)
   const isPortuguese = locale === 'pt-PT'
@@ -104,6 +111,30 @@ export default function Step3Evidence() {
     selectedSearchArticleIds.length > 0
       ? searchArticles.filter((article) => selectedSearchArticleIds.includes(article.id))
       : searchArticles
+
+  const ITEMS_PER_PAGE = 10
+
+  const filteredArticlesForAnalysis = articlesForAnalysis.filter((a) =>
+    articleFilterText.trim() === '' ||
+    a.title.toLowerCase().includes(articleFilterText.toLowerCase()) ||
+    (a.authors || []).some((auth) => auth.toLowerCase().includes(articleFilterText.toLowerCase()))
+  )
+  const articleTotalPages = Math.max(1, Math.ceil(filteredArticlesForAnalysis.length / ITEMS_PER_PAGE))
+  const pagedArticles = filteredArticlesForAnalysis.slice(
+    (articlePage - 1) * ITEMS_PER_PAGE,
+    articlePage * ITEMS_PER_PAGE
+  )
+
+  const filteredEvidenceRecords = evidenceRecords.filter((r) =>
+    evidenceFilterText.trim() === '' ||
+    r.title.toLowerCase().includes(evidenceFilterText.toLowerCase()) ||
+    r.claim.toLowerCase().includes(evidenceFilterText.toLowerCase())
+  )
+  const evidenceTotalPages = Math.max(1, Math.ceil(filteredEvidenceRecords.length / ITEMS_PER_PAGE))
+  const pagedEvidenceRecords = filteredEvidenceRecords.slice(
+    (evidencePage - 1) * ITEMS_PER_PAGE,
+    evidencePage * ITEMS_PER_PAGE
+  )
 
   useEffect(() => {
     const firstProvider = searchArticles.find(
@@ -363,7 +394,8 @@ export default function Step3Evidence() {
       const queryCandidates = buildRelatedQueryCandidates(
         searchDesign.booleanQuery,
         finalResearchQuestion?.question,
-        searchArticles
+        searchArticles,
+        relatedQueryInput
       )
       const existingIds = new Set(searchArticles.map((article) => article.id))
       const providerStatus: string[] = []
@@ -463,6 +495,7 @@ export default function Step3Evidence() {
               providerStatus,
               addedArticles: addedArticles.length,
               preferredProvider: relatedProvider,
+              customQuery: relatedQueryInput.trim() || null,
             }),
             topic,
             mode: 'standard',
@@ -507,6 +540,7 @@ export default function Step3Evidence() {
             eventType: 'retrieve',
             error: err instanceof Error ? err.message : t('api.searchFailure'),
             preferredProvider: relatedProvider,
+            customQuery: relatedQueryInput.trim() || null,
           }),
           topic,
           mode: 'standard',
@@ -557,6 +591,14 @@ export default function Step3Evidence() {
             ? `${articlesForAnalysis.length} artigo(s) selecionado(s) para analise`
             : `${articlesForAnalysis.length} selected article(s) for analysis`}
         </div>
+        {articlesForAnalysis.length > 10 && (
+          <input
+            value={articleFilterText}
+            onChange={(e) => { setArticleFilterText(e.target.value); setArticlePage(1) }}
+            placeholder={isPortuguese ? 'Filtrar por título ou autor…' : 'Filter by title or author…'}
+            className="ghost-input w-full"
+          />
+        )}
         {articlesForAnalysis.length === 0 ? (
           <div className="text-sm text-[var(--on_surface)] opacity-70">
             {selectedSearchArticleIds.length > 0
@@ -567,7 +609,8 @@ export default function Step3Evidence() {
           </div>
         ) : (
           <div className="space-y-3">
-            {articlesForAnalysis.map((article, index) => {
+            {pagedArticles.map((article, index) => {
+              const globalIndex = (articlePage - 1) * ITEMS_PER_PAGE + index
               const sourceId = article.id
               const isCurrent = activeSourceId === sourceId
               const isAnalyzed = analyzedSourceIds.has(sourceId)
@@ -582,7 +625,7 @@ export default function Step3Evidence() {
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
                     <div>
-                      {t('steps.step3.evidenceLabel')} {index + 1} | {article.provider}
+                      {t('steps.step3.evidenceLabel')} {globalIndex + 1} | {article.provider}
                     </div>
                     {isAnalyzed && (
                       <div className="primary-gradient rounded-[var(--radius-md)] px-2 py-1 text-[10px] font-semibold text-[var(--on_primary)]">
@@ -616,6 +659,31 @@ export default function Step3Evidence() {
                 </div>
               )
             })}
+            {articleTotalPages > 1 && (
+              <div className="flex items-center justify-between gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={articlePage === 1}
+                  onClick={() => setArticlePage((p) => p - 1)}
+                  className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
+                >
+                  {isPortuguese ? '← Anterior' : '← Prev'}
+                </button>
+                <span className="text-xs text-[var(--on_surface_variant)]">
+                  {isPortuguese
+                    ? `Página ${articlePage} de ${articleTotalPages} · ${filteredArticlesForAnalysis.length} artigos`
+                    : `Page ${articlePage} of ${articleTotalPages} · ${filteredArticlesForAnalysis.length} articles`}
+                </span>
+                <button
+                  type="button"
+                  disabled={articlePage === articleTotalPages}
+                  onClick={() => setArticlePage((p) => p + 1)}
+                  className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
+                >
+                  {isPortuguese ? 'Seguinte →' : 'Next →'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -630,6 +698,17 @@ export default function Step3Evidence() {
             : 'If you need more sources, this button automatically tries several providers and a simplified query before manual analysis.'}
         </div>
 
+        <input
+          value={relatedQueryInput}
+          onChange={(event) => setRelatedQueryInput(event.target.value)}
+          placeholder={
+            isPortuguese
+              ? 'Palavras-chave adicionais para procurar novos artigos (opcional)'
+              : 'Additional keywords to search for new articles (optional)'
+          }
+          className="ghost-input w-full"
+        />
+
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-sm text-[var(--on_surface)] opacity-70">
             {isPortuguese ? 'Fonte relacionada' : 'Related source'}:
@@ -641,7 +720,8 @@ export default function Step3Evidence() {
               <option value="crossref">Crossref</option>
               <option value="openaire">OpenAIRE Graph</option>
               <option value="semantic_scholar">Semantic Scholar</option>
-              <option value="rcaap">RCAAP</option>
+              <option value="arxiv">arXiv</option>
+              <option value="pubmed">PubMed / NCBI</option>
             </select>
           </label>
           <button
@@ -688,10 +768,21 @@ export default function Step3Evidence() {
             {t('steps.step3.evidenceTitle')}
           </div>
 
-          {evidenceRecords.map((record, index) => (
+          {evidenceRecords.length > 10 && (
+            <input
+              value={evidenceFilterText}
+              onChange={(e) => { setEvidenceFilterText(e.target.value); setEvidencePage(1) }}
+              placeholder={isPortuguese ? 'Filtrar evidências por título ou tese…' : 'Filter evidence by title or claim…'}
+              className="ghost-input w-full"
+            />
+          )}
+
+          {pagedEvidenceRecords.map((record, index) => {
+            const globalEvidenceIndex = (evidencePage - 1) * ITEMS_PER_PAGE + index
+            return (
             <div key={record.id} className="tonal-card p-5">
               <div className="mb-1 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
-                {t('steps.step3.evidenceLabel')} {index + 1}
+                {t('steps.step3.evidenceLabel')} {globalEvidenceIndex + 1}
               </div>
               <div className="text-lg font-semibold text-[var(--on_surface)]">{record.title}</div>
               <div className="mt-2 text-sm text-[var(--on_surface)] opacity-70">
@@ -738,7 +829,34 @@ export default function Step3Evidence() {
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
+
+          {evidenceTotalPages > 1 && (
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <button
+                type="button"
+                disabled={evidencePage === 1}
+                onClick={() => setEvidencePage((p) => p - 1)}
+                className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
+              >
+                {isPortuguese ? '← Anterior' : '← Prev'}
+              </button>
+              <span className="text-xs text-[var(--on_surface_variant)]">
+                {isPortuguese
+                  ? `Página ${evidencePage} de ${evidenceTotalPages} · ${filteredEvidenceRecords.length} evidências`
+                  : `Page ${evidencePage} of ${evidenceTotalPages} · ${filteredEvidenceRecords.length} evidence records`}
+              </span>
+              <button
+                type="button"
+                disabled={evidencePage === evidenceTotalPages}
+                onClick={() => setEvidencePage((p) => p + 1)}
+                className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
+              >
+                {isPortuguese ? 'Seguinte →' : 'Next →'}
+              </button>
+            </div>
+          )}
 
           <div className="flex justify-end">
             <button

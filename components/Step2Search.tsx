@@ -50,6 +50,8 @@ export default function Step2Search() {
   const [userRefinementPrompt, setUserRefinementPrompt] = useState('')
   const [userRefinementKeywords, setUserRefinementKeywords] = useState('')
   const [qualityRating, setQualityRating] = useState<number | null>(null)
+  const [articleFilterText, setArticleFilterText] = useState('')
+  const [articleDisplayPage, setArticleDisplayPage] = useState(1)
   const articlesRef = useRef<SearchArticle[]>(searchArticles)
 
   useEffect(() => {
@@ -58,6 +60,18 @@ export default function Step2Search() {
 
   const isApproved = Boolean(finalResearchQuestion?.approvedByUser)
   const isPortuguese = locale === 'pt-PT'
+
+  const ITEMS_PER_PAGE = 10
+  const filteredArticles = searchArticles.filter((a) =>
+    articleFilterText.trim() === '' ||
+    a.title.toLowerCase().includes(articleFilterText.toLowerCase()) ||
+    (a.authors || []).some((auth) => auth.toLowerCase().includes(articleFilterText.toLowerCase()))
+  )
+  const articleTotalDisplayPages = Math.max(1, Math.ceil(filteredArticles.length / ITEMS_PER_PAGE))
+  const pagedDisplayArticles = filteredArticles.slice(
+    (articleDisplayPage - 1) * ITEMS_PER_PAGE,
+    articleDisplayPage * ITEMS_PER_PAGE
+  )
 
   const providerLabel = (value: Provider) => {
     if (value === 'arxiv') return 'arXiv'
@@ -646,40 +660,76 @@ export default function Step2Search() {
               </button>
             </div>
 
+            {searchArticles.length > 10 && (
+              <input
+                value={articleFilterText}
+                onChange={(e) => { setArticleFilterText(e.target.value); setArticleDisplayPage(1) }}
+                placeholder={isPortuguese ? 'Filtrar por título ou autor…' : 'Filter by title or author…'}
+                className="ghost-input w-full"
+              />
+            )}
             {searchArticles.length > 0 ? (
               <div className="space-y-3">
-                {searchArticles.map((article, index) => (
-                  <div
-                    key={article.id}
-                    className={`p-4 transition-all duration-200 ${
-                      selectedSearchArticleIds.includes(article.id)
-                        ? 'ai-user-decided rq-active-accent'
-                        : 'bg-[var(--surface_container)] ghost-border hover:bg-[var(--surface_container_low)]'
-                    }`}
-                  >
-                    <div className={`font-label text-[10px] uppercase tracking-[0.1em] ${
-                      selectedSearchArticleIds.includes(article.id) ? 'text-[var(--on_primary)] opacity-70' : 'opacity-50'
-                    }`}>
-                      {t('steps.step2.articleLabel')} {index + 1} | {article.provider}
+                {pagedDisplayArticles.map((article, index) => {
+                  const globalIndex = (articleDisplayPage - 1) * ITEMS_PER_PAGE + index
+                  return (
+                    <div
+                      key={article.id}
+                      className={`p-4 transition-all duration-200 ${
+                        selectedSearchArticleIds.includes(article.id)
+                          ? 'ai-user-decided rq-active-accent'
+                          : 'bg-[var(--surface_container)] ghost-border hover:bg-[var(--surface_container_low)]'
+                      }`}
+                    >
+                      <div className={`font-label text-[10px] uppercase tracking-[0.1em] ${
+                        selectedSearchArticleIds.includes(article.id) ? 'text-[var(--on_primary)] opacity-70' : 'opacity-50'
+                      }`}>
+                        {t('steps.step2.articleLabel')} {globalIndex + 1} | {article.provider}
+                      </div>
+                      <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={selectedSearchArticleIds.includes(article.id)}
+                          onChange={() => toggleSearchArticleSelection(article.id)}
+                        />
+                        {isPortuguese ? 'Selecionar para analise' : 'Select for analysis'}
+                      </label>
+                      <div className={`mt-1 font-semibold ${selectedSearchArticleIds.includes(article.id) ? 'text-[var(--on_primary)]' : 'text-[var(--on_surface)]'}`}>{article.title}</div>
+                      <div className="mt-1 text-sm opacity-60">
+                        {(article.authors || []).slice(0, 3).join(', ') || t('common.unknownAuthors')}
+                        {article.year ? ` | ${article.year}` : ''}
+                      </div>
+                      <div className="mt-2 text-sm text-slate-700">
+                        {article.abstract || t('common.noAbstract')}
+                      </div>
                     </div>
-                    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold">
-                      <input
-                        type="checkbox"
-                        checked={selectedSearchArticleIds.includes(article.id)}
-                        onChange={() => toggleSearchArticleSelection(article.id)}
-                      />
-                      {isPortuguese ? 'Selecionar para analise' : 'Select for analysis'}
-                    </label>
-                    <div className={`mt-1 font-semibold ${selectedSearchArticleIds.includes(article.id) ? 'text-[var(--on_primary)]' : 'text-[var(--on_surface)]'}`}>{article.title}</div>
-                    <div className="mt-1 text-sm opacity-60">
-                      {(article.authors || []).slice(0, 3).join(', ') || t('common.unknownAuthors')}
-                      {article.year ? ` | ${article.year}` : ''}
-                    </div>
-                    <div className="mt-2 text-sm text-slate-700">
-                      {article.abstract || t('common.noAbstract')}
-                    </div>
+                  )
+                })}
+                {articleTotalDisplayPages > 1 && (
+                  <div className="flex items-center justify-between gap-2 pt-2">
+                    <button
+                      type="button"
+                      disabled={articleDisplayPage === 1}
+                      onClick={() => setArticleDisplayPage((p) => p - 1)}
+                      className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
+                    >
+                      {isPortuguese ? '← Anterior' : '← Prev'}
+                    </button>
+                    <span className="text-xs text-[var(--on_surface_variant)]">
+                      {isPortuguese
+                        ? `Página ${articleDisplayPage} de ${articleTotalDisplayPages} · ${filteredArticles.length} artigos`
+                        : `Page ${articleDisplayPage} of ${articleTotalDisplayPages} · ${filteredArticles.length} articles`}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={articleDisplayPage === articleTotalDisplayPages}
+                      onClick={() => setArticleDisplayPage((p) => p + 1)}
+                      className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
+                    >
+                      {isPortuguese ? 'Seguinte →' : 'Next →'}
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
             ) : (
               <div className="text-sm text-slate-600">

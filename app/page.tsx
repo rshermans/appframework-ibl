@@ -17,17 +17,28 @@ import {
   getSessionProjectCookie,
   setSessionProjectCookie,
 } from '@/lib/sessionClient'
+import { persistInteractionEvent } from '@/lib/interactionClient'
 
 export default function Home() {
+  const createEmptyOnboardingData = () => ({
+    educationLevel: '',
+    researchExperience: '',
+    domain: '',
+    role: '',
+  })
+
   const {
     projectId,
     stage,
     topic: storeTopic,
+    sessionId,
+    userProfile,
     aiConsentAccepted,
     interactions,
     resetSession,
     setAiConsent,
     setProject,
+    setUserProfile,
   } = useWizardStore()
   const { status } = useSession()
   const { t, locale } = useI18n()
@@ -38,6 +49,11 @@ export default function Home() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('')
   const [deletingServerData, setDeletingServerData] = useState(false)
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [onboardingData, setOnboardingData] = useState(
+    userProfile ?? createEmptyOnboardingData()
+  )
 
   useEffect(() => {
     const cookieProjectId = getSessionProjectCookie()
@@ -72,8 +88,254 @@ export default function Home() {
       const nextProjectId = generateProjectId()
       setProject(nextProjectId, topic)
       setSessionProjectCookie(nextProjectId)
+      if (!userProfile) {
+        const nextOnboardingData = createEmptyOnboardingData()
+        setIsEditingProfile(false)
+        setOnboardingData(nextOnboardingData)
+        trackOnboardingEvent('onboarding_viewed', nextOnboardingData, 'start', nextProjectId)
+        setShowOnboardingModal(true)
+        return
+      }
       setIsStarted(true)
     }
+  }
+
+  const handleEditProfile = () => {
+    const nextOnboardingData = {
+      educationLevel: userProfile?.educationLevel ?? '',
+      researchExperience: userProfile?.researchExperience ?? '',
+      domain: userProfile?.domain ?? '',
+      role: userProfile?.role ?? '',
+    }
+    setOnboardingData(nextOnboardingData)
+    setIsEditingProfile(true)
+    trackOnboardingEvent('onboarding_viewed', nextOnboardingData, 'edit')
+    setShowOnboardingModal(true)
+  }
+
+  const handleOpenManual = () => {
+    const eventProjectId = projectId || sessionId
+    if (!eventProjectId) return
+
+    void persistInteractionEvent({
+      projectId: eventProjectId,
+      stage: 0,
+      stepId: 'manual',
+      stepLabel: 'Manual Link',
+      userInput: 'manual_opened',
+      aiOutput: 'manual_link_clicked',
+      mode: 'telemetry',
+      locale,
+      topic: topic || storeTopic,
+      metadata: {
+        eventType: 'manual_opened',
+      },
+    })
+  }
+
+  const buildOnboardingTelemetryMetadata = (
+    formData = onboardingData,
+    source: 'start' | 'edit' = isEditingProfile ? 'edit' : 'start'
+  ) => {
+    const domain = formData.domain.trim()
+    const role = formData.role.trim()
+    const filledFields = [
+      formData.educationLevel,
+      formData.researchExperience,
+      domain,
+      role,
+    ].filter(Boolean).length
+
+    return {
+      source,
+      hasTopic: Boolean((topic || storeTopic).trim()),
+      hasExistingProfile: Boolean(userProfile),
+      educationLevel: formData.educationLevel || null,
+      researchExperience: formData.researchExperience || null,
+      domainProvided: Boolean(domain),
+      roleProvided: Boolean(role),
+      domainLength: domain.length,
+      roleLength: role.length,
+      filledFields,
+      completionRate: Number((filledFields / 4).toFixed(2)),
+    }
+  }
+
+  const trackOnboardingEvent = (
+    eventType: 'onboarding_viewed' | 'onboarding_skipped' | 'onboarding_completed' | 'profile_edited',
+    formData = onboardingData,
+    source: 'start' | 'edit' = isEditingProfile ? 'edit' : 'start',
+    eventProjectId = projectId || sessionId
+  ) => {
+    if (!eventProjectId) return
+
+    const telemetry = buildOnboardingTelemetryMetadata(formData, source)
+
+    void persistInteractionEvent({
+      projectId: eventProjectId,
+      stage: 0,
+      stepId: 'onboarding',
+      stepLabel: source === 'edit' ? 'Profile Edit' : 'Onboarding',
+      userInput: eventType,
+      aiOutput: JSON.stringify({
+        eventType,
+        source,
+        filledFields: telemetry.filledFields,
+        completionRate: telemetry.completionRate,
+      }),
+      mode: 'telemetry',
+      locale,
+      topic: topic || storeTopic,
+      metadata: {
+        eventType,
+        ...telemetry,
+      },
+    })
+  }
+
+  const EDUCATION_LABELS: Record<string, Record<string, string>> = {
+    'pt-PT': { basic: 'Ensino básico/secundário', undergraduate: 'Licenciatura', master: 'Mestrado', doctorate: 'Doutoramento' },
+    en: { basic: 'School (K-12)', undergraduate: 'Undergraduate', master: 'Master', doctorate: 'Doctorate' },
+  }
+  const EXPERIENCE_LABELS: Record<string, Record<string, string>> = {
+    'pt-PT': { beginner: 'Iniciante', intermediate: 'Intermédia', advanced: 'Avançada' },
+    en: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+  }
+  const friendlyLabel = (map: Record<string, Record<string, string>>, value: string) =>
+    map[locale]?.[value] ?? map['pt-PT']?.[value] ?? value
+
+  const handleOnboardingSkip = () => {
+    const source = isEditingProfile ? 'edit' : 'start'
+
+    setShowOnboardingModal(false)
+    setIsEditingProfile(false)
+    if (!isEditingProfile) setIsStarted(true)
+
+    trackOnboardingEvent('onboarding_skipped', onboardingData, source)
+  }
+
+  const handleOnboardingContinue = () => {
+    const source = isEditingProfile ? 'edit' : 'start'
+    const eventType = source === 'edit' ? 'profile_edited' : 'onboarding_completed'
+
+    setUserProfile(onboardingData)
+    setShowOnboardingModal(false)
+    setIsEditingProfile(false)
+    setIsStarted(true)
+
+    trackOnboardingEvent(eventType, onboardingData, source)
+  }
+
+  const renderOnboardingModal = () => {
+    if (!showOnboardingModal) return null
+
+    const title = isEditingProfile
+      ? t('home.onboarding.titleEdit')
+      : t('home.onboarding.title')
+    const description = isEditingProfile
+      ? t('home.onboarding.descriptionEdit')
+      : t('home.onboarding.description')
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="w-full max-w-xl rounded-[var(--radius-md)] border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:p-6">
+          <h2 className="font-display text-xl font-semibold text-slate-900">
+            {title}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            {description}
+          </p>
+
+          <ul className="mt-4 space-y-2 rounded-[var(--radius-sm)] bg-slate-50 p-3 text-xs leading-6 text-slate-700">
+            <li>{t('home.onboarding.benefit1')}</li>
+            <li>{t('home.onboarding.benefit2')}</li>
+            <li>{t('home.onboarding.benefit3')}</li>
+          </ul>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <label className="text-sm font-medium text-slate-800">
+              {t('home.onboarding.educationLabel')}
+              <select
+                value={onboardingData.educationLevel}
+                onChange={(e) =>
+                  setOnboardingData((prev) => ({ ...prev, educationLevel: e.target.value }))
+                }
+                className="mt-1 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="">{t('home.onboarding.educationPlaceholder')}</option>
+                <option value="basic">{t('home.onboarding.educationBasic')}</option>
+                <option value="undergraduate">{t('home.onboarding.educationUndergraduate')}</option>
+                <option value="master">{t('home.onboarding.educationMaster')}</option>
+                <option value="doctorate">{t('home.onboarding.educationDoctorate')}</option>
+              </select>
+            </label>
+
+            <label className="text-sm font-medium text-slate-800">
+              {t('home.onboarding.experienceLabel')}
+              <select
+                value={onboardingData.researchExperience}
+                onChange={(e) =>
+                  setOnboardingData((prev) => ({ ...prev, researchExperience: e.target.value }))
+                }
+                className="mt-1 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="">{t('home.onboarding.experiencePlaceholder')}</option>
+                <option value="beginner">{t('home.onboarding.experienceBeginner')}</option>
+                <option value="intermediate">{t('home.onboarding.experienceIntermediate')}</option>
+                <option value="advanced">{t('home.onboarding.experienceAdvanced')}</option>
+              </select>
+            </label>
+
+            <label className="text-sm font-medium text-slate-800">
+              {t('home.onboarding.domainLabel')}
+              <input
+                type="text"
+                value={onboardingData.domain}
+                onChange={(e) =>
+                  setOnboardingData((prev) => ({ ...prev, domain: e.target.value }))
+                }
+                placeholder={t('home.onboarding.domainPlaceholder')}
+                className="mt-1 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
+              />
+            </label>
+
+            <label className="text-sm font-medium text-slate-800">
+              {t('home.onboarding.roleLabel')}
+              <input
+                type="text"
+                value={onboardingData.role}
+                onChange={(e) =>
+                  setOnboardingData((prev) => ({ ...prev, role: e.target.value }))
+                }
+                placeholder={t('home.onboarding.rolePlaceholder')}
+                className="mt-1 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
+              />
+            </label>
+          </div>
+
+          <p className="mt-4 text-xs leading-6 text-slate-600">
+            {t('home.onboarding.optionalNote')}
+          </p>
+
+          <div className="mt-6 flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={handleOnboardingSkip}
+              className="rounded-[var(--radius-sm)] border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              {isEditingProfile ? t('home.deleteModal.cancel') : t('home.onboarding.skip')}
+            </button>
+            <button
+              type="button"
+              onClick={handleOnboardingContinue}
+              className="rounded-[var(--radius-sm)] bg-[var(--primary)] px-3 py-2 text-xs font-semibold text-[var(--on_primary)]"
+            >
+              {t('home.onboarding.continue')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const handleResetSession = () => {
@@ -297,8 +559,10 @@ export default function Home() {
                 .
               </div>
             </div>
+
           </div>
         </div>
+        {renderOnboardingModal()}
       </main>
     )
   }
@@ -358,6 +622,13 @@ export default function Home() {
           >
             {t('home.privacyPolicy')}
           </Link>
+          <Link
+            href="/manual"
+            onClick={handleOpenManual}
+            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+          >
+            {t('home.manualButton')}
+          </Link>
           <button
             type="button"
             onClick={handleDownloadSessionJson}
@@ -409,6 +680,28 @@ export default function Home() {
         {stage === 2 && <Stage2Multimodal />}
         {stage === 3 && <Stage3Reflection />}
 
+        <section className="mt-4 rounded-[var(--radius-md)] bg-[var(--surface_container_low)] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display text-sm font-semibold uppercase tracking-[0.08em] text-[var(--on_surface)]">
+              {t('home.profileCard.title')}
+            </h2>
+            <button
+              type="button"
+              onClick={handleEditProfile}
+              className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+            >
+              {t('home.profileCard.edit')}
+            </button>
+          </div>
+
+          <div className="mt-3 grid gap-2 text-xs text-[var(--on_surface)] md:grid-cols-2">
+            <p><span className="font-semibold">{t('home.profileCard.education')}:</span> {userProfile?.educationLevel ? friendlyLabel(EDUCATION_LABELS, userProfile.educationLevel) : t('home.profileCard.empty')}</p>
+            <p><span className="font-semibold">{t('home.profileCard.experience')}:</span> {userProfile?.researchExperience ? friendlyLabel(EXPERIENCE_LABELS, userProfile.researchExperience) : t('home.profileCard.empty')}</p>
+            <p><span className="font-semibold">{t('home.profileCard.domain')}:</span> {userProfile?.domain || t('home.profileCard.empty')}</p>
+            <p><span className="font-semibold">{t('home.profileCard.role')}:</span> {userProfile?.role || t('home.profileCard.empty')}</p>
+          </div>
+        </section>
+
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
             <div className="w-full max-w-md rounded-[var(--radius-md)] border border-rose-200 bg-white p-5 text-slate-900 shadow-2xl">
@@ -452,6 +745,8 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {renderOnboardingModal()}
       </div>
     </main>
   )

@@ -1,6 +1,11 @@
 import type { SearchArticle, SearchPagination } from '@/types/research-workflow'
 
 export type SearchProvider = 'semantic_scholar' | 'crossref' | 'openaire' | 'arxiv' | 'pubmed'
+const SUPPORTED_PROVIDERS: SearchProvider[] = ['semantic_scholar', 'crossref', 'openaire', 'arxiv', 'pubmed']
+
+export function isSearchProvider(value: string): value is SearchProvider {
+  return SUPPORTED_PROVIDERS.includes(value as SearchProvider)
+}
 
 const SEMANTIC_SCHOLAR_MIN_INTERVAL_MS = 1100
 let semanticScholarNextSlotAt = 0
@@ -21,26 +26,31 @@ interface SearchOutput {
 
 export async function searchScientificArticles(input: SearchInput): Promise<SearchOutput> {
   const provider = input.provider ?? 'crossref'
+  const query = simplifyQueryForProvider(provider, input.query)
   const pageSize = clampLimit(input.limit)
   const page = clampPage(input.page)
 
   if (provider === 'crossref') {
-    return searchCrossref(input.query, pageSize, page)
+    return searchCrossref(query, pageSize, page)
   }
 
   if (provider === 'openaire') {
-    return searchOpenAIRE(input.query, pageSize, page)
+    return searchOpenAIRE(query, pageSize, page)
   }
 
   if (provider === 'arxiv') {
-    return searchArXiv(input.query, pageSize, page)
+    return searchArXiv(query, pageSize, page)
   }
 
   if (provider === 'pubmed') {
-    return searchPubMed(input.query, pageSize, page)
+    return searchPubMed(query, pageSize, page)
   }
 
-  return searchSemanticScholar(input.query, pageSize, page)
+  if (provider === 'semantic_scholar') {
+    return searchSemanticScholar(query, pageSize, page)
+  }
+
+  throw new Error(`Unsupported provider: ${provider}`)
 }
 
 function clampLimit(limit?: number): number {
@@ -601,6 +611,21 @@ function simplifySemanticScholarQuery(query: string): string {
     .filter((term) => term.length >= 3)
 
   return Array.from(new Set(terms)).slice(0, 10).join(' ')
+}
+
+function simplifyQueryForProvider(provider: SearchProvider, query: string): string {
+  const cleaned = query.trim()
+  if (!cleaned) return cleaned
+
+  if (provider === 'semantic_scholar') {
+    return simplifySemanticScholarQuery(cleaned)
+  }
+
+  if (provider === 'openaire' || provider === 'arxiv' || provider === 'pubmed') {
+    return simplifyPortalQuery(cleaned)
+  }
+
+  return cleaned
 }
 
 function simplifyPortalQuery(query: string): string {

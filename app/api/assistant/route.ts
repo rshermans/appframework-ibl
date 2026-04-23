@@ -37,7 +37,7 @@ function truncateManual(manual: string, maxChars = 8000): string {
 
 export async function POST(req: Request) {
   try {
-    const { messages, locale = 'pt-PT', currentStep, currentStage } = await req.json()
+    const { messages, locale = 'pt-PT', currentStep, currentStage, userProfile } = await req.json()
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ ok: false, error: 'Messages are required' }, { status: 400 })
@@ -50,11 +50,23 @@ export async function POST(req: Request) {
       ? (STEP_CONTEXT[currentStep] ?? `Step: ${currentStep} (Stage ${currentStage ?? '?'})`)
       : 'Unknown step — user may be on the dashboard or navigating between steps.'
 
+    const userProfileContext = userProfile
+      ? `
+PERFIL DO UTILIZADOR:
+- Nível de ensino: ${userProfile.educationLevel || 'não indicado'}
+- Experiência em investigação: ${userProfile.researchExperience || 'não indicado'}
+- Área: ${userProfile.domain || 'não indicada'}
+- Papel: ${userProfile.role || 'não indicado'}
+`.trim()
+      : 'PERFIL DO UTILIZADOR: não indicado.'
+
     const systemPrompt = `
 Você é o "Copiloto IBL-AI", um assistente especializado em orientar utilizadores no framework de investigação IBL-AI da Universidade do Minho.
 
 POSIÇÃO ATUAL DO UTILIZADOR:
 ${stepContext}
+
+${userProfileContext}
 
 BASE DE CONHECIMENTO (MANUAL IBL-AI):
 ---
@@ -68,6 +80,7 @@ DIRETRIZES DE RESPOSTA (GUARDLINES):
 4. TOM: Profissional, encorajador, direto. Usa "tu" (informal, académico).
 5. LÍNGUA: Responde na língua do utilizador (padrão: ${locale}).
 6. CONTEXT-AWARE: O utilizador está em "${stepContext}". Usa isto para dar orientações específicas a esta etapa.
+7. PERSONALIZAÇÃO: Ajusta exemplos e linguagem ao perfil do utilizador quando o perfil estiver disponível.
 8. FORMATO: Usa texto corrido, listas com traço (-) e **negrito** quando útil. NUNCA retornes JSON, código, ou estruturas técnicas. Máximo 200 palavras por resposta.
 9. CONCISÃO: Sé direto e prático. Não repitas o enunciado da pergunta.
 
