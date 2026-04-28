@@ -86,18 +86,19 @@ export default async function TelemetryDashboardPage({ searchParams }: PageProps
     // Only logged in users or special access? We omit redirection for local dev debug
   }
 
-  const baseWhere: Prisma.ProjectInteractionWhereInput = {
-    ...(buildPeriodStart(selectedPeriod)
-      ? { createdAt: { gte: buildPeriodStart(selectedPeriod) as Date } }
-      : {}),
-    ...(selectedStage !== 'all' && Number.isFinite(selectedStageNumber)
-      ? { stage: selectedStageNumber }
-      : {}),
-  }
+  try {
+    const baseWhere: Prisma.ProjectInteractionWhereInput = {
+      ...(buildPeriodStart(selectedPeriod)
+        ? { createdAt: { gte: buildPeriodStart(selectedPeriod) as Date } }
+        : {}),
+      ...(selectedStage !== 'all' && Number.isFinite(selectedStageNumber)
+        ? { stage: selectedStageNumber }
+        : {}),
+    }
 
-  const matchedByDbFilters = await prisma.projectInteraction.count({ where: baseWhere })
+    const matchedByDbFilters = await prisma.projectInteraction.count({ where: baseWhere })
 
-  const interactions = await prisma.projectInteraction.findMany({
+    const interactions = await prisma.projectInteraction.findMany({
     where: baseWhere,
     orderBy: { createdAt: 'desc' },
     take: 500,
@@ -453,5 +454,51 @@ export default async function TelemetryDashboardPage({ searchParams }: PageProps
         </section>
       </div>
     </div>
-  )
+    )
+  } catch (error) {
+    console.error('[Telemetry Error]', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    return (
+      <div className="min-h-screen bg-slate-50 p-6 font-body">
+        <div className="mx-auto max-w-7xl space-y-8">
+          <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-8">
+            <h1 className="mb-2 text-2xl font-bold text-red-900">⚠️ Telemetry Error</h1>
+            <p className="mb-4 text-red-800">Unable to load telemetry data. This typically happens when:</p>
+            
+            <ul className="mb-6 list-inside space-y-2 text-red-800">
+              <li>✗ <strong>Database connection missing</strong> - DATABASE_URL not configured in Netlify environment variables</li>
+              <li>✗ <strong>DIRECT_URL missing</strong> - Required for serverless Prisma connections</li>
+              <li>✗ <strong>Database unavailable</strong> - Connection pool exhausted or server offline</li>
+              <li>✗ <strong>Prisma schema not migrated</strong> - Run migrations in production</li>
+            </ul>
+
+            <div className="mb-6 rounded-lg bg-white p-4 font-mono text-sm text-red-700">
+              <strong>Error details:</strong>
+              <pre className="mt-2 whitespace-pre-wrap break-words text-xs">{errorMessage}</pre>
+            </div>
+
+            <div className="space-y-4 rounded-lg bg-white p-4">
+              <h2 className="font-semibold text-slate-900">📋 Setup Instructions for Netlify:</h2>
+              <ol className="list-inside space-y-2 text-slate-700">
+                <li><strong>1.</strong> Go to Netlify Dashboard → Site Settings → Build & Deploy → Environment</li>
+                <li><strong>2.</strong> Add these variables:
+                  <ul className="ml-6 mt-2 space-y-1 text-slate-600">
+                    <li>• <code className="bg-slate-100 px-2 py-1">DATABASE_URL</code> = your PostgreSQL connection string</li>
+                    <li>• <code className="bg-slate-100 px-2 py-1">DIRECT_URL</code> = same as DATABASE_URL (for serverless)</li>
+                  </ul>
+                </li>
+                <li><strong>3.</strong> Redeploy your site (push to main or trigger redeploy)</li>
+                <li><strong>4.</strong> Run database migrations: <code className="bg-slate-100 px-2 py-1">npx prisma migrate deploy</code> in build logs</li>
+              </ol>
+            </div>
+
+            <a href="/" className="mt-6 inline-block rounded-md bg-slate-900 px-4 py-2 text-white hover:bg-slate-800">
+              ← Back to Home
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
