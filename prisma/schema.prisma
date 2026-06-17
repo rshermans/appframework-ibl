@@ -4,8 +4,7 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // Optional in local/dev environments. Re-enable if a direct migration connection is required.
-  // directUrl = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
