@@ -33,14 +33,21 @@ jobs:
 
       - name: 🔍 Run ESLint
         run: npm run lint
-        continue-on-error: true
 
       - name: ✅ Type checking
         run: npm run type-check
-        continue-on-error: true
+
+      - name: 🧪 Tests
+        run: npm test
 
       - name: 🏗️ Build
         run: npm run build
+        env:
+          # Placeholders so route modules can be imported while Next collects page data.
+          OPENAI_API_KEY: sk-ci-placeholder
+          AUTH_SECRET: ci-placeholder-secret
+          DATABASE_URL: postgresql://user:pass@localhost:5432/ci
+          DIRECT_URL: postgresql://user:pass@localhost:5432/ci
 
       - name: 📄 Generate Prisma
         run: npm run prisma:generate

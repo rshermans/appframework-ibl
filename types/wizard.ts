@@ -1,3 +1,4 @@
+import type { Audience } from '@/lib/audience'
 import type {
   CandidateResearchQuestion,
   ComparisonResult,
@@ -89,6 +90,7 @@ export interface WizardState {
   userProfile: UserProfile | null
   aiConsentAccepted: boolean
   aiConsentAcceptedAt: string | null
+  audience: Audience
   
   // Navigation
   stage: Stage
@@ -160,6 +162,7 @@ export interface WizardState {
   setKnowledgeStructure: (structure: KnowledgeStructure | null) => void
   setExplanationDraft: (draft: ExplanationDraft | null) => void
   // Stage 2
+  setAudience: (audience: Audience) => void
   setMultimodalPoster: (draft: PosterDraft | undefined) => void
   setMultimodalPodcast: (script: PodcastScript | undefined) => void
   setMultimodalVideocast: (board: VideostoryBoard | undefined) => void

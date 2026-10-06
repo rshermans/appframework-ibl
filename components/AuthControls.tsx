@@ -86,9 +86,16 @@ export default function AuthControls() {
 
   if (!session?.user) {
     if (googleAvailable === false) {
+      const detail = pt
+        ? 'Login Google indisponivel (configurar AUTH_GOOGLE_ID/SECRET).'
+        : 'Google login unavailable (set AUTH_GOOGLE_ID/SECRET).'
       return (
-        <span className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-medium text-[var(--on_surface)] opacity-80">
-          {pt ? 'Login Google indisponivel (configurar AUTH_GOOGLE_ID/SECRET).' : 'Google login unavailable (set AUTH_GOOGLE_ID/SECRET).'}
+        <span
+          title={detail}
+          className="inline-flex min-h-[40px] items-center rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-medium text-[var(--on_surface)] opacity-80"
+        >
+          {pt ? 'Login indisponivel' : 'Login unavailable'}
+          <span className="sr-only"> — {detail}</span>
         </span>
       )
     }
@@ -99,7 +106,7 @@ export default function AuthControls() {
       : null
 
     return (
-      <div className="flex flex-col items-end gap-1">
+      <div className="relative">
         <button
           type="button"
           onClick={() => {
@@ -107,14 +114,27 @@ export default function AuthControls() {
             void signIn('google')
           }}
           disabled={googleAvailable !== true}
-          className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+          aria-label={
+            googleAvailable === null
+              ? (pt ? 'A carregar login...' : 'Loading sign-in...')
+              : (pt ? 'Entrar com Google' : 'Sign in with Google')
+          }
+          className="min-h-[40px] rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)] disabled:opacity-60"
         >
           {googleAvailable === null
-            ? (pt ? 'A carregar login...' : 'Loading sign-in...')
-            : (pt ? 'Entrar com Google' : 'Sign in with Google')}
+            ? '…'
+            : (
+              <>
+                <span className="sm:hidden">{pt ? 'Entrar' : 'Sign in'}</span>
+                <span className="hidden sm:inline">{pt ? 'Entrar com Google' : 'Sign in with Google'}</span>
+              </>
+            )}
         </button>
         {errorMessage && (
-          <span role="alert" className="max-w-[320px] text-right text-xs text-red-600">
+          <span
+            role="alert"
+            className="absolute right-0 top-full z-50 mt-2 w-[min(88vw,320px)] rounded-[var(--radius-md)] bg-red-50 p-3 text-xs text-red-700 shadow-lg ring-1 ring-red-200"
+          >
             {errorMessage}
           </span>
         )}
@@ -124,13 +144,13 @@ export default function AuthControls() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="max-w-[180px] truncate text-xs text-[var(--on_surface)] opacity-80">
+      <span className="hidden max-w-[180px] truncate text-xs text-[var(--on_surface)] opacity-80 md:inline">
         {session.user.email ?? session.user.name ?? (pt ? 'Utilizador' : 'User')}
       </span>
       <button
         type="button"
         onClick={() => signOut()}
-        className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+        className="min-h-[40px] rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
       >
         {pt ? 'Sair' : 'Sign out'}
       </button>

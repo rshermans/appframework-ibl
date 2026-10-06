@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
+import { WIZARD_STORAGE_KEY, wizardStorage } from '@/lib/persistStorage'
 import { WizardState, Stage, InteractionRecord } from '@/types/wizard'
 import { resolveWorkflowStepId, toLegacyStepId } from '@/lib/workflow'
 import { clearSessionProjectCookie, setSessionProjectCookie, generateProjectId } from '@/lib/sessionClient'
@@ -13,6 +14,7 @@ export const useWizardStore = create<WizardState>()(
   userProfile: null,
   aiConsentAccepted: false,
   aiConsentAcceptedAt: null,
+  audience: 'general',
   stage: 1,
   step: 'step0',
   workflowStep: 'step0_generate',
@@ -151,6 +153,9 @@ export const useWizardStore = create<WizardState>()(
     set({ explanationDraft }),
 
   // Stage 2 — Multimodal
+  setAudience: (audience) =>
+    set({ audience }),
+
   setMultimodalPoster: (poster) =>
     set((state) => ({ multimodalOutputs: { ...state.multimodalOutputs, poster } })),
 
@@ -203,6 +208,7 @@ export const useWizardStore = create<WizardState>()(
         userProfile: null,
         aiConsentAccepted: false,
         aiConsentAcceptedAt: null,
+        audience: 'general',
         stage: 1,
         step: 'step0',
         workflowStep: 'step0_generate',
@@ -234,13 +240,14 @@ export const useWizardStore = create<WizardState>()(
     }),
     }),
     {
-      name: 'ibl-step0-memory',
-      storage: createJSONStorage(() => sessionStorage),
+      name: WIZARD_STORAGE_KEY,
+      storage: createJSONStorage(() => wizardStorage),
       partialize: (state) => ({
         projectId: state.projectId,
         sessionId: state.sessionId,
         aiConsentAccepted: state.aiConsentAccepted,
         aiConsentAcceptedAt: state.aiConsentAcceptedAt,
+        audience: state.audience,
         stage: state.stage,
         step: state.step,
         workflowStep: state.workflowStep,

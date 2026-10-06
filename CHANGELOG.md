@@ -5,6 +5,21 @@ Todas as mudanças notáveis neste projeto serão documentadas neste ficheiro.
 O formato está baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Não lançado]
+
+### Corrigido
+- Login Google: provider só registado com credenciais, sessão JWT, erros visíveis (ver `docs/AUTH_GOOGLE_SETUP.md`).
+- Mind map (Markmap) e mapa conceptual desenhado como grafo; filtros e acesso da telemetria.
+
+### Alterado
+- Layout: aplicação com uma só zona de scroll (barra superior fixa, passos em coluna lateral no desktop e faixa fixa no telemóvel, barra de ações Anterior/Seguinte sempre visível, `100dvh`).
+- Mind map, perfil, progresso e diálogos abrem sobrepostos (componente `Drawer`: Esc, foco, bloqueio de scroll) em vez de empurrar a página; o progresso flutuante passou para a barra superior.
+- Barra de nove botões substituída por um menu "Mais" (exportar, privacidade, ações destrutivas separadas).
+- Código: `Step3Evidence`, `Step2Search`, `Step4Structure`, `Step5Explanation` e `app/page.tsx` divididos em módulos/hooks/componentes; 112 testes (Vitest) e CI a bloquear em lint, tipos e testes.
+- Stage 1: stepper com progresso, próximo passo recomendado e navegação Anterior/Seguinte.
+- O progresso passa a ser guardado em `localStorage` neste dispositivo (migra sessões antigas); política de privacidade atualizada.
+- Stage 2: audiência única (geral / escola / académico) aplicada a todos os formatos e às exportações NotebookLM, com regras de integridade científica nos prompts.
+
 ## [1.0.0] - 2026-04-12
 
 ### 🎉 Lançamento Inicial

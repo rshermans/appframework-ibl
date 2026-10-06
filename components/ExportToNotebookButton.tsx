@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import NotebookLmExporter from '@/components/NotebookLmExporter'
 import type { NotebookLmArtifactType } from '@/lib/notebookLmPrompts'
+import { useWizardStore } from '@/store/wizardStore'
 import type { EvidenceRecord } from '@/types/research-workflow'
 
 interface ExportToNotebookButtonProps {
@@ -27,6 +28,7 @@ export default function ExportToNotebookButton({
   size = 'sm',
 }: ExportToNotebookButtonProps) {
   const [showExporter, setShowExporter] = useState(false)
+  const audience = useWizardStore((state) => state.audience)
 
   const variantClasses = {
     primary:
@@ -60,6 +62,7 @@ export default function ExportToNotebookButton({
           researchQuestion={researchQuestion}
           evidenceRecords={evidenceRecords}
           artifactType={artifactType}
+          audience={audience}
           onClose={() => setShowExporter(false)}
         />
       )}

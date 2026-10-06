@@ -23,7 +23,7 @@ export default function PrivacyPage() {
             {pt ? 'Política de Privacidade' : 'Privacy Policy'}
           </h1>
           <p className="text-sm text-[var(--on_surface)] opacity-80">
-            {pt ? 'Atualizado em 16 de abril de 2026' : 'Updated on April 16, 2026'}
+            {pt ? 'Atualizado em 6 de outubro de 2026' : 'Updated on October 6, 2026'}
           </p>
         </header>
 
@@ -73,7 +73,16 @@ export default function PrivacyPage() {
         </section>
 
         <section className="space-y-2 text-sm leading-7 text-[var(--on_surface)]">
-          <h2 className="text-base font-semibold">{pt ? '6. Contacto de segurança e privacidade' : '6. Security and privacy contact'}</h2>
+          <h2 className="text-base font-semibold">{pt ? '6. Armazenamento local no dispositivo' : '6. Local storage on your device'}</h2>
+          <p>
+            {pt
+              ? 'Para poder retomar o trabalho, o progresso do projeto (incluindo o seu consentimento de IA) é guardado no armazenamento local do seu browser, neste dispositivo, e mantém-se depois de fechar o separador. Esta cópia não é enviada para o servidor nem partilhada entre dispositivos. Pode removê-la a qualquer momento com "Limpar e reiniciar sessão" ou limpando os dados do site no browser. Em computadores partilhados, use essa opção ao terminar.'
+              : 'To let you resume your work, project progress (including your AI consent) is stored in your browser\'s local storage on this device and remains after you close the tab. This copy is not sent to the server or shared across devices. You can remove it at any time with "Clear and restart session" or by clearing the site data in your browser. On shared computers, use that option when you finish.'}
+          </p>
+        </section>
+
+        <section className="space-y-2 text-sm leading-7 text-[var(--on_surface)]">
+          <h2 className="text-base font-semibold">{pt ? '7. Contacto de segurança e privacidade' : '7. Security and privacy contact'}</h2>
           <p>
             {pt ? 'Para questões de segurança ou privacidade:' : 'For security or privacy matters:'} relia.informa@gmail.com
           </p>

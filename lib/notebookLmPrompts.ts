@@ -8,6 +8,8 @@
  * Token budgets: 800-1500 max per prompt (includes evidence + instructions)
  */
 
+import { getAudienceGuidance, getIntegrityRules, AUDIENCE_LABELS, type Audience } from '@/lib/audience'
+
 export type NotebookLmArtifactType = 'poster' | 'podcast' | 'video' | 'game' | 'presentation'
 
 export interface NotebookLmExportData {
@@ -20,6 +22,7 @@ export interface NotebookLmExportData {
   evidenceKeyPoints: Array<{ claim: string; source: string }>
   promptText: string
   instructions: string
+  audience?: Audience
 }
 
 // ============================================================================
@@ -505,6 +508,7 @@ export function buildNotebookLmPrompt(
   })()
 
   const pt = data.locale === 'pt-PT'
+  const audience: Audience = data.audience ?? 'general'
 
   const systemPrompt = pt
     ? `Você é um especialista educativo em comunicação científica. O seu trabalho é transformar perguntas de investigação e evidências científicas em artefatos criativos, educativos e de qualidade profissional para alunos.`
@@ -519,6 +523,15 @@ ${pt ? '**Tópico:**' : '**Topic:**'} ${data.topic}
 ${pt ? '## Evidência Comprimida (Pontos-Chave)' : '## Compressed Evidence (Key Points)'}
 
 ${data.evidenceKeyPoints.map((ep) => `- ${ep.claim} (${pt ? 'Fonte' : 'Source'}: ${ep.source})`).join('\n')}
+
+${pt ? '## Público-Alvo' : '## Target Audience'}
+
+**${AUDIENCE_LABELS[audience][pt ? 'pt' : 'en']}**
+${getAudienceGuidance(audience, data.locale)}
+
+${pt ? '## Integridade Científica' : '## Scientific Integrity'}
+
+${getIntegrityRules(data.locale)}
 
 ${pt ? '## Instruções Detalhadas' : '## Detailed Instructions'}
 

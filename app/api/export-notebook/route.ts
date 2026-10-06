@@ -23,6 +23,7 @@
 import { NextResponse } from 'next/server'
 import { buildNotebookLmPrompt, type NotebookLmArtifactType } from '@/lib/notebookLmPrompts'
 import { compressEvidence } from '@/lib/evidenceCompressor'
+import { normalizeAudience } from '@/lib/audience'
 import type { EvidenceRecord } from '@/types/research-workflow'
 
 interface ExportRequest {
@@ -32,6 +33,7 @@ interface ExportRequest {
   researchQuestion: string
   topic: string
   evidenceRecords: EvidenceRecord[]
+  audience?: string
 }
 
 export async function POST(req: Request) {
@@ -71,6 +73,7 @@ export async function POST(req: Request) {
       })),
       promptText: '',
       instructions: '', // placeholder, filled by buildNotebookLmPrompt
+      audience: normalizeAudience(body.audience),
     })
 
     // Generate NotebookLM share link (or temp Google Docs link)

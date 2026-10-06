@@ -18,6 +18,8 @@ export type PromptId =
   | 'multimodal_video'
   | 'multimodal_game'
   | 'multimodal_oral'
+  | 'multimodal_plan'
+  | 'multimodal_part'
   | 'peer_review_guide'
   | 'self_assessment'
   | 'reflection_journal'
@@ -541,6 +543,56 @@ Respond with valid JSON only:
   "fidelityScore": 85
 }`,
   },
+  multimodal_plan: {
+    id: 'multimodal_plan',
+    template: `You are a scientific communication specialist planning a [KIND].
+
+Research Question: [RQ]
+Audience: [AUDIENCE]
+Target duration (minutes, if relevant): [DURATION]
+
+Evidence (each line starts with the record id in square brackets):
+[EVIDENCE]
+
+Plan the outline only. Do NOT write the final content yet.
+
+Rules:
+- Return between [MIN_ITEMS] and [MAX_ITEMS] items, in presentation order.
+- Each item has a short "focus" (one sentence: what this part must communicate) and "evidenceIds" (ids copied exactly from the evidence list that support it).
+- Build one coherent argument; do not introduce claims that are not in the evidence.
+- Adapt tone and complexity to the audience.
+
+Respond with valid JSON only:
+{
+  "title": "Short title",
+  "layoutSuggestion": "One sentence: layout, format or learning objective",
+  "items": [ { "focus": "What this part communicates", "evidenceIds": ["id"] } ]
+}`,
+  },
+  multimodal_part: {
+    id: 'multimodal_part',
+    template: `You are a scientific communication specialist writing ONE part of a [KIND].
+
+Research Question: [RQ]
+Audience: [AUDIENCE]
+
+Overall plan (JSON):
+[PLAN]
+
+You are writing part [PART_INDEX] of [PART_TOTAL]. Its focus: [PART_FOCUS]
+
+Evidence (each line starts with the record id in square brackets):
+[EVIDENCE]
+
+Rules:
+- Write only this part; stay consistent with the plan so the parts fit together.
+- Use only claims that appear in the evidence; if a claim is tentative, say so.
+- Copy evidence ids exactly as they appear in square brackets.
+- Match the audience's language level.
+
+Respond with valid JSON only, using exactly this shape for the part:
+[SHAPE]`,
+  },
   peer_review_guide: {
     id: 'peer_review_guide',
     template: `You are a peer review facilitator for IBL research projects.
@@ -756,6 +808,14 @@ export function buildDefaultUserMessage(
       return portuguese
         ? 'Gera um outline de apresentação oral com notas de orador ancoradas na evidência.'
         : 'Generate an oral presentation outline with speaker notes anchored to the evidence.'
+    case 'multimodal_plan':
+      return portuguese
+        ? 'Planeia o esqueleto do output e devolve apenas o plano em JSON.'
+        : 'Plan the output outline and return only the JSON plan.'
+    case 'multimodal_part':
+      return portuguese
+        ? 'Escreve apenas esta parte do output e devolve JSON válido.'
+        : 'Write only this part of the output and return valid JSON.'
     case 'peer_review_guide':
       return portuguese
         ? 'Gera prompts guiados para revisão por pares alinhados com a rúbrica IBL.'

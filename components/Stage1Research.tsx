@@ -6,9 +6,7 @@ import { getNextRecommendedStep, getStage1LockKey, isStage1StepDone } from '@/li
 import { getStepContract, resolveWorkflowStepId } from '@/lib/workflow'
 import { getIblEthicalTip, getIblStepMeta, type IBLStepKey } from '@/lib/iblFramework'
 import { useI18n } from '@/components/I18nProvider'
-import InfoTooltip from '@/components/InfoTooltip'
 import EthicalTip from '@/components/EthicalTip'
-import AppBrand from '@/components/AppBrand'
 import StepSelect from './StepSelect'
 import Step1A from './Step1A'
 import Step1B from './Step1B'
@@ -139,167 +137,160 @@ export default function Stage1Research() {
   const stepLabel = (stepId: IBLStepKey) => t(`workflow.${stepId}.label`) || getStepContract(stepId).label
 
   return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden bg-[var(--surface_container_low)] p-6 md:p-8">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(27,38,59,0.12)_0%,rgba(27,38,59,0.03)_52%,rgba(120,89,27,0.12)_100%)]" />
-        <div className="relative flex flex-wrap items-start justify-between gap-6">
-          <div className="space-y-3">
-            <AppBrand />
-            <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--on_surface)] md:text-4xl">
-              {t('stage1.title')}
-            </h2>
-            <p className="max-w-3xl text-slate-700">{t('stage1.intro')}</p>
-            <EthicalTip title={t('common.stageEthicalTip')} tip={getIblEthicalTip('stage1', locale)} />
-          </div>
-        </div>
-      </section>
+    <div className="mx-auto w-full max-w-[1500px] md:grid md:grid-cols-[17.5rem_minmax(0,1fr)] md:gap-6 md:px-5">
+      {/* Steps: a sticky strip on phones, a left rail from md up */}
+      <aside
+        aria-label={pt ? 'Passos do Stage 1' : 'Stage 1 steps'}
+        className="sticky top-0 z-30 border-b border-[var(--outline_variant)] bg-[var(--surface)]/95 backdrop-blur md:z-10 md:max-h-[calc(100dvh-3.5rem)] md:self-start md:overflow-y-auto md:border-0 md:bg-transparent md:py-4 md:backdrop-blur-none"
+      >
+        <div className="flex snap-x gap-2 overflow-x-auto px-3 py-2 md:flex-col md:gap-1.5 md:overflow-visible md:px-0 md:py-0">
+          {visibleSteps.map((stepId, index) => {
+            const step = getStepContract(stepId)
+            const iblMeta = getIblStepMeta(stepId)
+            const isActive = activeStep === stepId
+            const lockKey = getStage1LockKey(stepId, flowState)
+            const isLocked = lockKey !== null
+            const isDone = isStage1StepDone(stepId, flowState)
+            const description = t(`workflow.${stepId}.description`) || step.description
 
-      {step0OptionalCompleted && activeStep !== 'step0_generate' && (
-        <div className="inline-flex items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface_container)] px-4 py-2.5 text-xs font-semibold text-[var(--on_surface)] ghost-border">
-          <span className="opacity-70">{t('common.step0Archived')}</span>
-          <button
-            type="button"
-            onClick={() => setWorkflowStep('step0_generate')}
-            className="rounded-[var(--radius-md)] bg-[var(--surface_container_lowest)] px-2.5 py-1 text-[10px] uppercase tracking-[0.1em] text-[var(--on_surface)] transition hover:bg-[var(--surface_container_low)]"
-          >
-            {t('common.reopen')}
-          </button>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs font-semibold text-[var(--on_surface)]">
-            {pt
-              ? `Passo ${Math.max(activeIndex + 1, 1)} de ${visibleSteps.length} · ${doneCount} ${doneCount === 1 ? 'concluído' : 'concluídos'}`
-              : `Step ${Math.max(activeIndex + 1, 1)} of ${visibleSteps.length} · ${doneCount} completed`}
-          </div>
-          {nextStepId && nextStepId !== activeStep && (
-            <button
-              type="button"
-              onClick={() => setWorkflowStep(nextStepId)}
-              className="rounded-[var(--radius-md)] bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-[var(--on_primary)] transition hover:brightness-95"
-            >
-              {pt ? 'Próximo passo recomendado: ' : 'Recommended next step: '}
-              {stepLabel(nextStepId)} →
-            </button>
-          )}
-        </div>
-        <div
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={progressPct}
-          className="h-1.5 w-full bg-[var(--surface_container)]"
-        >
-          <div className="primary-gradient h-1.5 transition-all" style={{ width: `${progressPct}%` }} />
-        </div>
-      </div>
-
-      <div className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-2 md:mx-0 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-7">
-        {visibleSteps.map((stepId, index) => {
-          const step = getStepContract(stepId)
-          const iblMeta = getIblStepMeta(stepId)
-          const isActive = activeStep === stepId
-          const lockKey = getStage1LockKey(stepId, flowState)
-          const isLocked = lockKey !== null
-          const isDone = isStage1StepDone(stepId, flowState)
-
-          return (
-            <button
-              key={stepId}
-              onClick={() => {
-                if (!isLocked) {
-                  setWorkflowStep(stepId)
-                }
-              }}
-              disabled={isLocked}
-              aria-current={isActive ? 'step' : undefined}
-              title={iblMeta.title}
-              className={`group relative flex min-h-[140px] min-w-[210px] snap-start flex-col p-4 text-left transition-all duration-200 md:min-w-0 ${
-                isActive
-                  ? 'bg-[linear-gradient(135deg,rgba(37,99,235,0.10),rgba(22,163,74,0.10))] ambient-shadow rq-active-accent ring-1 ring-[rgba(37,99,235,0.18)]'
-                  : 'tonal-card ghost-border hover:bg-[var(--surface_container_low)]'
-              } ${isLocked ? 'cursor-not-allowed opacity-40' : ''}`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div
-                  className={`font-label text-[10px] uppercase tracking-[0.12em] ${
-                    isActive ? 'text-[var(--primary_container)]' : 'text-[var(--outline_variant)]'
+            return (
+              <button
+                key={stepId}
+                onClick={() => {
+                  if (!isLocked) {
+                    setWorkflowStep(stepId)
+                  }
+                }}
+                disabled={isLocked}
+                aria-current={isActive ? 'step' : undefined}
+                title={`${iblMeta.title} — ${lockKey ? t(lockKey) : description}`}
+                className={`group flex min-h-[48px] min-w-[11.5rem] snap-start items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-left transition md:min-w-0 ${
+                  isActive
+                    ? 'bg-[linear-gradient(135deg,rgba(37,99,235,0.12),rgba(22,163,74,0.10))] ring-1 ring-[rgba(37,99,235,0.25)]'
+                    : 'bg-[var(--surface_container_low)] hover:bg-[var(--surface_container)]'
+                } ${isLocked ? 'cursor-not-allowed opacity-45' : ''}`}
+              >
+                <span
+                  aria-label={isDone ? (pt ? 'Concluído' : 'Completed') : `${index + 1}/${visibleSteps.length}`}
+                  className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    isDone
+                      ? 'bg-emerald-600 text-white'
+                      : isActive
+                        ? 'primary-gradient text-[var(--on_primary)]'
+                        : 'bg-[var(--surface_container_highest)] text-[var(--on_surface)]'
                   }`}
                 >
-                  {t(`workflow.${stepId}.badge`) || iblMeta.badge}
-                </div>
-                <span
-                  className={`text-[10px] font-semibold ${isDone ? 'text-[var(--secondary)]' : 'text-[var(--outline_variant)]'}`}
-                  aria-label={isDone ? (pt ? 'Concluído' : 'Completed') : `${index + 1}/${visibleSteps.length}`}
-                >
-                  {isDone ? '✓' : `${index + 1}/${visibleSteps.length}`}
+                  {isDone ? '✓' : index + 1}
                 </span>
-              </div>
-              <div className="mt-1.5 flex items-start justify-between gap-2">
-                <span className="text-sm font-semibold leading-tight text-[var(--on_surface)]">
-                  {stepLabel(stepId)}
+                <span className="min-w-0 flex-1">
+                  <span className="block font-label text-[10px] uppercase tracking-[0.12em] text-[var(--on_surface_variant)]">
+                    {t(`workflow.${stepId}.badge`) || iblMeta.badge}
+                    {iblMeta.isOptional ? ` · ${t('common.optional')}` : ''}
+                  </span>
+                  <span className="block truncate text-sm font-semibold leading-tight text-[var(--on_surface)] md:whitespace-normal">
+                    {stepLabel(stepId)}
+                  </span>
+                  {lockKey && (
+                    <span className="mt-0.5 hidden text-[11px] leading-snug text-[var(--on_surface_variant)] md:block">
+                      {t(lockKey)}
+                    </span>
+                  )}
                 </span>
-                <InfoTooltip
-                  label=""
-                  description={t(`workflow.${stepId}.description`) || iblMeta.title}
-                  className="mt-0.5 flex-shrink-0"
-                />
-              </div>
-              <div className={`mt-2 text-[11px] leading-relaxed text-[var(--on_surface)] ${isActive ? 'opacity-90' : 'opacity-70'}`}>
-                {lockKey ? t(lockKey) : (t(`workflow.${stepId}.description`) || step.description)}
-              </div>
-              {iblMeta.isOptional && (
-                <span className="mt-3 inline-flex rounded-[var(--radius-md)] bg-[var(--secondary_container)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--on_secondary_container)]">
-                  {t('common.optional')}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-
-      <div ref={stepContentRef} className="scroll-mt-4 bg-[var(--surface_container_low)] p-1">
-        <div className="tonal-card p-6 md:p-10">
-          {renderStep(activeStep)}
+              </button>
+            )
+          })}
         </div>
-      </div>
+      </aside>
 
-      {(previousStepId || followingStepId) && (
-        <div className="flex items-center justify-between gap-3">
-          {previousStepId ? (
+      <div className="min-w-0 space-y-4 px-3 pt-4 md:px-0">
+        <header className="space-y-2">
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-[var(--on_surface)] md:text-3xl">
+            {t('stage1.title')}
+          </h2>
+          <p className="max-w-3xl text-sm leading-6 text-slate-700">{t('stage1.intro')}</p>
+          <EthicalTip title={t('common.stageEthicalTip')} tip={getIblEthicalTip('stage1', locale)} />
+        </header>
+
+        {step0OptionalCompleted && activeStep !== 'step0_generate' && (
+          <div className="inline-flex items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface_container)] px-4 py-2.5 text-xs font-semibold text-[var(--on_surface)] ghost-border">
+            <span className="opacity-70">{t('common.step0Archived')}</span>
             <button
               type="button"
-              onClick={() => setWorkflowStep(previousStepId)}
-              className="tonal-card ghost-border rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_low)]"
+              onClick={() => setWorkflowStep('step0_generate')}
+              className="min-h-[36px] rounded-[var(--radius-md)] bg-[var(--surface_container_lowest)] px-3 py-1 text-[10px] uppercase tracking-[0.1em] text-[var(--on_surface)] transition hover:bg-[var(--surface_container_low)]"
             >
-              ← {stepLabel(previousStepId)}
+              {t('common.reopen')}
             </button>
-          ) : <span />}
-          {followingStepId && (
-            <button
-              type="button"
-              onClick={() => setWorkflowStep(followingStepId)}
-              className="tonal-card ghost-border rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_low)]"
-            >
-              {stepLabel(followingStepId)} →
-            </button>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {explanationDraft && (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => setStage(2)}
-            className="rounded-[var(--radius-md)] bg-[var(--primary)] px-8 py-3.5 text-sm font-semibold text-[var(--on_primary)] shadow-lg transition hover:brightness-95 active:scale-95 flex items-center gap-2"
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-semibold text-[var(--on_surface)]">
+              {pt
+                ? `Passo ${Math.max(activeIndex + 1, 1)} de ${visibleSteps.length} · ${doneCount} ${doneCount === 1 ? 'concluído' : 'concluídos'}`
+                : `Step ${Math.max(activeIndex + 1, 1)} of ${visibleSteps.length} · ${doneCount} completed`}
+            </div>
+            {nextStepId && nextStepId !== activeStep && (
+              <button
+                type="button"
+                onClick={() => setWorkflowStep(nextStepId)}
+                className="min-h-[40px] rounded-[var(--radius-md)] bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-[var(--on_primary)] transition hover:brightness-95"
+              >
+                {pt ? 'Próximo passo recomendado: ' : 'Recommended next step: '}
+                {stepLabel(nextStepId)} →
+              </button>
+            )}
+          </div>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPct}
+            className="h-1.5 w-full bg-[var(--surface_container)]"
           >
-            {t('steps.step1B.continueButton')} →
-          </button>
+            <div className="primary-gradient h-1.5 transition-all" style={{ width: `${progressPct}%` }} />
+          </div>
         </div>
-      )}
+
+        <div ref={stepContentRef} className="scroll-mt-20 bg-[var(--surface_container_low)] p-1">
+          <div className="tonal-card p-4 md:p-8">{renderStep(activeStep)}</div>
+        </div>
+
+        {/* Always reachable: no scrolling back up to move on */}
+        <div className="sticky bottom-0 z-20 -mx-3 border-t border-[var(--outline_variant)] bg-[var(--surface)]/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pr-20 backdrop-blur md:mx-0 md:rounded-t-[var(--radius-md)] md:px-4">
+          <div className="flex items-center justify-between gap-2">
+            {previousStepId ? (
+              <button
+                type="button"
+                onClick={() => setWorkflowStep(previousStepId)}
+                className="min-h-[44px] min-w-0 max-w-[45%] truncate rounded-[var(--radius-md)] bg-[var(--surface_container)] px-4 text-sm font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+              >
+                ← {stepLabel(previousStepId)}
+              </button>
+            ) : (
+              <span />
+            )}
+            {explanationDraft && (activeStep === 'step9_explanation' || !followingStepId) ? (
+              <button
+                type="button"
+                onClick={() => setStage(2)}
+                className="flex min-h-[44px] items-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-5 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-95 active:scale-95"
+              >
+                {t('steps.step1B.continueButton')} →
+              </button>
+            ) : followingStepId ? (
+              <button
+                type="button"
+                onClick={() => setWorkflowStep(followingStepId)}
+                className="min-h-[44px] min-w-0 max-w-[55%] truncate rounded-[var(--radius-md)] bg-[var(--surface_container)] px-4 text-sm font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+              >
+                {stepLabel(followingStepId)} →
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

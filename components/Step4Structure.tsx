@@ -5,8 +5,9 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { KnowledgeStructure } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
-import MarkmapPreview from '@/components/MarkmapPreview'
+import MindMapModal from '@/components/MindMapModal'
 import { parseAiJson } from '@/lib/parseAiJson'
+import { normalizeKnowledgeStructure, type RawKnowledgeStructure } from '@/lib/knowledgeStructure'
 import { safeFetch } from '@/lib/safeFetch'
 import ConceptMapGraph from '@/components/ConceptMapGraph'
 import { buildMarkmapMarkdown, buildMindMapLines, buildPlantUmlMindMap } from '@/lib/mindmap'
@@ -79,121 +80,8 @@ export default function Step4Structure() {
         throw new Error((payload?.details || payload?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = parseAiJson<{
-        topics?: string[]
-        main_topics?: string[]
-        subtopics?: string[]
-        key_subtopics?: string[]
-        concept_map_nodes?: string[]
-        conceptMapNodes?: string[]
-        nodes?: string[]
-        concept_map_edges?: Array<{ from?: string; to?: string; relation?: string }>
-        conceptMapEdges?: Array<{ from?: string; to?: string; relation?: string; source?: string; target?: string; label?: string }>
-        edges?: Array<{ from?: string; to?: string; relation?: string; source?: string; target?: string; label?: string }>
-        mind_map_markdown?: string
-        mindMapMarkdown?: string
-        glossary?: KnowledgeStructure['glossary']
-        terms?: KnowledgeStructure['glossary']
-      }>(data.output)
-
-      const normalizeStringArray = (value: unknown): string[] => {
-        if (Array.isArray(value)) {
-          return value
-            .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
-            .filter(Boolean)
-        }
-
-        if (typeof value === 'string') {
-          return value
-            .split(/[\n,;]+/)
-            .map((entry) => entry.trim())
-            .filter(Boolean)
-        }
-
-        return []
-      }
-
-      const normalizedTopics = normalizeStringArray(parsed?.topics ?? parsed?.main_topics)
-      const normalizedSubtopics = normalizeStringArray(parsed?.subtopics ?? parsed?.key_subtopics)
-      const normalizedNodes = normalizeStringArray(
-        parsed?.concept_map_nodes ?? parsed?.conceptMapNodes ?? parsed?.nodes
-      )
-
-      // Derive topics from nodes/edges if model omitted the topics field
-      const derivedTopicsFromNodes = normalizedTopics.length === 0 && normalizedNodes.length > 0
-        ? normalizedNodes.slice(0, 6)
-        : normalizedTopics
-
-      // Derive topics from evidence records as last resort
-      const lastResortTopics = derivedTopicsFromNodes.length === 0
-        ? evidenceRecords
-            .map((r: { claim?: string; title?: string }) => r.claim || r.title || '')
-            .filter(Boolean)
-            .slice(0, 5)
-        : derivedTopicsFromNodes
-
-      const rawEdges: Array<{
-        from?: string
-        to?: string
-        relation?: string
-        source?: string
-        target?: string
-        label?: string
-      }> = Array.isArray(parsed?.concept_map_edges)
-        ? parsed.concept_map_edges
-        : Array.isArray(parsed?.conceptMapEdges)
-          ? parsed.conceptMapEdges
-          : Array.isArray(parsed?.edges)
-            ? parsed.edges
-            : []
-
-      const normalizedEdges = rawEdges
-        .map((edge) => ({
-          from: (edge.from || edge.source || '').trim(),
-          to: (edge.to || edge.target || '').trim(),
-          relation: (edge.relation || edge.label || '').trim(),
-        }))
-        .filter((edge) => edge.from && edge.to)
-
-      const derivedNodes = Array.from(
-        new Set([
-          ...normalizedNodes,
-          ...lastResortTopics,
-          ...normalizedSubtopics,
-          ...normalizedEdges.flatMap((edge) => [edge.from, edge.to]),
-        ])
-      ).filter(Boolean)
-
-      const finalDerivedNodes = derivedNodes.length === 0
-        ? lastResortTopics
-        : derivedNodes
-
-      const normalizedGlossary = Array.isArray(parsed?.glossary)
-        ? parsed.glossary
-        : Array.isArray(parsed?.terms)
-          ? parsed.terms
-          : []
-
-      const nextStructure: KnowledgeStructure = {
-        topics: lastResortTopics,
-        subtopics: normalizedSubtopics,
-        conceptMapNodes: finalDerivedNodes,
-        conceptMapEdges: normalizedEdges,
-        mindMapMarkdown:
-          typeof parsed?.mind_map_markdown === 'string'
-            ? parsed.mind_map_markdown
-            : typeof parsed?.mindMapMarkdown === 'string'
-              ? parsed.mindMapMarkdown
-              : '',
-        glossary: Array.isArray(normalizedGlossary)
-          ? normalizedGlossary
-              .map((entry: { term?: string; definition?: string }) => ({
-                term: entry.term || '',
-                definition: entry.definition || '',
-              }))
-              .filter((entry: { term: string; definition: string }) => entry.term && entry.definition)
-          : [],
-      }
+      const parsed = parseAiJson<RawKnowledgeStructure>(data.output)
+      const nextStructure = normalizeKnowledgeStructure(parsed, evidenceRecords)
 
       if (nextStructure.topics.length === 0 && nextStructure.conceptMapNodes.length === 0) {
         throw new Error(
@@ -390,81 +278,13 @@ export default function Step4Structure() {
       )}
 
       {mindMapOpen && knowledgeStructure && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
-          <div className="max-h-[90vh] w-full max-w-6xl overflow-auto rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <div>
-                <div className="text-lg font-semibold text-[var(--on_surface)]">
-                  {isPortuguese ? 'Preview do mind map' : 'Mind map preview'}
-                </div>
-                <div className="text-sm text-[var(--on_surface)] opacity-70">
-                  {isPortuguese
-                    ? 'Representacao visual do texto futuro e codigo PlantUML pronto para editor externo.'
-                    : 'Visual representation of the future text and PlantUML code ready for external editors.'}
-                </div>
-              </div>
-              <button
-                onClick={() => setMindMapOpen(false)}
-                className="ghost-input"
-              >
-                {isPortuguese ? 'Fechar' : 'Close'}
-              </button>
-            </div>
-
-            <div className="grid gap-6 p-5 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="space-y-4">
-                <div className="bg-[var(--surface_container_low)] p-4">
-                  <div className="mb-3 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
-                    {isPortuguese ? 'Preview visual interativo do mind map' : 'Interactive mind map preview'}
-                  </div>
-                  <MarkmapPreview markdown={markmapMarkdown} />
-                </div>
-
-                <div className="ai-user-decided rq-active-accent p-4">
-                  <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--primary_container)]">
-                    {isPortuguese ? 'Leitura do mapa' : 'Map reading'}
-                  </div>
-                  <p className="text-sm text-[var(--on_surface)] opacity-90">
-                    {isPortuguese
-                      ? 'O nodo raiz representa a pergunta final. Os ramos de segundo nivel correspondem aos topicos centrais e o terceiro nivel antecipa os detalhes que deverao aparecer no texto cientifico.'
-                      : 'The root node represents the final question. Second-level branches capture the central topics, and the third level anticipates the details that should appear in the scientific text.'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="bg-[var(--surface_container_low)] p-4">
-                  <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
-                    PlantUML mind map
-                  </div>
-                  <pre className="overflow-x-auto bg-[var(--surface_container)] p-3 text-sm text-[var(--on_surface)]">
-                    {plantUmlMindMap}
-                  </pre>
-                </div>
-
-                <div className="bg-[var(--surface_container_low)] p-4">
-                  <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
-                    {isPortuguese ? 'Outline para plugin' : 'Plugin outline'}
-                  </div>
-                  <pre className="overflow-x-auto bg-[var(--surface_container)] p-3 text-sm text-[var(--on_surface)]">
-                    {markmapMarkdown}
-                  </pre>
-                </div>
-
-                {knowledgeStructure.mindMapMarkdown && (
-                  <div className="bg-[var(--surface_container_low)] p-4">
-                    <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
-                      {isPortuguese ? 'Outline original' : 'Original outline'}
-                    </div>
-                    <pre className="overflow-x-auto bg-[var(--surface_container)] p-3 text-sm text-[var(--on_surface)]">
-                      {knowledgeStructure.mindMapMarkdown}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <MindMapModal
+          isPortuguese={isPortuguese}
+          markmapMarkdown={markmapMarkdown}
+          plantUmlMindMap={plantUmlMindMap}
+          originalOutline={knowledgeStructure.mindMapMarkdown}
+          onClose={() => setMindMapOpen(false)}
+        />
       )}
     </div>
   )

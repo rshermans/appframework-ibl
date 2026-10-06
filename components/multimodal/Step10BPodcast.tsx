@@ -4,13 +4,10 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
+import AudienceSelect from './AudienceSelect'
+import GenerateControls from './GenerateControls'
 import EvidenceWatermark from './EvidenceWatermark'
 import ExportToNotebookButton from '@/components/ExportToNotebookButton'
-import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
-import { retryWithBackoff } from '@/lib/retryHelper'
-import { safeFetch } from '@/lib/safeFetch'
-import { isValidMultimodalArtifact } from '@/lib/multimodalContract'
-import type { PodcastScript } from '@/types/research-workflow'
 
 interface Props {
   onBack: () => void
@@ -20,52 +17,11 @@ export default function Step10BPodcast({ onBack }: Props) {
   const { locale } = useI18n()
   const {
     projectId, topic, finalResearchQuestion, evidenceRecords,
-    multimodalOutputs, setMultimodalPodcast, setEvidenceFidelityScore,
+    multimodalOutputs,
   } = useWizardStore()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [duration, setDuration] = useState('10')
   const draft = multimodalOutputs.podcast
   const pt = locale === 'pt-PT'
-  const generationSoonLabel = pt
-    ? 'Geração direta no app em breve. Use "Exportar para NotebookLM".'
-    : 'Direct generation in-app is coming soon. Use "Export to NotebookLM".'
-
-  const generate = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const { response, json: payload } = await retryWithBackoff(
-        () =>
-          safeFetch('/api/ai', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectId, topic, locale,
-              stage: 2, promptId: 'multimodal_podcast',
-              stepId: 'step6_multimodal', stepLabel: 'Podcast Script',
-              rq: finalResearchQuestion?.question ?? '',
-              evidence: JSON.stringify(evidenceRecords, null, 2),
-              audience: 'general', duration,
-            }),
-          }),
-        { maxAttempts: 2, initialDelayMs: 1200, maxDelayMs: 3000 }
-      )
-      if (!response.ok || !payload?.ok) throw new Error((payload?.details || payload?.error || 'API error') as string)
-      const data = payload?.data ?? payload
-      const parsed = parseAiJsonWithOptions<PodcastScript>(data.output, {
-        validate: (value) => isValidMultimodalArtifact('podcast', value),
-        errorMessage: pt ? 'Resposta invalida para o contrato de podcast.' : 'Invalid podcast contract response.',
-      })
-      if (!parsed?.segments?.length) throw new Error(pt ? 'Resposta inválida da IA.' : 'Invalid AI response.')
-      setMultimodalPodcast(parsed)
-      if (typeof parsed.fidelityScore === 'number') setEvidenceFidelityScore(parsed.fidelityScore)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -81,6 +37,7 @@ export default function Step10BPodcast({ onBack }: Props) {
       </button>
 
       <div className="flex flex-wrap items-center gap-3">
+        <AudienceSelect />
         <label className="text-sm font-medium text-[var(--on_surface)]">
           {pt ? 'Duração (min):' : 'Duration (min):'}
         </label>
@@ -91,16 +48,7 @@ export default function Step10BPodcast({ onBack }: Props) {
         >
           {['5', '10', '15', '20'].map((d) => <option key={d} value={d}>{d} min</option>)}
         </select>
-        <span title={generationSoonLabel} className="inline-flex cursor-not-allowed">
-          <button
-            type="button"
-            onClick={generate}
-            disabled
-            className="rounded-[var(--radius-md)] bg-[var(--surface_container_high)] px-4 py-2 text-sm font-medium text-[var(--on_surface_variant)] opacity-80"
-          >
-            {pt ? 'Em breve' : 'Coming soon'}
-          </button>
-        </span>
+        <GenerateControls kind="podcast" durationMinutes={Number(duration)} hasDraft={Boolean(draft)} />
         <ExportToNotebookButton
           projectId={projectId}
           topic={topic}
@@ -111,8 +59,6 @@ export default function Step10BPodcast({ onBack }: Props) {
           size="sm"
         />
       </div>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {draft && (
         <div className="space-y-4">

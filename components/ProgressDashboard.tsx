@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import { getIblStepMeta, type IBLStepKey } from '@/lib/iblFramework'
@@ -28,7 +28,7 @@ function useProgressSteps(): ProgressStep[] {
   ]
 }
 
-export default function ProgressDashboard() {
+export function useProgressSummary() {
   const { t, locale } = useI18n()
   const { stage, multimodalOutputs, peerReviews, selfAssessment, reflectionJournal, extensionPlan, explanationDraft } = useWizardStore()
   const pt = locale === 'pt-PT'
@@ -63,115 +63,120 @@ export default function ProgressDashboard() {
   const activeStageCompleted = stage === 1 ? stage1Completed : stage === 2 ? stage2Completed : stage3Completed
   const activeStageTotal = stage === 1 ? stage1Total : stage === 2 ? stage2Total : stage3Total
   const overallPct = Math.round((stage1Pct + stage2Pct + stage3Pct) / 3)
-  const [expanded, setExpanded] = useState(false)
+
+  return {
+    t, pt, stage, stage1Steps, multimodalOutputs, peerReviews, selfAssessment, reflectionJournal, extensionPlan, explanationDraft,
+    stage1Pct, stage2Pct, stage3Pct, overallPct, activeStagePct, activeStageCompleted, activeStageTotal,
+  }
+}
+
+/** Compact "Global 34%" button for the top bar. */
+export function ProgressPill({ onClick }: { onClick: () => void }) {
+  const { pt, overallPct } = useProgressSummary()
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={pt ? `Progresso global ${overallPct}%` : `Overall progress ${overallPct}%`}
+      className="inline-flex h-10 min-w-[44px] items-center gap-2 rounded-full bg-[var(--surface_container)] px-3 text-xs font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)]"
+    >
+      <span className="hidden sm:inline">{pt ? 'Progresso' : 'Progress'}</span>
+      <span className="relative hidden h-1.5 w-10 overflow-hidden rounded-full sm:block bg-[var(--surface_container_highest)]">
+        <span className="primary-gradient absolute inset-y-0 left-0" style={{ width: `${overallPct}%` }} />
+      </span>
+      <span>{overallPct}%</span>
+    </button>
+  )
+}
+
+/** Detailed progress, shown inside a Drawer. */
+export default function ProgressPanel() {
+  const {
+    t, pt, stage, stage1Steps, multimodalOutputs, peerReviews, selfAssessment, reflectionJournal, extensionPlan, explanationDraft,
+    stage1Pct, stage2Pct, stage3Pct, activeStagePct, activeStageCompleted, activeStageTotal,
+  } = useProgressSummary()
 
   return (
-    <div className="fixed bottom-0 left-0 w-72 sm:w-80 sm:left-6 sm:bottom-6 glass-panel ambient-shadow z-50 rounded-tr-xl sm:rounded-xl overflow-hidden">
-      <button
-        type="button"
-        className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <span className="font-label text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on_surface)]">{t('progress.title')}</span>
-            <span className="font-label text-[10px] font-semibold text-[var(--on_surface)] opacity-60">
-              {pt ? `Global ${overallPct}%` : `Overall ${overallPct}%`}
+    <div className="space-y-1 text-sm">
+      <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1.5 text-[11px] text-[var(--on_surface)]">
+        <span className="font-semibold">{pt ? 'Stage ativo:' : 'Active stage:'} </span>
+        <span>{stage === 1 ? 'Stage 1' : stage === 2 ? 'Stage 2' : 'Stage 3'}</span>
+        <span className="opacity-70"> · {activeStagePct}% ({activeStageCompleted}/{activeStageTotal})</span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-1.5 py-1">
+        <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1 text-center">
+          <p className="text-[10px] font-semibold text-[var(--on_surface)]">S1</p>
+          <p className="text-[10px] text-[var(--on_surface_variant)]">{stage1Pct}%</p>
+        </div>
+        <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1 text-center">
+          <p className="text-[10px] font-semibold text-[var(--on_surface)]">S2</p>
+          <p className="text-[10px] text-[var(--on_surface_variant)]">{stage2Pct}%</p>
+        </div>
+        <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1 text-center">
+          <p className="text-[10px] font-semibold text-[var(--on_surface)]">S3</p>
+          <p className="text-[10px] text-[var(--on_surface_variant)]">{stage3Pct}%</p>
+        </div>
+      </div>
+
+      {stage === 1 && stage1Steps.map((step) => {
+        const meta = step.stepId ? getIblStepMeta(step.stepId) : null
+        return (
+          <div key={step.i18nKey} className="flex items-center gap-2 py-0.5">
+            <span className={step.done ? 'text-[var(--secondary)]' : 'text-[var(--outline_variant)]'}>
+              {step.done ? '●' : '○'}
+            </span>
+            {(meta || step.customBadge) && (
+              <span className="font-label text-[9px] font-semibold uppercase tracking-wide text-[var(--outline_variant)] min-w-[3.5rem]">
+                {step.customBadge || meta?.badge}
+              </span>
+            )}
+            <span className={step.done ? 'text-[var(--on_surface)] font-medium' : 'text-[var(--on_surface)] opacity-50'}>
+              {t(step.i18nKey)}
             </span>
           </div>
-          <div className="w-full bg-[var(--surface_container)] h-1.5">
-            <div
-              className="primary-gradient h-1.5 transition-all"
-              style={{ width: `${overallPct}%` }}
-            />
-          </div>
+        )
+      })}
+
+      {stage === 2 && (
+        <div className="space-y-1">
+          {[
+            { id: 'explanation', done: Boolean(explanationDraft), labelPt: 'Explicação Científica (Etapa 9)', labelEn: 'Scientific Explanation (Step 9)' },
+            { id: 'poster', done: Boolean(multimodalOutputs.poster), labelPt: 'Poster', labelEn: 'Poster' },
+            { id: 'podcast', done: Boolean(multimodalOutputs.podcast), labelPt: 'Podcast', labelEn: 'Podcast' },
+            { id: 'video', done: Boolean(multimodalOutputs.videocast), labelPt: 'Videocast', labelEn: 'Videocast' },
+            { id: 'game', done: Boolean(multimodalOutputs.game), labelPt: 'Jogo', labelEn: 'Game' },
+            { id: 'oral', done: Boolean(multimodalOutputs.oral), labelPt: 'Apresentação', labelEn: 'Presentation' },
+          ].map((item) => (
+            <div key={item.id} className="flex items-center gap-2 py-0.5">
+              <span className={item.done ? 'text-[var(--secondary)]' : 'text-[var(--outline_variant)]'}>
+                {item.done ? '●' : '○'}
+              </span>
+              <span className={item.done ? 'text-[var(--on_surface)] font-medium' : 'text-[var(--on_surface)] opacity-50'}>
+                {pt ? item.labelPt : item.labelEn}
+              </span>
+            </div>
+          ))}
         </div>
-        <span className="text-[var(--outline_variant)] text-xs flex-shrink-0">{expanded ? '▼' : '▲'}</span>
-      </button>
+      )}
 
-      {expanded && (
-        <div className="px-4 pb-3 space-y-1 text-xs max-h-52 overflow-y-auto">
-          <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1.5 text-[11px] text-[var(--on_surface)]">
-            <span className="font-semibold">{pt ? 'Stage ativo:' : 'Active stage:'} </span>
-            <span>{stage === 1 ? 'Stage 1' : stage === 2 ? 'Stage 2' : 'Stage 3'}</span>
-            <span className="opacity-70"> · {activeStagePct}% ({activeStageCompleted}/{activeStageTotal})</span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-1.5 py-1">
-            <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1 text-center">
-              <p className="text-[10px] font-semibold text-[var(--on_surface)]">S1</p>
-              <p className="text-[10px] text-[var(--on_surface_variant)]">{stage1Pct}%</p>
+      {stage === 3 && (
+        <div className="space-y-1">
+          {[
+            { id: 'peer', done: peerReviews.length > 0, labelPt: 'Revisão por pares', labelEn: 'Peer review' },
+            { id: 'self', done: Boolean(selfAssessment), labelPt: 'Auto-avaliação', labelEn: 'Self-assessment' },
+            { id: 'reflect', done: reflectionJournal.length > 0, labelPt: 'Reflexão', labelEn: 'Reflection journal' },
+            { id: 'extend', done: Boolean(extensionPlan), labelPt: 'Extensão', labelEn: 'Extension planner' },
+          ].map((item) => (
+            <div key={item.id} className="flex items-center gap-2 py-0.5">
+              <span className={item.done ? 'text-[var(--secondary)]' : 'text-[var(--outline_variant)]'}>
+                {item.done ? '●' : '○'}
+              </span>
+              <span className={item.done ? 'text-[var(--on_surface)] font-medium' : 'text-[var(--on_surface)] opacity-50'}>
+                {pt ? item.labelPt : item.labelEn}
+              </span>
             </div>
-            <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1 text-center">
-              <p className="text-[10px] font-semibold text-[var(--on_surface)]">S2</p>
-              <p className="text-[10px] text-[var(--on_surface_variant)]">{stage2Pct}%</p>
-            </div>
-            <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1 text-center">
-              <p className="text-[10px] font-semibold text-[var(--on_surface)]">S3</p>
-              <p className="text-[10px] text-[var(--on_surface_variant)]">{stage3Pct}%</p>
-            </div>
-          </div>
-
-          {stage === 1 && stage1Steps.map((step) => {
-            const meta = step.stepId ? getIblStepMeta(step.stepId) : null
-            return (
-              <div key={step.i18nKey} className="flex items-center gap-2 py-0.5">
-                <span className={step.done ? 'text-[var(--secondary)]' : 'text-[var(--outline_variant)]'}>
-                  {step.done ? '●' : '○'}
-                </span>
-                {(meta || step.customBadge) && (
-                  <span className="font-label text-[9px] font-semibold uppercase tracking-wide text-[var(--outline_variant)] min-w-[3.5rem]">
-                    {step.customBadge || meta?.badge}
-                  </span>
-                )}
-                <span className={step.done ? 'text-[var(--on_surface)] font-medium' : 'text-[var(--on_surface)] opacity-50'}>
-                  {t(step.i18nKey)}
-                </span>
-              </div>
-            )
-          })}
-
-          {stage === 2 && (
-            <div className="space-y-1">
-              {[
-                { id: 'explanation', done: Boolean(explanationDraft), labelPt: 'Explicação Científica (Etapa 9)', labelEn: 'Scientific Explanation (Step 9)' },
-                { id: 'poster', done: Boolean(multimodalOutputs.poster), labelPt: 'Poster', labelEn: 'Poster' },
-                { id: 'podcast', done: Boolean(multimodalOutputs.podcast), labelPt: 'Podcast', labelEn: 'Podcast' },
-                { id: 'video', done: Boolean(multimodalOutputs.videocast), labelPt: 'Videocast', labelEn: 'Videocast' },
-                { id: 'game', done: Boolean(multimodalOutputs.game), labelPt: 'Jogo', labelEn: 'Game' },
-                { id: 'oral', done: Boolean(multimodalOutputs.oral), labelPt: 'Apresentação', labelEn: 'Presentation' },
-              ].map((item) => (
-                <div key={item.id} className="flex items-center gap-2 py-0.5">
-                  <span className={item.done ? 'text-[var(--secondary)]' : 'text-[var(--outline_variant)]'}>
-                    {item.done ? '●' : '○'}
-                  </span>
-                  <span className={item.done ? 'text-[var(--on_surface)] font-medium' : 'text-[var(--on_surface)] opacity-50'}>
-                    {pt ? item.labelPt : item.labelEn}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {stage === 3 && (
-            <div className="space-y-1">
-              {[
-                { id: 'peer', done: peerReviews.length > 0, labelPt: 'Revisão por pares', labelEn: 'Peer review' },
-                { id: 'self', done: Boolean(selfAssessment), labelPt: 'Auto-avaliação', labelEn: 'Self-assessment' },
-                { id: 'reflect', done: reflectionJournal.length > 0, labelPt: 'Reflexão', labelEn: 'Reflection journal' },
-                { id: 'extend', done: Boolean(extensionPlan), labelPt: 'Extensão', labelEn: 'Extension planner' },
-              ].map((item) => (
-                <div key={item.id} className="flex items-center gap-2 py-0.5">
-                  <span className={item.done ? 'text-[var(--secondary)]' : 'text-[var(--outline_variant)]'}>
-                    {item.done ? '●' : '○'}
-                  </span>
-                  <span className={item.done ? 'text-[var(--on_surface)] font-medium' : 'text-[var(--on_surface)] opacity-50'}>
-                    {pt ? item.labelPt : item.labelEn}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
       )}
     </div>

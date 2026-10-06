@@ -80,6 +80,16 @@ export async function POST(req: Request) {
       CONTEXT: context || '',
       FINAL_RQ: finalRQ || resolvedRQ,
       SELECTED_RQS: Array.isArray(selectedRQs) ? selectedRQs.join('\n') : resolvedRQ,
+      // Stage 2 chunked generation (plan + parts)
+      KIND: typeof body.kind === 'string' ? body.kind : '',
+      DURATION: body.duration !== undefined ? String(body.duration) : '',
+      MIN_ITEMS: body.minItems !== undefined ? String(body.minItems) : '',
+      MAX_ITEMS: body.maxItems !== undefined ? String(body.maxItems) : '',
+      PLAN: typeof body.plan === 'string' ? body.plan : '',
+      PART_INDEX: body.partIndex !== undefined ? String(body.partIndex) : '',
+      PART_TOTAL: body.partTotal !== undefined ? String(body.partTotal) : '',
+      PART_FOCUS: typeof body.partFocus === 'string' ? body.partFocus : '',
+      SHAPE: typeof body.shape === 'string' ? body.shape : '',
     }
     const missingFields = resolvedWorkflowStep
       ? getMissingRequiredFields(resolvedWorkflowStep, {
