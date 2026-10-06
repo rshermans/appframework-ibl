@@ -5,13 +5,9 @@ import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
 import AudienceSelect from './AudienceSelect'
+import GenerateControls from './GenerateControls'
 import EvidenceWatermark from './EvidenceWatermark'
 import ExportToNotebookButton from '@/components/ExportToNotebookButton'
-import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
-import { retryWithBackoff } from '@/lib/retryHelper'
-import { safeFetch } from '@/lib/safeFetch'
-import { isValidMultimodalArtifact } from '@/lib/multimodalContract'
-import type { VideostoryBoard } from '@/types/research-workflow'
 
 interface Props {
   onBack: () => void
@@ -21,51 +17,10 @@ export default function Step10CVideocast({ onBack }: Props) {
   const { locale } = useI18n()
   const {
     projectId, topic, finalResearchQuestion, evidenceRecords,
-    multimodalOutputs, audience, setMultimodalVideocast, setEvidenceFidelityScore,
+    multimodalOutputs,
   } = useWizardStore()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const draft = multimodalOutputs.videocast
   const pt = locale === 'pt-PT'
-  const generationSoonLabel = pt
-    ? 'Geração direta no app em breve. Use "Exportar para NotebookLM".'
-    : 'Direct generation in-app is coming soon. Use "Export to NotebookLM".'
-
-  const generate = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const { response, json: payload } = await retryWithBackoff(
-        () =>
-          safeFetch('/api/ai', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectId, topic, locale,
-              stage: 2, promptId: 'multimodal_video',
-              stepId: 'step6_multimodal', stepLabel: 'Videocast Storyboard',
-              rq: finalResearchQuestion?.question ?? '',
-              evidence: JSON.stringify(evidenceRecords, null, 2),
-              audience,
-            }),
-          }),
-        { maxAttempts: 2, initialDelayMs: 1200, maxDelayMs: 3000 }
-      )
-      if (!response.ok || !payload?.ok) throw new Error((payload?.details || payload?.error || 'API error') as string)
-      const data = payload?.data ?? payload
-      const parsed = parseAiJsonWithOptions<VideostoryBoard>(data.output, {
-        validate: (value) => isValidMultimodalArtifact('video', value),
-        errorMessage: pt ? 'Resposta invalida para o contrato de videocast.' : 'Invalid videocast contract response.',
-      })
-      if (!parsed?.scenes?.length) throw new Error(pt ? 'Resposta inválida da IA.' : 'Invalid AI response.')
-      setMultimodalVideocast(parsed)
-      if (typeof parsed.fidelityScore === 'number') setEvidenceFidelityScore(parsed.fidelityScore)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -82,16 +37,7 @@ export default function Step10CVideocast({ onBack }: Props) {
 
       <div className="flex flex-wrap items-center gap-3">
         <AudienceSelect />
-        <span title={generationSoonLabel} className="inline-flex cursor-not-allowed">
-          <button
-            type="button"
-            onClick={generate}
-            disabled
-            className="rounded-[var(--radius-md)] bg-[var(--surface_container_high)] px-4 py-2 text-sm font-medium text-[var(--on_surface_variant)] opacity-80"
-          >
-            {pt ? 'Em breve' : 'Coming soon'}
-          </button>
-        </span>
+        <GenerateControls kind="video" hasDraft={Boolean(draft)} />
         <ExportToNotebookButton
           projectId={projectId}
           topic={topic}
@@ -102,8 +48,6 @@ export default function Step10CVideocast({ onBack }: Props) {
           size="sm"
         />
       </div>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {draft && (
         <div className="space-y-4">
