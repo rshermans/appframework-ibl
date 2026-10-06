@@ -629,45 +629,58 @@ export default function Home() {
           >
             {t('home.manualButton')}
           </Link>
+          <details className="group relative">
+            <summary className="cursor-pointer list-none rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)] [&::-webkit-details-marker]:hidden">
+              {pt ? 'Exportar e partilhar ▾' : 'Export & share ▾'}
+            </summary>
+            <div className="absolute left-0 z-20 mt-1 flex min-w-[220px] flex-col gap-1 rounded-[var(--radius-md)] bg-[var(--surface_container_lowest)] p-2 ambient-shadow ghost-border">
           <button
             type="button"
             onClick={handleDownloadSessionJson}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+            className="rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
           >
             {t('home.downloadJson')}
           </button>
           <button
             type="button"
             onClick={handleDownloadPdf}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+            className="rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
           >
             {t('home.downloadPdf')}
           </button>
           <button
             type="button"
             onClick={handleShareEmail}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+            className="rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
           >
             {t('home.shareEmail')}
           </button>
           <button
             type="button"
             onClick={handleShareGoogleDoc}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+            className="rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
           >
             {t('home.shareGoogleDocs')}
           </button>
+            </div>
+          </details>
+          <span className="ml-auto" aria-hidden="true" />
           <button
             type="button"
-            onClick={handleResetSession}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+            onClick={() => {
+              const message = pt
+                ? 'Limpar e reiniciar apaga o progresso desta sessão neste dispositivo. Continuar?'
+                : 'Clear and restart removes this session\'s progress on this device. Continue?'
+              if (window.confirm(message)) handleResetSession()
+            }}
+            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-red-700 hover:bg-[var(--surface_container_high)]"
           >
             {t('home.clearAndRestart')}
           </button>
           <button
             type="button"
             onClick={handleDeleteServerData}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
+            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-red-700 hover:bg-[var(--surface_container_high)]"
           >
             {t('home.deleteProjectData')}
           </button>

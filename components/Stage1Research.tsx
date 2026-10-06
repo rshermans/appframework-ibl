@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
+import { getNextRecommendedStep, getStage1LockKey, isStage1StepDone } from '@/lib/flowProgress'
 import { getStepContract, resolveWorkflowStepId } from '@/lib/workflow'
 import { getIblEthicalTip, getIblStepMeta, type IBLStepKey } from '@/lib/iblFramework'
 import { useI18n } from '@/components/I18nProvider'
@@ -68,19 +70,73 @@ export default function Stage1Research() {
     searchArticles,
     searchDesign,
     step0OptionalCompleted,
+    candidateResearchQuestions,
+    rqCandidates,
+    selectedRQs,
+    comparisonResult,
     stage,
     workflowStep,
     setStage,
     setWorkflowStep,
   } = useWizardStore()
+  const stepContentRef = useRef<HTMLDivElement | null>(null)
+  const userHasInteracted = useRef(false)
+
+  // Only scroll after the learner has interacted: restoring persisted state on load
+  // also changes workflowStep and must not move the page.
+  useEffect(() => {
+    const markInteracted = () => {
+      userHasInteracted.current = true
+    }
+    window.addEventListener('pointerdown', markInteracted, { once: true })
+    window.addEventListener('keydown', markInteracted, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', markInteracted)
+      window.removeEventListener('keydown', markInteracted)
+    }
+  }, [])
+
+  // Bring the new step into view when navigating (the stepper sits above long forms).
+  useEffect(() => {
+    if (!userHasInteracted.current) return
+    stepContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [workflowStep])
 
   if (stage !== 1) return null
+
+  const flowState = {
+    candidateResearchQuestions,
+    rqCandidates,
+    step0OptionalCompleted,
+    selectedRQs,
+    comparisonResult,
+    finalResearchQuestion,
+    searchDesign,
+    searchArticles,
+    evidenceRecords,
+    knowledgeStructure,
+    explanationDraft,
+  }
 
   const activeStep = resolveWorkflowStepId(workflowStep)
   const visibleSteps =
     step0OptionalCompleted && activeStep !== 'step0_generate'
       ? ACTIVE_WORKFLOW_STEPS.filter((stepId) => stepId !== 'step0_generate')
       : ACTIVE_WORKFLOW_STEPS
+
+  const pt = locale === 'pt-PT'
+  const doneCount = visibleSteps.filter((stepId) => isStage1StepDone(stepId, flowState)).length
+  const progressPct = Math.round((doneCount / visibleSteps.length) * 100)
+  const nextStepId = getNextRecommendedStep(flowState)
+  const activeIndex = (visibleSteps as readonly IBLStepKey[]).indexOf(activeStep)
+  const unlockedSteps = visibleSteps.filter((stepId) => getStage1LockKey(stepId, flowState) === null)
+  const activeUnlockedIndex = (unlockedSteps as readonly IBLStepKey[]).indexOf(activeStep)
+  const previousStepId = activeUnlockedIndex > 0 ? unlockedSteps[activeUnlockedIndex - 1] : null
+  const followingStepId =
+    activeUnlockedIndex >= 0 && activeUnlockedIndex < unlockedSteps.length - 1
+      ? unlockedSteps[activeUnlockedIndex + 1]
+      : null
+  const stepLabel = (stepId: IBLStepKey) => t(`workflow.${stepId}.label`) || getStepContract(stepId).label
 
   return (
     <div className="space-y-6">
@@ -111,21 +167,43 @@ export default function Stage1Research() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-4 xl:grid-cols-7">
-        {visibleSteps.map((stepId) => {
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="text-xs font-semibold text-[var(--on_surface)]">
+            {pt
+              ? `Passo ${Math.max(activeIndex + 1, 1)} de ${visibleSteps.length} · ${doneCount} ${doneCount === 1 ? 'concluído' : 'concluídos'}`
+              : `Step ${Math.max(activeIndex + 1, 1)} of ${visibleSteps.length} · ${doneCount} completed`}
+          </div>
+          {nextStepId && nextStepId !== activeStep && (
+            <button
+              type="button"
+              onClick={() => setWorkflowStep(nextStepId)}
+              className="rounded-[var(--radius-md)] bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-[var(--on_primary)] transition hover:brightness-95"
+            >
+              {pt ? 'Próximo passo recomendado: ' : 'Recommended next step: '}
+              {stepLabel(nextStepId)} →
+            </button>
+          )}
+        </div>
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progressPct}
+          className="h-1.5 w-full bg-[var(--surface_container)]"
+        >
+          <div className="primary-gradient h-1.5 transition-all" style={{ width: `${progressPct}%` }} />
+        </div>
+      </div>
+
+      <div className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-2 md:mx-0 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-7">
+        {visibleSteps.map((stepId, index) => {
           const step = getStepContract(stepId)
           const iblMeta = getIblStepMeta(stepId)
           const isActive = activeStep === stepId
-          const isStep2Locked =
-            stepId === 'step2_search_design' && !finalResearchQuestion?.approvedByUser
-          const isStep3Locked =
-            stepId === 'step3_evidence_extraction' && (!searchDesign || searchArticles.length === 0)
-          const isStep4Locked = stepId === 'step4_knowledge_structure' && evidenceRecords.length === 0
-          const isStepCRAAPLocked = stepId === 'step5_source_selection' && evidenceRecords.length === 0
-          const isStepGlossaryLocked = stepId === 'step8_glossary' && !knowledgeStructure
-          const isStep5Locked =
-            stepId === 'step9_explanation' && (!knowledgeStructure || evidenceRecords.length === 0)
-          const isLocked = isStep2Locked || isStep3Locked || isStep4Locked || isStepCRAAPLocked || isStepGlossaryLocked || isStep5Locked
+          const lockKey = getStage1LockKey(stepId, flowState)
+          const isLocked = lockKey !== null
+          const isDone = isStage1StepDone(stepId, flowState)
 
           return (
             <button
@@ -136,23 +214,32 @@ export default function Stage1Research() {
                 }
               }}
               disabled={isLocked}
+              aria-current={isActive ? 'step' : undefined}
               title={iblMeta.title}
-              className={`group relative flex flex-col p-4 text-left transition-all duration-200 min-h-[140px] ${
+              className={`group relative flex min-h-[140px] min-w-[210px] snap-start flex-col p-4 text-left transition-all duration-200 md:min-w-0 ${
                 isActive
                   ? 'bg-[linear-gradient(135deg,rgba(37,99,235,0.10),rgba(22,163,74,0.10))] ambient-shadow rq-active-accent ring-1 ring-[rgba(37,99,235,0.18)]'
                   : 'tonal-card ghost-border hover:bg-[var(--surface_container_low)]'
               } ${isLocked ? 'cursor-not-allowed opacity-40' : ''}`}
             >
-              <div
-                className={`font-label text-[10px] uppercase tracking-[0.12em] ${
-                  isActive ? 'text-[var(--primary_container)]' : 'text-[var(--outline_variant)]'
-                }`}
-              >
-                {t(`workflow.${stepId}.badge`) || iblMeta.badge}
+              <div className="flex items-center justify-between gap-2">
+                <div
+                  className={`font-label text-[10px] uppercase tracking-[0.12em] ${
+                    isActive ? 'text-[var(--primary_container)]' : 'text-[var(--outline_variant)]'
+                  }`}
+                >
+                  {t(`workflow.${stepId}.badge`) || iblMeta.badge}
+                </div>
+                <span
+                  className={`text-[10px] font-semibold ${isDone ? 'text-[var(--secondary)]' : 'text-[var(--outline_variant)]'}`}
+                  aria-label={isDone ? (pt ? 'Concluído' : 'Completed') : `${index + 1}/${visibleSteps.length}`}
+                >
+                  {isDone ? '✓' : `${index + 1}/${visibleSteps.length}`}
+                </span>
               </div>
               <div className="mt-1.5 flex items-start justify-between gap-2">
                 <span className="text-sm font-semibold leading-tight text-[var(--on_surface)]">
-                  {t(`workflow.${stepId}.label`) || step.label}
+                  {stepLabel(stepId)}
                 </span>
                 <InfoTooltip
                   label=""
@@ -161,17 +248,7 @@ export default function Stage1Research() {
                 />
               </div>
               <div className={`mt-2 text-[11px] leading-relaxed text-[var(--on_surface)] ${isActive ? 'opacity-90' : 'opacity-70'}`}>
-                {isStep2Locked
-                  ? t('common.lockedStep2')
-                  : isStep3Locked
-                    ? t('common.lockedStep3')
-                  : isStep4Locked
-                      ? t('common.lockedStep4')                  : isStepCRAAPLocked
-                      ? t('steps.step5_source_selection.locked')
-                  : isStepGlossaryLocked
-                      ? t('steps.step8.locked')                    : isStep5Locked
-                      ? t('common.lockedStep5')
-                    : (t(`workflow.${stepId}.description`) || step.description)}
+                {lockKey ? t(lockKey) : (t(`workflow.${stepId}.description`) || step.description)}
               </div>
               {iblMeta.isOptional && (
                 <span className="mt-3 inline-flex rounded-[var(--radius-md)] bg-[var(--secondary_container)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--on_secondary_container)]">
@@ -183,11 +260,34 @@ export default function Stage1Research() {
         })}
       </div>
 
-      <div className="bg-[var(--surface_container_low)] p-1">
+      <div ref={stepContentRef} className="scroll-mt-4 bg-[var(--surface_container_low)] p-1">
         <div className="tonal-card p-6 md:p-10">
           {renderStep(activeStep)}
         </div>
       </div>
+
+      {(previousStepId || followingStepId) && (
+        <div className="flex items-center justify-between gap-3">
+          {previousStepId ? (
+            <button
+              type="button"
+              onClick={() => setWorkflowStep(previousStepId)}
+              className="tonal-card ghost-border rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_low)]"
+            >
+              ← {stepLabel(previousStepId)}
+            </button>
+          ) : <span />}
+          {followingStepId && (
+            <button
+              type="button"
+              onClick={() => setWorkflowStep(followingStepId)}
+              className="tonal-card ghost-border rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_low)]"
+            >
+              {stepLabel(followingStepId)} →
+            </button>
+          )}
+        </div>
+      )}
 
       {explanationDraft && (
         <div className="flex justify-end">
