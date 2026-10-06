@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Inter, Manrope, Public_Sans } from 'next/font/google'
 import './globals.css'
 import { I18nProvider } from '@/components/I18nProvider'
-import ProgressDashboard from '@/components/ProgressDashboard'
 import ChatAssistant from '@/components/ChatAssistant'
 import AuthSessionProvider from '@/components/AuthSessionProvider'
 import NextTopLoader from 'nextjs-toploader'
@@ -38,7 +37,6 @@ export default function RootLayout({
         <AuthSessionProvider>
           <I18nProvider>
             {children}
-            <ProgressDashboard />
             <ChatAssistant />
           </I18nProvider>
         </AuthSessionProvider>

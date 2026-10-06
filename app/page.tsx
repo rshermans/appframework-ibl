@@ -22,6 +22,10 @@ import { buildGoogleDocMarkdown, buildSessionExport, buildShareEmail } from '@/l
 import OnboardingModal from '@/components/OnboardingModal'
 import DeleteDataModal from '@/components/DeleteDataModal'
 import ProfileCard from '@/components/ProfileCard'
+import Drawer from '@/components/ui/Drawer'
+import AppShell from '@/components/shell/AppShell'
+import TopBar from '@/components/shell/TopBar'
+import ProgressPanel from '@/components/ProgressDashboard'
 
 export default function Home() {
   const createEmptyOnboardingData = () => ({
@@ -54,6 +58,8 @@ export default function Home() {
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('')
   const [deletingServerData, setDeletingServerData] = useState(false)
   const [showOnboardingModal, setShowOnboardingModal] = useState(false)
+  const [showProgress, setShowProgress] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [onboardingData, setOnboardingData] = useState(
     userProfile ?? createEmptyOnboardingData()
@@ -86,6 +92,12 @@ export default function Home() {
       body: JSON.stringify({ projectId }),
     }).catch(() => null)
   }, [projectId, status])
+
+  useEffect(() => {
+    if (!shareMessage) return
+    const timer = setTimeout(() => setShareMessage(''), 6000)
+    return () => clearTimeout(timer)
+  }, [shareMessage])
 
   const handleStart = () => {
     if (topic.trim()) {
@@ -465,104 +477,89 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-transparent">
-      <div className="mx-auto max-w-7xl p-6 md:p-8">
-        <section className="mb-4 flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface_container_low)] p-3">
-          <AuthControls />
-          <Link
-            href="/privacy"
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
-          >
-            {t('home.privacyPolicy')}
-          </Link>
-          <Link
-            href="/manual"
-            onClick={handleOpenManual}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
-          >
-            {t('home.manualButton')}
-          </Link>
-          <details className="group relative">
-            <summary className="cursor-pointer list-none rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)] [&::-webkit-details-marker]:hidden">
-              {pt ? 'Exportar e partilhar ▾' : 'Export & share ▾'}
-            </summary>
-            <div className="absolute left-0 z-20 mt-1 flex min-w-[220px] flex-col gap-1 rounded-[var(--radius-md)] bg-[var(--surface_container_lowest)] p-2 ambient-shadow ghost-border">
-          <button
-            type="button"
-            onClick={handleDownloadSessionJson}
-            className="rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
-          >
-            {t('home.downloadJson')}
-          </button>
-          <button
-            type="button"
-            onClick={handleDownloadPdf}
-            className="rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
-          >
-            {t('home.downloadPdf')}
-          </button>
-          <button
-            type="button"
-            onClick={handleShareEmail}
-            className="rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
-          >
-            {t('home.shareEmail')}
-          </button>
-          <button
-            type="button"
-            onClick={handleShareGoogleDoc}
-            className="rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
-          >
-            {t('home.shareGoogleDocs')}
-          </button>
-            </div>
-          </details>
-          <span className="ml-auto" aria-hidden="true" />
-          <button
-            type="button"
-            onClick={() => {
-              const message = pt
-                ? 'Limpar e reiniciar apaga o progresso desta sessão neste dispositivo. Continuar?'
-                : 'Clear and restart removes this session\'s progress on this device. Continue?'
-              if (window.confirm(message)) handleResetSession()
+    <>
+      <AppShell
+        topBar={
+          <TopBar
+            actions={{
+              onOpenProgress: () => setShowProgress(true),
+              onOpenProfile: () => setShowProfile(true),
+              onOpenManual: handleOpenManual,
+              onDownloadJson: handleDownloadSessionJson,
+              onDownloadPdf: handleDownloadPdf,
+              onShareEmail: handleShareEmail,
+              onShareGoogleDoc: handleShareGoogleDoc,
+              onReset: () => {
+                const message = pt
+                  ? 'Limpar e reiniciar apaga o progresso desta sessão neste dispositivo. Continuar?'
+                  : 'Clear and restart removes this session\'s progress on this device. Continue?'
+                if (window.confirm(message)) handleResetSession()
+              },
+              onDelete: handleDeleteServerData,
             }}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-red-700 hover:bg-[var(--surface_container_high)]"
-          >
-            {t('home.clearAndRestart')}
-          </button>
-          <button
-            type="button"
-            onClick={handleDeleteServerData}
-            className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-red-700 hover:bg-[var(--surface_container_high)]"
-          >
-            {t('home.deleteProjectData')}
-          </button>
-          {shareMessage && (
-            <span className="text-xs text-[var(--on_surface)] opacity-70">{shareMessage}</span>
-          )}
-        </section>
-
-        {stage === 1 && <Stage1Research />}
-        {stage === 2 && <Stage2Multimodal />}
-        {stage === 3 && <Stage3Reflection />}
-
-        <ProfileCard userProfile={userProfile} onEdit={handleEditProfile} />
-
-        {showDeleteModal && (
-          <DeleteDataModal
-            inputValue={deleteConfirmationInput}
-            onInputChange={setDeleteConfirmationInput}
-            deleting={deletingServerData}
-            onCancel={() => {
-              setShowDeleteModal(false)
-              setDeleteConfirmationInput('')
-            }}
-            onConfirm={confirmDeleteServerData}
           />
+        }
+      >
+        {stage === 1 && <Stage1Research />}
+        {stage === 2 && (
+          <div className="mx-auto w-full max-w-6xl px-3 py-4 md:px-5">
+            <Stage2Multimodal />
+          </div>
         )}
+        {stage === 3 && (
+          <div className="mx-auto w-full max-w-6xl px-3 py-4 md:px-5">
+            <Stage3Reflection />
+          </div>
+        )}
+      </AppShell>
 
-        {renderOnboardingModal()}
-      </div>
-    </main>
+      {shareMessage && (
+        <div
+          role="status"
+          className="fixed bottom-20 left-1/2 z-50 max-w-[90vw] -translate-x-1/2 rounded-full bg-[var(--on_surface)] px-4 py-2 text-xs font-medium text-[var(--surface)] shadow-lg"
+        >
+          {shareMessage}
+        </div>
+      )}
+
+      <Drawer
+        open={showProgress}
+        onClose={() => setShowProgress(false)}
+        title={pt ? 'Progresso do projeto' : 'Project progress'}
+        closeLabel={pt ? 'Fechar' : 'Close'}
+      >
+        <ProgressPanel />
+      </Drawer>
+
+      <Drawer
+        open={showProfile}
+        onClose={() => setShowProfile(false)}
+        title={t('home.profileCard.title')}
+        closeLabel={pt ? 'Fechar' : 'Close'}
+      >
+        <ProfileCard
+          userProfile={userProfile}
+          onEdit={() => {
+            setShowProfile(false)
+            handleEditProfile()
+          }}
+        />
+      </Drawer>
+
+      {showDeleteModal && (
+        <DeleteDataModal
+          inputValue={deleteConfirmationInput}
+          onInputChange={setDeleteConfirmationInput}
+          deleting={deletingServerData}
+          onCancel={() => {
+            setShowDeleteModal(false)
+            setDeleteConfirmationInput('')
+          }}
+          onConfirm={confirmDeleteServerData}
+        />
+      )}
+
+      {renderOnboardingModal()}
+    </>
   )
 }

@@ -2,6 +2,7 @@
 
 import type { Dispatch, SetStateAction } from 'react'
 import { useI18n } from '@/components/I18nProvider'
+import Drawer from '@/components/ui/Drawer'
 
 export interface OnboardingFormData {
   educationLevel: string
@@ -24,12 +25,9 @@ export default function OnboardingModal({ data, onChange, isEditing, onSkip, onC
   const description = isEditing ? t('home.onboarding.descriptionEdit') : t('home.onboarding.description')
 
   return (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-    <div className="w-full max-w-xl rounded-[var(--radius-md)] border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:p-6">
-      <h2 className="font-display text-xl font-semibold text-slate-900">
-        {title}
-      </h2>
-      <p className="mt-2 text-sm leading-6 text-slate-700">
+  <Drawer open variant="dialog" size="lg" title={title} onClose={onSkip} closeLabel={t('home.deleteModal.cancel')}>
+    <div className="text-[var(--on_surface)]">
+      <p className="text-sm leading-6 text-slate-700">
         {description}
       </p>
 
@@ -121,7 +119,6 @@ export default function OnboardingModal({ data, onChange, isEditing, onSkip, onC
         </button>
       </div>
     </div>
-  </div>
-
+  </Drawer>
   )
 }

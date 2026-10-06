@@ -208,10 +208,10 @@ export default function ChatAssistant() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] font-body">
+    <div className="chat-fab fixed bottom-4 right-4 z-[50] font-body md:bottom-6 md:right-6">
       {/* Chat window */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-[360px] sm:w-[420px] h-[540px] glass-panel rounded-2xl overflow-hidden flex flex-col border border-white/20 shadow-2xl"
+        <div className="absolute bottom-16 right-0 w-[min(92vw,420px)] h-[min(540px,70dvh)] glass-panel rounded-2xl overflow-hidden flex flex-col border border-white/20 shadow-2xl"
           style={{ animation: 'slideUp 0.25s ease-out' }}
         >
           {/* Header */}

@@ -46,11 +46,29 @@ describe('Stage 1 - stepper and navigation', () => {
     expect(next).toBeTruthy()
   })
 
-  it('offers the way to Stage 2 once the explanation exists', () => {
-    resetStore({ stage: 1, explanationDraft: { outline: ['x'], argumentCore: 'c', evidenceReferences: [], bibliography: ['b'] } })
+  it('offers the way to Stage 2 at the end of the path once the explanation exists', () => {
+    resetStore({
+      stage: 1, workflowStep: 'step9_explanation', finalResearchQuestion: approvedQuestion, knowledgeStructure, evidenceRecords: [evidenceRecord()],
+      explanationDraft: { outline: ['x'], argumentCore: 'c', evidenceReferences: [], bibliography: ['b'] },
+    })
     renderStep(<Stage1Research />)
     fireEvent.click(screen.getByRole('button', { name: new RegExp(msg('steps.step1B.continueButton')) }))
     expect(state().stage).toBe(2)
+  })
+
+  it('keeps Previous/Next in the always-visible bar while earlier steps are open', () => {
+    resetStore({
+      stage: 1, workflowStep: 'step1_select', step0OptionalCompleted: true,
+      explanationDraft: { outline: ['x'], argumentCore: 'c', evidenceReferences: [], bibliography: ['b'] },
+    })
+    renderStep(<Stage1Research />)
+    expect(screen.queryByRole('button', { name: new RegExp(`^${msg('steps.step1B.continueButton')}`) })).not.toBeInTheDocument()
+    const bar = document.querySelector('.sticky.bottom-0') as HTMLElement
+    expect(bar).toBeTruthy()
+    fireEvent.click(within(bar).getByRole('button', { name: /→$/ }))
+    expect(state().workflowStep).toBe('step1a_compare')
+    fireEvent.click(within(bar).getByRole('button', { name: /^←/ }))
+    expect(state().workflowStep).toBe('step1_select')
   })
 
   it('renders nothing outside stage 1', () => {
@@ -135,7 +153,8 @@ describe('Login (AuthControls)', () => {
   it('says Google login is unavailable when the provider is not configured', async () => {
     mockFetch({ other: () => jsonResponse({}) })
     renderStep(<AuthControls />)
-    expect(await screen.findByText(/indisponivel|unavailable/i)).toBeInTheDocument()
+    const notice = await screen.findByTitle(/AUTH_GOOGLE_ID/)
+    expect(notice).toHaveTextContent(/indisponivel|unavailable/i) // short label; the env var names are in the tooltip
     expect(screen.queryByRole('button', { name: /Entrar com Google|Sign in with Google/ })).not.toBeInTheDocument()
   })
 

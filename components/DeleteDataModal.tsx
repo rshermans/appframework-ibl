@@ -1,6 +1,7 @@
 'use client'
 
 import { useI18n } from '@/components/I18nProvider'
+import Drawer from '@/components/ui/Drawer'
 
 interface DeleteDataModalProps {
   inputValue: string
@@ -14,11 +15,8 @@ export default function DeleteDataModal({ inputValue, onInputChange, deleting, o
   const { t } = useI18n()
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-[var(--radius-md)] border border-rose-200 bg-white p-5 text-slate-900 shadow-2xl">
-        <h3 className="text-base font-semibold">
-          {t('home.deleteModal.title')}
-        </h3>
+    <Drawer open variant="dialog" size="md" title={t('home.deleteModal.title')} onClose={onCancel} closeLabel={t('home.deleteModal.cancel')}>
+      <div className="text-[var(--on_surface)]">
         <p className="mt-2 text-sm text-slate-700">
           {t('home.deleteModal.description')}
         </p>
@@ -51,6 +49,6 @@ export default function DeleteDataModal({ inputValue, onInputChange, deleting, o
           </button>
         </div>
       </div>
-    </div>
+  </Drawer>
   )
 }

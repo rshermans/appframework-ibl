@@ -3,9 +3,7 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
-import AppBrand from '@/components/AppBrand'
 import EthicalTip from '@/components/EthicalTip'
-import LocaleSwitcher from '@/components/LocaleSwitcher'
 import { getIblEthicalTip } from '@/lib/iblFramework'
 import AudienceSelect from './multimodal/AudienceSelect'
 import Step10APoster from './multimodal/Step10APoster'
@@ -61,7 +59,6 @@ export default function Stage2Multimodal() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(27,38,59,0.12)_0%,rgba(27,38,59,0.03)_52%,rgba(120,89,27,0.12)_100%)]" />
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-3">
-            <AppBrand />
             <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--on_surface)] md:text-4xl">
               Stage 2 — Explain &amp; Create
             </h2>
@@ -75,7 +72,6 @@ export default function Stage2Multimodal() {
               tip={getIblEthicalTip('stage2', locale)}
             />
           </div>
-          <LocaleSwitcher compact />
         </div>
       </section>
 

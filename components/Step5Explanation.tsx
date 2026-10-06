@@ -207,7 +207,7 @@ export default function Step5Explanation() {
       metadata: {
         rating,
         audience,
-        bibliographyItems: explanationDraft.bibliography.length,
+        bibliographyItems: (explanationDraft.bibliography ?? []).length,
       },
       createdAt: new Date().toISOString(),
     })
@@ -226,7 +226,7 @@ export default function Step5Explanation() {
             eventType: 'rate',
             rating,
             audience,
-            bibliographyItems: explanationDraft.bibliography.length,
+            bibliographyItems: (explanationDraft.bibliography ?? []).length,
           }),
           topic,
           mode: 'standard',
@@ -292,7 +292,7 @@ export default function Step5Explanation() {
               {t('steps.step5.outline')}
             </div>
             <ol className="space-y-2">
-              {explanationDraft.outline.map((item, index) => (
+              {(explanationDraft.outline ?? []).map((item, index) => (
                 <li key={`${item}-${index}`} className="tonal-card ghost-border px-3 py-2 text-sm">
                   {index + 1}. {item}
                 </li>
@@ -315,7 +315,7 @@ export default function Step5Explanation() {
                 {t('steps.step5.evidenceReferences')}
               </div>
               <ul className="space-y-2">
-                {explanationDraft.evidenceReferences.map((reference) => (
+                {(explanationDraft.evidenceReferences ?? []).map((reference) => (
                   <li key={reference} className="tonal-card ghost-border px-3 py-2 text-sm text-[var(--on_surface)]">
                     {reference}
                   </li>
@@ -328,7 +328,7 @@ export default function Step5Explanation() {
                 {t('steps.step5.openIssues')}
               </div>
               <ul className="space-y-2">
-                {explanationDraft.openIssues.map((issue) => (
+                {(explanationDraft.openIssues ?? []).map((issue) => (
                   <li key={issue} className="tonal-card ghost-border px-3 py-2 text-sm text-[var(--on_surface)]">
                     {issue}
                   </li>
@@ -342,7 +342,7 @@ export default function Step5Explanation() {
               {isPortuguese ? 'Bibliografia completa' : 'Complete bibliography'}
             </div>
             <ul className="space-y-2">
-              {explanationDraft.bibliography.map((entry) => (
+              {(explanationDraft.bibliography ?? []).map((entry) => (
                 <li key={entry} className="tonal-card ghost-border px-3 py-2 text-sm text-[var(--on_surface)]">
                   {entry}
                 </li>
