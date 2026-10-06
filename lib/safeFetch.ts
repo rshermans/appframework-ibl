@@ -1,3 +1,5 @@
+import { readPersistedWizardState } from '@/lib/persistStorage'
+
 /**
  * Safe fetch wrapper that ensures JSON parsing never fails silently.
  * When the API returns HTML (e.g. Netlify error pages, 404s, redirects),
@@ -39,9 +41,8 @@ function appendAiConsent(url: string, options: RequestInit): RequestInit {
       return options
     }
 
-    const persisted = window.sessionStorage.getItem('ibl-step0-memory')
-    const parsedPersisted = persisted ? (JSON.parse(persisted) as { state?: { aiConsentAccepted?: boolean } }) : null
-    const aiConsentAccepted = parsedPersisted?.state?.aiConsentAccepted === true
+    const aiConsentAccepted =
+      readPersistedWizardState<{ aiConsentAccepted?: boolean }>()?.aiConsentAccepted === true
 
     return {
       ...options,

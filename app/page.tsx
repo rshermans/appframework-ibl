@@ -581,6 +581,7 @@ export default function Home() {
           <div className="space-y-3 text-sm leading-7 text-[var(--on_surface)]">
             <p>{t('home.consent.p1')}</p>
             <p>{t('home.consent.p2')}</p>
+            <p>{t('home.consent.localStorageNotice')}</p>
             <p>
               {t('home.consent.privacyPrefix')}
               <Link href="/privacy" className="font-semibold underline">

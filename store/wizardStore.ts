@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
+import { WIZARD_STORAGE_KEY, wizardStorage } from '@/lib/persistStorage'
 import { WizardState, Stage, InteractionRecord } from '@/types/wizard'
 import { resolveWorkflowStepId, toLegacyStepId } from '@/lib/workflow'
 import { clearSessionProjectCookie, setSessionProjectCookie, generateProjectId } from '@/lib/sessionClient'
@@ -234,8 +235,8 @@ export const useWizardStore = create<WizardState>()(
     }),
     }),
     {
-      name: 'ibl-step0-memory',
-      storage: createJSONStorage(() => sessionStorage),
+      name: WIZARD_STORAGE_KEY,
+      storage: createJSONStorage(() => wizardStorage),
       partialize: (state) => ({
         projectId: state.projectId,
         sessionId: state.sessionId,
