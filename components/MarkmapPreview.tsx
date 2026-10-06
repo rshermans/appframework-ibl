@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Maximize2, X, RefreshCw } from 'lucide-react'
+import { Maximize2, X, RefreshCw, Download } from 'lucide-react'
+import type { Markmap } from 'markmap-view'
 
 interface MarkmapPreviewProps {
   markdown: string
@@ -9,101 +10,168 @@ interface MarkmapPreviewProps {
 }
 
 const DEFAULT_HEIGHT = 420
-const DEFAULT_WIDTH = 800
 
-export default function MarkmapPreview({ markdown, className }: MarkmapPreviewProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const svgRef = useRef<SVGSVGElement | null>(null)
-  const modalSvgRef = useRef<SVGSVGElement | null>(null)
-  const [error, setError] = useState('')
-  const [containerWidth, setContainerWidth] = useState(DEFAULT_WIDTH)
-  const [isMaximized, setIsMaximized] = useState(false)
-  const [retryKey, setRetryKey] = useState(0)
+interface MarkmapCanvasProps {
+  markdown: string
+  height: number | string
+  onError: (message: string) => void
+  svgRef?: React.MutableRefObject<SVGSVGElement | null>
+}
 
-  useEffect(() => {
-    if (!containerRef.current || typeof ResizeObserver === 'undefined') return
-
-    const observer = new ResizeObserver((entries) => {
-      const nextWidth = Math.max(Math.round(entries[0]?.contentRect.width || DEFAULT_WIDTH), 320)
-      setContainerWidth((currentWidth) => (currentWidth === nextWidth ? currentWidth : nextWidth))
-    })
-
-    observer.observe(containerRef.current)
-    return () => observer.disconnect()
-  }, [])
+/**
+ * Owns one Markmap instance. The map is created once, as soon as the SVG has a
+ * real size (a hidden/zero-size container used to yield a blank map), updated
+ * in place when the markdown changes and re-fitted when the container resizes.
+ */
+function MarkmapCanvas({ markdown, height, onError, svgRef: externalSvgRef }: MarkmapCanvasProps) {
+  const internalSvgRef = useRef<SVGSVGElement | null>(null)
+  const svgRef = externalSvgRef ?? internalSvgRef
+  const markmapRef = useRef<Markmap | null>(null)
+  const markdownRef = useRef(markdown)
+  markdownRef.current = markdown
 
   useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+
     let disposed = false
+    let creating = false
+    let fitTimer: ReturnType<typeof setTimeout> | undefined
 
-    async function renderMarkmap() {
-      const targetSvg = isMaximized ? modalSvgRef.current : svgRef.current
-      if (!targetSvg) return
+    async function render() {
+      const [{ Transformer }, { Markmap }] = await Promise.all([
+        import('markmap-lib'),
+        import('markmap-view'),
+      ])
+      if (disposed || !svg) return
 
-      try {
-        setError('')
-        const width = isMaximized 
-          ? window.innerWidth * 0.9 
-          : Math.max(containerWidth || containerRef.current?.clientWidth || DEFAULT_WIDTH, 320)
-        
-        const height = isMaximized ? window.innerHeight * 0.8 : DEFAULT_HEIGHT
+      const { root } = new Transformer().transform(markdownRef.current?.trim() || '- Mind map\n  - Empty')
 
-        targetSvg.innerHTML = ''
-        targetSvg.setAttribute('width', String(width))
-        targetSvg.setAttribute('height', String(height))
-        targetSvg.style.width = '100%'
-        targetSvg.style.height = `${height}px`
-        targetSvg.style.display = 'block'
-
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-
-        // Dynamically import markmap libraries
-        const [{ Transformer }, { Markmap }] = await Promise.all([
-          import('markmap-lib'),
-          import('markmap-view'),
-        ])
-
-        if (disposed) return
-
-        const transformer = new Transformer()
-        const { root } = transformer.transform(markdown?.trim() || '- Mind map\n  - Empty')
-
-        Markmap.create(
-          targetSvg,
-          {
-            autoFit: true,
-            duration: 500,
-            maxWidth: 300,
-            pan: true,
-            zoom: true,
-          },
-          root
-        )
-      } catch (err) {
-        if (!disposed) {
-          console.error('Markmap error:', err)
-          setError('Falha ao carregar o visualizador do mapa mental. Por favor, tente atualizar a página ou clique no botão de recarregar.')
-        }
+      if (markmapRef.current) {
+        void markmapRef.current.setData(root)
+        void markmapRef.current.fit()
+        return
       }
+
+      markmapRef.current = Markmap.create(
+        svg,
+        { autoFit: true, duration: 400, maxWidth: 300, pan: true, zoom: true },
+        root
+      )
     }
 
-    renderMarkmap()
+    const tryRender = () => {
+      if (disposed || creating) return
+      const { width, height: h } = svg.getBoundingClientRect()
+      if (width < 10 || h < 10) return // wait until the container is laid out
+      creating = true
+      render()
+        .catch((err) => {
+          console.error('Markmap error:', err)
+          if (!disposed) onError('Falha ao carregar o visualizador do mapa mental.')
+        })
+        .finally(() => {
+          creating = false
+        })
+    }
+
+    const observer = new ResizeObserver(() => {
+      if (!markmapRef.current) {
+        tryRender()
+        return
+      }
+      clearTimeout(fitTimer)
+      fitTimer = setTimeout(() => void markmapRef.current?.fit(), 120)
+    })
+    observer.observe(svg)
+    tryRender()
 
     return () => {
       disposed = true
+      clearTimeout(fitTimer)
+      observer.disconnect()
+      markmapRef.current?.destroy()
+      markmapRef.current = null
+      svg.innerHTML = ''
     }
-  }, [markdown, containerWidth, isMaximized, retryKey])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const handleRetry = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setRetryKey(v => v + 1)
+  // Data updates reuse the existing instance instead of rebuilding the SVG.
+  useEffect(() => {
+    if (!markmapRef.current) return
+    import('markmap-lib')
+      .then(({ Transformer }) => {
+        const { root } = new Transformer().transform(markdown?.trim() || '- Mind map\n  - Empty')
+        void markmapRef.current?.setData(root)
+        void markmapRef.current?.fit()
+      })
+      .catch((err) => console.error('Markmap update error:', err))
+  }, [markdown])
+
+  return (
+    <svg
+      ref={svgRef}
+      className="block w-full cursor-grab active:cursor-grabbing"
+      style={{ height }}
+    />
+  )
+}
+
+function downloadSvg(svg: SVGSVGElement | null) {
+  if (!svg) return
+  const clone = svg.cloneNode(true) as SVGSVGElement
+  const rect = svg.getBoundingClientRect()
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  clone.setAttribute('width', String(Math.round(rect.width)))
+  clone.setAttribute('height', String(Math.round(rect.height)))
+
+  // Markmap styles live in a <style> tag in the document head; inline them so
+  // the exported file renders correctly outside the page.
+  const css = Array.from(document.querySelectorAll('style'))
+    .map((style) => style.textContent || '')
+    .filter((text) => text.includes('.markmap'))
+    .join('\n')
+  if (css) {
+    const style = document.createElementNS('http://www.w3.org/2000/svg', 'style')
+    style.textContent = css
+    clone.insertBefore(style, clone.firstChild)
   }
+
+  const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'mapa-mental.svg'
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+export default function MarkmapPreview({ markdown, className }: MarkmapPreviewProps) {
+  const [error, setError] = useState('')
+  const [isMaximized, setIsMaximized] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
+  const inlineSvgRef = useRef<SVGSVGElement | null>(null)
+
+  useEffect(() => {
+    if (!isMaximized) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMaximized(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isMaximized])
 
   if (error) {
     return (
       <div className={`rounded-[var(--radius-xl)] bg-[var(--surface_container_lowest)] p-6 text-sm text-[var(--on_surface)] ghost-border flex flex-col items-center gap-4 ${className || ''}`}>
         <p className="text-center opacity-70">{error}</p>
-        <button 
-          onClick={handleRetry}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setError('')
+            setRetryKey((v) => v + 1)
+          }}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--surface_container_high)] hover:bg-[var(--surface_container_highest)] transition-colors font-medium border border-[var(--outline_variant)]"
         >
           <RefreshCw size={16} />
@@ -115,35 +183,50 @@ export default function MarkmapPreview({ markdown, className }: MarkmapPreviewPr
 
   return (
     <>
-      <div ref={containerRef} className={`group relative overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface_container_lowest)] p-2 ghost-border transition-all hover:ambient-shadow ${className || ''}`}>
-        <button
-          onClick={() => setIsMaximized(true)}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-[var(--surface_container_highest)] text-[var(--on_surface)] opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 active:scale-95"
-          title="Maximizar"
-        >
-          <Maximize2 size={18} />
-        </button>
-        <svg ref={svgRef} className="cursor-grab active:cursor-grabbing" />
+      <div className={`group relative overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface_container_lowest)] p-2 ghost-border transition-all hover:ambient-shadow ${className || ''}`}>
+        <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          <button
+            onClick={() => downloadSvg(inlineSvgRef.current)}
+            className="p-2 rounded-full bg-[var(--surface_container_highest)] text-[var(--on_surface)] hover:scale-110 active:scale-95"
+            title="Descarregar SVG"
+            aria-label="Descarregar SVG"
+          >
+            <Download size={18} />
+          </button>
+          <button
+            onClick={() => setIsMaximized(true)}
+            className="p-2 rounded-full bg-[var(--surface_container_highest)] text-[var(--on_surface)] hover:scale-110 active:scale-95"
+            title="Maximizar"
+            aria-label="Maximizar"
+          >
+            <Maximize2 size={18} />
+          </button>
+        </div>
+        <MarkmapCanvas
+          key={retryKey}
+          markdown={markdown}
+          height={DEFAULT_HEIGHT}
+          onError={setError}
+          svgRef={inlineSvgRef}
+        />
       </div>
 
       {isMaximized && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300">
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-md" 
-            onClick={() => setIsMaximized(false)} 
-          />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsMaximized(false)} />
           <div className="relative w-full max-w-6xl h-[90vh] glass-panel-heavy rounded-[var(--radius-2xl)] ambient-shadow overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--outline_variant)]">
               <h3 className="font-display font-semibold text-[var(--on_surface)]">Mapa Mental Interativo</h3>
               <button
                 onClick={() => setIsMaximized(false)}
                 className="p-2 rounded-full hover:bg-[var(--surface_container_highest)] text-[var(--on_surface)] transition-colors"
+                aria-label="Fechar"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="flex-1 bg-[var(--surface_container_lowest)] relative overflow-hidden">
-               <svg ref={modalSvgRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+              <MarkmapCanvas markdown={markdown} height="100%" onError={setError} />
             </div>
           </div>
         </div>

@@ -8,101 +8,8 @@ import StepHeader from '@/components/StepHeader'
 import MarkmapPreview from '@/components/MarkmapPreview'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
-
-interface MindMapLine {
-  level: number
-  text: string
-}
-
-function normalizeMindMapText(value: string): string {
-  return value.replace(/\s+/g, ' ').trim()
-}
-
-function parseOutlineMarkdown(markdown?: string): MindMapLine[] {
-  if (!markdown) return []
-
-  return markdown
-    .split('\n')
-    .map((line) => {
-      const match = line.match(/^(\s*)[-*]\s+(.+)$/)
-      if (!match) return null
-      const indentation = Math.floor(match[1].replace(/\t/g, '  ').length / 2)
-      return {
-        level: indentation + 1,
-        text: normalizeMindMapText(match[2]),
-      }
-    })
-    .filter((line): line is MindMapLine => Boolean(line && line.text))
-}
-
-function deriveFallbackMindMap(
-  structure: KnowledgeStructure,
-  rootLabel: string
-): MindMapLine[] {
-  const lines: MindMapLine[] = [{ level: 1, text: normalizeMindMapText(rootLabel) }]
-  const safeTopics = structure.topics.slice(0, 8)
-
-  safeTopics.forEach((topic, topicIndex) => {
-    lines.push({ level: 2, text: normalizeMindMapText(topic) })
-
-    const relatedEdges = structure.conceptMapEdges
-      .filter(
-        (edge) =>
-          edge.from.toLowerCase().includes(topic.toLowerCase()) ||
-          edge.to.toLowerCase().includes(topic.toLowerCase())
-      )
-      .flatMap((edge) => [edge.from, edge.to])
-
-    const chunkedSubtopics = structure.subtopics.slice(topicIndex * 2, topicIndex * 2 + 2)
-    const candidateDetails = Array.from(
-      new Set([...chunkedSubtopics, ...relatedEdges, ...structure.conceptMapNodes.slice(topicIndex, topicIndex + 2)])
-    )
-      .map((entry) => normalizeMindMapText(entry))
-      .filter((entry) => entry && entry.toLowerCase() !== topic.toLowerCase())
-      .slice(0, 3)
-
-    candidateDetails.forEach((detail) => {
-      lines.push({ level: 3, text: detail })
-    })
-  })
-
-  return lines
-}
-
-function buildMindMapLines(
-  structure: KnowledgeStructure,
-  rootLabel: string
-): MindMapLine[] {
-  const parsedOutline = parseOutlineMarkdown(structure.mindMapMarkdown)
-  if (parsedOutline.length === 0) {
-    return deriveFallbackMindMap(structure, rootLabel)
-  }
-
-  const firstLine = parsedOutline[0]
-  if (firstLine.level === 1) {
-    return parsedOutline
-  }
-
-  return [{ level: 1, text: normalizeMindMapText(rootLabel) }, ...parsedOutline.map((line) => ({
-    level: Math.min(line.level + 1, 3),
-    text: line.text,
-  }))]
-}
-
-function buildPlantUmlMindMap(lines: MindMapLine[]): string {
-  const normalized = lines
-    .filter((line) => line.text.length > 0)
-    .map((line) => `${'*'.repeat(Math.max(1, Math.min(3, line.level)))} ${line.text}`)
-
-  return ['@startmindmap', ...normalized, '@endmindmap'].join('\n')
-}
-
-function buildMarkmapMarkdown(lines: MindMapLine[]): string {
-  return lines
-    .filter((line) => line.text.length > 0)
-    .map((line) => `${'  '.repeat(Math.max(0, line.level - 1))}- ${line.text}`)
-    .join('\n')
-}
+import ConceptMapGraph from '@/components/ConceptMapGraph'
+import { buildMarkmapMarkdown, buildMindMapLines, buildPlantUmlMindMap } from '@/lib/mindmap'
 
 export default function Step4Structure() {
   const { locale, t } = useI18n()
@@ -124,9 +31,7 @@ export default function Step4Structure() {
   const isPortuguese = locale === 'pt-PT'
   const rootLabel = finalResearchQuestion?.question || topic || 'Research Question'
   const mindMapLines = knowledgeStructure ? buildMindMapLines(knowledgeStructure, rootLabel) : []
-  const markmapMarkdown = knowledgeStructure
-    ? (knowledgeStructure.mindMapMarkdown?.trim() || buildMarkmapMarkdown(mindMapLines))
-    : ''
+  const markmapMarkdown = knowledgeStructure ? buildMarkmapMarkdown(mindMapLines) : ''
   const plantUmlMindMap = knowledgeStructure ? buildPlantUmlMindMap(mindMapLines) : ''
 
   const buildKnowledgeStructure = async () => {
@@ -418,6 +323,17 @@ export default function Step4Structure() {
                 </span>
               ))}
             </div>
+          </div>
+
+          <div>
+            <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
+              {isPortuguese ? 'Mapa conceptual' : 'Concept map'}
+            </div>
+            <ConceptMapGraph
+              nodes={knowledgeStructure.conceptMapNodes}
+              edges={knowledgeStructure.conceptMapEdges}
+              emptyLabel={isPortuguese ? 'Sem relacoes para desenhar.' : 'No relations to draw.'}
+            />
           </div>
 
           <div>
