@@ -3,21 +3,21 @@ import type { EvidenceRecord, KnowledgeStructure } from '@/types/research-workfl
 type RawEdge = { from?: string; to?: string; relation?: string; source?: string; target?: string; label?: string }
 
 export interface RawKnowledgeStructure {
-        topics?: string[]
-        main_topics?: string[]
-        subtopics?: string[]
-        key_subtopics?: string[]
-        concept_map_nodes?: string[]
-        conceptMapNodes?: string[]
-        nodes?: string[]
-        concept_map_edges?: RawEdge[]
-        conceptMapEdges?: Array<{ from?: string; to?: string; relation?: string; source?: string; target?: string; label?: string }>
-        edges?: Array<{ from?: string; to?: string; relation?: string; source?: string; target?: string; label?: string }>
-        mind_map_markdown?: string
-        mindMapMarkdown?: string
-        glossary?: KnowledgeStructure['glossary']
-        terms?: KnowledgeStructure['glossary']
-      }
+  topics?: string[]
+  main_topics?: string[]
+  subtopics?: string[]
+  key_subtopics?: string[]
+  concept_map_nodes?: string[]
+  conceptMapNodes?: string[]
+  nodes?: string[]
+  concept_map_edges?: RawEdge[]
+  conceptMapEdges?: RawEdge[]
+  edges?: RawEdge[]
+  mind_map_markdown?: string
+  mindMapMarkdown?: string
+  glossary?: KnowledgeStructure['glossary']
+  terms?: KnowledgeStructure['glossary']
+}
 
 /**
  * Turns the model's JSON into a KnowledgeStructure. Accepts snake_case and camelCase keys,
