@@ -14,6 +14,9 @@
 # DO NOT add catch-all redirects or manual functions directory here —
 # they will intercept /_next/static/* assets and break CSS/JS loading.
 
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "OPENAI_MODEL,NEXT_PUBLIC_APP_URL"
+
 [functions]
   node_bundler = "nft"
   # Netlify timeout limits: 30s (basic) or 60s (pro)
