@@ -81,20 +81,77 @@ export default async function TelemetryDashboardPage({ searchParams }: PageProps
       : 'all'
   const selectedStageNumber = Number(selectedStage)
 
-  const session = await auth()
-  if (!session?.user) {
-    // Only logged in users or special access? We omit redirection for local dev debug
+  // Telemetry exposes per-session student data: require a signed-in user, and
+  // restrict to TELEMETRY_ADMIN_EMAILS (comma separated) when that is configured.
+  let sessionEmail: string | null = null
+  let signedIn = false
+  try {
+    const session = await auth()
+    signedIn = Boolean(session?.user)
+    sessionEmail = session?.user?.email?.toLowerCase() ?? null
+  } catch (error) {
+    console.error('[Telemetry] auth() failed', error)
+  }
+  const adminEmails = (process.env.TELEMETRY_ADMIN_EMAILS || '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
+  const isAllowed = adminEmails.length > 0
+    ? Boolean(sessionEmail && adminEmails.includes(sessionEmail))
+    : signedIn
+
+  if (!isAllowed) {
+    const pt = locale === 'pt-PT'
+    return (
+      <div className="min-h-screen bg-slate-50 p-6 font-body">
+        <div className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="font-display text-xl font-bold text-slate-900">
+            {pt ? 'Acesso restrito' : 'Restricted access'}
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            {signedIn
+              ? (pt ? 'A sua conta nao tem permissao para ver a telemetria.' : 'Your account is not allowed to view telemetry.')
+              : (pt ? 'Inicie sessao com Google na pagina inicial para ver a telemetria.' : 'Sign in with Google on the home page to view telemetry.')}
+          </p>
+          <a href="/" className="mt-5 inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+            {pt ? 'Voltar ao inicio' : 'Back to home'}
+          </a>
+        </div>
+      </div>
+    )
   }
 
   try {
+    const periodWhere: Prisma.ProjectInteractionWhereInput = buildPeriodStart(selectedPeriod)
+      ? { createdAt: { gte: buildPeriodStart(selectedPeriod) as Date } }
+      : {}
+
     const baseWhere: Prisma.ProjectInteractionWhereInput = {
-      ...(buildPeriodStart(selectedPeriod)
-        ? { createdAt: { gte: buildPeriodStart(selectedPeriod) as Date } }
-        : {}),
+      ...periodWhere,
       ...(selectedStage !== 'all' && Number.isFinite(selectedStageNumber)
         ? { stage: selectedStageNumber }
         : {}),
+      // Filtered in the database (not in memory over a 500-row sample) so totals stay correct.
+      ...(selectedEventType !== 'all'
+        ? { metadata: { path: ['eventType'], equals: selectedEventType } }
+        : {}),
     }
+
+    // Filter options come from the period only, so choosing a stage/event no longer
+    // collapses the dropdown to the single selected value.
+    const [stageRows, eventTypeRows] = await Promise.all([
+      prisma.projectInteraction.findMany({
+        where: periodWhere,
+        distinct: ['stage'],
+        select: { stage: true },
+      }),
+      prisma.projectInteraction.findMany({
+        where: periodWhere,
+        orderBy: { createdAt: 'desc' },
+        take: 1000,
+        select: { metadata: true },
+      }),
+    ])
 
     const matchedByDbFilters = await prisma.projectInteraction.count({ where: baseWhere })
 
@@ -118,26 +175,15 @@ export default async function TelemetryDashboardPage({ searchParams }: PageProps
 
   const eventTypeOptions = Array.from(
     new Set(
-      interactions
-        .map((interaction) => {
-          const metadata = interaction.metadata as Record<string, unknown> | null
-          return String(metadata?.eventType || '').trim()
-        })
+      eventTypeRows
+        .map((row) => String((row.metadata as Record<string, unknown> | null)?.eventType || '').trim())
         .filter(Boolean)
     )
   ).sort((a, b) => a.localeCompare(b))
 
-  const stageOptions = Array.from(new Set(interactions.map((interaction) => String(interaction.stage)))).sort()
+  const stageOptions = stageRows.map((row) => String(row.stage)).sort((a, b) => Number(a) - Number(b))
 
-  const filteredInteractions = interactions.filter((interaction) => {
-    if (selectedEventType !== 'all') {
-      const metadata = interaction.metadata as Record<string, unknown> | null
-      const eventType = String(metadata?.eventType || '')
-      if (eventType !== selectedEventType) return false
-    }
-
-    return true
-  })
+  const filteredInteractions = interactions
 
   const totalEvents = filteredInteractions.length
   const enrichedEvents = filteredInteractions.filter(
@@ -301,17 +347,17 @@ export default async function TelemetryDashboardPage({ searchParams }: PageProps
             </div>
 
             <div className="rounded-xl bg-violet-50 px-4 py-3 text-center">
-              <div className="text-2xl font-bold text-violet-700">{avgBloomLevel.toFixed(1)}</div>
+              <div className="text-2xl font-bold text-violet-700">{bloomLevels.length ? avgBloomLevel.toFixed(1) : '—'}</div>
               <div className="text-xs font-semibold uppercase tracking-wider text-violet-900/70">{t('telemetry.kpi.avgBloom')}</div>
             </div>
 
             <div className="rounded-xl bg-cyan-50 px-4 py-3 text-center">
-              <div className="text-2xl font-bold text-cyan-700">{avgConfidence.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-cyan-700">{confidenceValues.length ? avgConfidence.toFixed(2) : '—'}</div>
               <div className="text-xs font-semibold uppercase tracking-wider text-cyan-900/70">{t('telemetry.kpi.avgConfidence')}</div>
             </div>
 
             <div className="rounded-xl bg-rose-50 px-4 py-3 text-center">
-              <div className="text-2xl font-bold text-rose-700">{avgFrustration.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-rose-700">{frustrationValues.length ? avgFrustration.toFixed(2) : '—'}</div>
               <div className="text-xs font-semibold uppercase tracking-wider text-rose-900/70">{t('telemetry.kpi.avgFrustration')}</div>
             </div>
 
@@ -473,10 +519,12 @@ export default async function TelemetryDashboardPage({ searchParams }: PageProps
               <li>✗ <strong>Prisma schema not migrated</strong> - Run migrations in production</li>
             </ul>
 
-            <div className="mb-6 rounded-lg bg-white p-4 font-mono text-sm text-red-700">
-              <strong>Error details:</strong>
-              <pre className="mt-2 whitespace-pre-wrap break-words text-xs">{errorMessage}</pre>
-            </div>
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="mb-6 rounded-lg bg-white p-4 font-mono text-sm text-red-700">
+                <strong>Error details:</strong>
+                <pre className="mt-2 whitespace-pre-wrap break-words text-xs">{errorMessage}</pre>
+              </div>
+            )}
 
             <div className="space-y-4 rounded-lg bg-white p-4">
               <h2 className="font-semibold text-slate-900">📋 Setup Instructions for Netlify:</h2>
