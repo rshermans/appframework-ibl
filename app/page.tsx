@@ -18,6 +18,10 @@ import {
   setSessionProjectCookie,
 } from '@/lib/sessionClient'
 import { persistInteractionEvent } from '@/lib/interactionClient'
+import { buildGoogleDocMarkdown, buildSessionExport, buildShareEmail } from '@/lib/sessionExport'
+import OnboardingModal from '@/components/OnboardingModal'
+import DeleteDataModal from '@/components/DeleteDataModal'
+import ProfileCard from '@/components/ProfileCard'
 
 export default function Home() {
   const createEmptyOnboardingData = () => ({
@@ -193,17 +197,6 @@ export default function Home() {
     })
   }
 
-  const EDUCATION_LABELS: Record<string, Record<string, string>> = {
-    'pt-PT': { basic: 'Ensino básico/secundário', undergraduate: 'Licenciatura', master: 'Mestrado', doctorate: 'Doutoramento' },
-    en: { basic: 'School (K-12)', undergraduate: 'Undergraduate', master: 'Master', doctorate: 'Doctorate' },
-  }
-  const EXPERIENCE_LABELS: Record<string, Record<string, string>> = {
-    'pt-PT': { beginner: 'Iniciante', intermediate: 'Intermédia', advanced: 'Avançada' },
-    en: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
-  }
-  const friendlyLabel = (map: Record<string, Record<string, string>>, value: string) =>
-    map[locale]?.[value] ?? map['pt-PT']?.[value] ?? value
-
   const handleOnboardingSkip = () => {
     const source = isEditingProfile ? 'edit' : 'start'
 
@@ -226,117 +219,16 @@ export default function Home() {
     trackOnboardingEvent(eventType, onboardingData, source)
   }
 
-  const renderOnboardingModal = () => {
-    if (!showOnboardingModal) return null
-
-    const title = isEditingProfile
-      ? t('home.onboarding.titleEdit')
-      : t('home.onboarding.title')
-    const description = isEditingProfile
-      ? t('home.onboarding.descriptionEdit')
-      : t('home.onboarding.description')
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-        <div className="w-full max-w-xl rounded-[var(--radius-md)] border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:p-6">
-          <h2 className="font-display text-xl font-semibold text-slate-900">
-            {title}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            {description}
-          </p>
-
-          <ul className="mt-4 space-y-2 rounded-[var(--radius-sm)] bg-slate-50 p-3 text-xs leading-6 text-slate-700">
-            <li>{t('home.onboarding.benefit1')}</li>
-            <li>{t('home.onboarding.benefit2')}</li>
-            <li>{t('home.onboarding.benefit3')}</li>
-          </ul>
-
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <label className="text-sm font-medium text-slate-800">
-              {t('home.onboarding.educationLabel')}
-              <select
-                value={onboardingData.educationLevel}
-                onChange={(e) =>
-                  setOnboardingData((prev) => ({ ...prev, educationLevel: e.target.value }))
-                }
-                className="mt-1 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="">{t('home.onboarding.educationPlaceholder')}</option>
-                <option value="basic">{t('home.onboarding.educationBasic')}</option>
-                <option value="undergraduate">{t('home.onboarding.educationUndergraduate')}</option>
-                <option value="master">{t('home.onboarding.educationMaster')}</option>
-                <option value="doctorate">{t('home.onboarding.educationDoctorate')}</option>
-              </select>
-            </label>
-
-            <label className="text-sm font-medium text-slate-800">
-              {t('home.onboarding.experienceLabel')}
-              <select
-                value={onboardingData.researchExperience}
-                onChange={(e) =>
-                  setOnboardingData((prev) => ({ ...prev, researchExperience: e.target.value }))
-                }
-                className="mt-1 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="">{t('home.onboarding.experiencePlaceholder')}</option>
-                <option value="beginner">{t('home.onboarding.experienceBeginner')}</option>
-                <option value="intermediate">{t('home.onboarding.experienceIntermediate')}</option>
-                <option value="advanced">{t('home.onboarding.experienceAdvanced')}</option>
-              </select>
-            </label>
-
-            <label className="text-sm font-medium text-slate-800">
-              {t('home.onboarding.domainLabel')}
-              <input
-                type="text"
-                value={onboardingData.domain}
-                onChange={(e) =>
-                  setOnboardingData((prev) => ({ ...prev, domain: e.target.value }))
-                }
-                placeholder={t('home.onboarding.domainPlaceholder')}
-                className="mt-1 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-800">
-              {t('home.onboarding.roleLabel')}
-              <input
-                type="text"
-                value={onboardingData.role}
-                onChange={(e) =>
-                  setOnboardingData((prev) => ({ ...prev, role: e.target.value }))
-                }
-                placeholder={t('home.onboarding.rolePlaceholder')}
-                className="mt-1 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
-              />
-            </label>
-          </div>
-
-          <p className="mt-4 text-xs leading-6 text-slate-600">
-            {t('home.onboarding.optionalNote')}
-          </p>
-
-          <div className="mt-6 flex flex-wrap justify-end gap-2">
-            <button
-              type="button"
-              onClick={handleOnboardingSkip}
-              className="rounded-[var(--radius-sm)] border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              {isEditingProfile ? t('home.deleteModal.cancel') : t('home.onboarding.skip')}
-            </button>
-            <button
-              type="button"
-              onClick={handleOnboardingContinue}
-              className="rounded-[var(--radius-sm)] bg-[var(--primary)] px-3 py-2 text-xs font-semibold text-[var(--on_primary)]"
-            >
-              {t('home.onboarding.continue')}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const renderOnboardingModal = () =>
+    showOnboardingModal ? (
+      <OnboardingModal
+        data={onboardingData}
+        onChange={setOnboardingData}
+        isEditing={isEditingProfile}
+        onSkip={handleOnboardingSkip}
+        onContinue={handleOnboardingContinue}
+      />
+    ) : null
 
   const handleResetSession = () => {
     resetSession()
@@ -412,34 +304,9 @@ export default function Home() {
     }
   }
 
-  const buildSessionExport = () => {
-    const snapshot = useWizardStore.getState()
-    return {
-      exportedAt: new Date().toISOString(),
-      projectId: snapshot.projectId,
-      stage: snapshot.stage,
-      workflowStep: snapshot.workflowStep,
-      topic: snapshot.topic,
-      finalResearchQuestion: snapshot.finalResearchQuestion,
-      searchDesign: snapshot.searchDesign,
-      selectedArticles: snapshot.selectedSearchArticleIds,
-      evidenceRecords: snapshot.evidenceRecords,
-      knowledgeStructure: snapshot.knowledgeStructure,
-      explanationDraft: snapshot.explanationDraft,
-      multimodalOutputs: snapshot.multimodalOutputs,
-      reflection: {
-        peerReviews: snapshot.peerReviews,
-        selfAssessment: snapshot.selfAssessment,
-        reflectionJournal: snapshot.reflectionJournal,
-        extensionPlan: snapshot.extensionPlan,
-      },
-      interactions: snapshot.interactions,
-    }
-  }
-
   const handleDownloadSessionJson = () => {
     if (!projectId) return
-    const payload = buildSessionExport()
+    const payload = buildSessionExport(useWizardStore.getState())
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
@@ -451,34 +318,19 @@ export default function Home() {
 
   const handleShareEmail = () => {
     if (!projectId) return
-    const subject = encodeURIComponent(pt ? `Sessao IBL ${projectId}` : `IBL Session ${projectId}`)
-    const body = encodeURIComponent(
-      pt
-        ? `ID do projeto: ${projectId}\nTopico: ${topic || storeTopic || '-'}\nStage: ${stage}\nInteracoes: ${interactions.length}\n\nUse /api/export/${projectId} para descarregar o registo PDF.`
-        : `Project ID: ${projectId}\nTopic: ${topic || storeTopic || '-'}\nStage: ${stage}\nInteractions: ${interactions.length}\n\nUse /api/export/${projectId} to download the PDF record.`
-    )
-    window.location.href = `mailto:?subject=${subject}&body=${body}`
+    const { subject, body } = buildShareEmail({
+      projectId,
+      topic: topic || storeTopic,
+      stage,
+      interactionCount: interactions.length,
+      pt,
+    })
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
 
   const handleShareGoogleDoc = async () => {
     if (!projectId) return
-    const payload = buildSessionExport()
-    const markdown = [
-      `# IBL Session ${projectId}`,
-      `- Topic: ${payload.topic || '-'}`,
-      `- Stage: ${payload.stage}`,
-      `- Workflow Step: ${payload.workflowStep}`,
-      `- Exported At: ${payload.exportedAt}`,
-      '',
-      '## Final Question',
-      payload.finalResearchQuestion?.question || '-',
-      '',
-      '## Explanation Core',
-      payload.explanationDraft?.argumentCore || '-',
-      '',
-      '## Notes',
-      `Interactions recorded: ${payload.interactions.length}`,
-    ].join('\n')
+    const markdown = buildGoogleDocMarkdown(buildSessionExport(useWizardStore.getState()))
 
     try {
       await navigator.clipboard.writeText(markdown)
@@ -694,70 +546,19 @@ export default function Home() {
         {stage === 2 && <Stage2Multimodal />}
         {stage === 3 && <Stage3Reflection />}
 
-        <section className="mt-4 rounded-[var(--radius-md)] bg-[var(--surface_container_low)] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-display text-sm font-semibold uppercase tracking-[0.08em] text-[var(--on_surface)]">
-              {t('home.profileCard.title')}
-            </h2>
-            <button
-              type="button"
-              onClick={handleEditProfile}
-              className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-semibold text-[var(--on_surface)] hover:bg-[var(--surface_container_high)]"
-            >
-              {t('home.profileCard.edit')}
-            </button>
-          </div>
-
-          <div className="mt-3 grid gap-2 text-xs text-[var(--on_surface)] md:grid-cols-2">
-            <p><span className="font-semibold">{t('home.profileCard.education')}:</span> {userProfile?.educationLevel ? friendlyLabel(EDUCATION_LABELS, userProfile.educationLevel) : t('home.profileCard.empty')}</p>
-            <p><span className="font-semibold">{t('home.profileCard.experience')}:</span> {userProfile?.researchExperience ? friendlyLabel(EXPERIENCE_LABELS, userProfile.researchExperience) : t('home.profileCard.empty')}</p>
-            <p><span className="font-semibold">{t('home.profileCard.domain')}:</span> {userProfile?.domain || t('home.profileCard.empty')}</p>
-            <p><span className="font-semibold">{t('home.profileCard.role')}:</span> {userProfile?.role || t('home.profileCard.empty')}</p>
-          </div>
-        </section>
+        <ProfileCard userProfile={userProfile} onEdit={handleEditProfile} />
 
         {showDeleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-            <div className="w-full max-w-md rounded-[var(--radius-md)] border border-rose-200 bg-white p-5 text-slate-900 shadow-2xl">
-              <h3 className="text-base font-semibold">
-                {t('home.deleteModal.title')}
-              </h3>
-              <p className="mt-2 text-sm text-slate-700">
-                {t('home.deleteModal.description')}
-              </p>
-              <p className="mt-3 text-xs font-semibold text-slate-700">
-                {t('home.deleteModal.instruction')}
-              </p>
-              <input
-                type="text"
-                value={deleteConfirmationInput}
-                onChange={(e) => setDeleteConfirmationInput(e.target.value)}
-                placeholder={t('home.deleteModal.keyword')}
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-slate-300 px-3 py-2 text-sm"
-              />
-
-              <div className="mt-4 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDeleteModal(false)
-                    setDeleteConfirmationInput('')
-                  }}
-                  className="rounded-[var(--radius-sm)] border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  {t('home.deleteModal.cancel')}
-                </button>
-                <button
-                  type="button"
-                  disabled={deletingServerData || deleteConfirmationInput.trim() !== t('home.deleteModal.keyword')}
-                  onClick={confirmDeleteServerData}
-                  className="rounded-[var(--radius-sm)] bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                >
-                  {deletingServerData ? t('home.deleteModal.deleting') : t('home.deleteModal.confirm')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <DeleteDataModal
+            inputValue={deleteConfirmationInput}
+            onInputChange={setDeleteConfirmationInput}
+            deleting={deletingServerData}
+            onCancel={() => {
+              setShowDeleteModal(false)
+              setDeleteConfirmationInput('')
+            }}
+            onConfirm={confirmDeleteServerData}
+          />
         )}
 
         {renderOnboardingModal()}

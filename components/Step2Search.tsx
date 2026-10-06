@@ -1,25 +1,20 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
-import type { SearchArticle, SearchDesign } from '@/types/research-workflow'
+import type { SearchDesign } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
 import QualityRating from '@/components/QualityRating'
+import Pager from '@/components/Pager'
+import SearchArticleCard from '@/components/search/SearchArticleCard'
+import { useSearchRetrieval } from '@/components/search/useSearchRetrieval'
 import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 import { persistInteractionEvent } from '@/lib/interactionClient'
-
-type Provider = 'semantic_scholar' | 'crossref' | 'openaire' | 'arxiv' | 'pubmed'
-
-const PROVIDER_SEQUENCE: Provider[] = ['crossref', 'openaire', 'semantic_scholar', 'arxiv', 'pubmed']
-
-function mergeUniqueArticles(existing: SearchArticle[], incoming: SearchArticle[]): SearchArticle[] {
-  const byId = new Map<string, SearchArticle>()
-  existing.forEach((article) => byId.set(article.id, article))
-  incoming.forEach((article) => byId.set(article.id, article))
-  return Array.from(byId.values())
-}
+import { ITEMS_PER_PAGE, filterArticlesByText, paginate } from '@/lib/evidenceHelpers'
+import { providerLabel, type Provider } from '@/lib/searchProviders'
+import { isUsableRawSearchDesign, normalizeSearchDesign, type RawSearchDesign } from '@/lib/searchDesign'
 
 export default function Step2Search() {
   const { locale, t } = useI18n()
@@ -39,164 +34,37 @@ export default function Step2Search() {
     toggleSearchArticleSelection,
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [provider, setProvider] = useState<Provider>('crossref')
   const [error, setError] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
-  const [totalResults, setTotalResults] = useState<number | undefined>(undefined)
-  const [hasNextPage, setHasNextPage] = useState(false)
-  const [bulkLoading, setBulkLoading] = useState(false)
   const [userRefinementPrompt, setUserRefinementPrompt] = useState('')
   const [userRefinementKeywords, setUserRefinementKeywords] = useState('')
   const [qualityRating, setQualityRating] = useState<number | null>(null)
   const [articleFilterText, setArticleFilterText] = useState('')
   const [articleDisplayPage, setArticleDisplayPage] = useState(1)
-  const articlesRef = useRef<SearchArticle[]>(searchArticles)
-
-  useEffect(() => {
-    articlesRef.current = searchArticles
-  }, [searchArticles])
+  const {
+    searchLoading,
+    provider,
+    page,
+    pageSize,
+    setPageSize,
+    totalResults,
+    hasNextPage,
+    bulkLoading,
+    runRetrieval,
+    runRetrievalAcrossProviders,
+    changeProvider,
+    selectAllLoadedArticles,
+    loadMoreResults,
+    loadAllRemainingResults,
+  } = useSearchRetrieval(setError)
 
   const isApproved = Boolean(finalResearchQuestion?.approvedByUser)
   const isPortuguese = locale === 'pt-PT'
 
-  const ITEMS_PER_PAGE = 10
-  const filteredArticles = searchArticles.filter((a) =>
-    articleFilterText.trim() === '' ||
-    a.title.toLowerCase().includes(articleFilterText.toLowerCase()) ||
-    (a.authors || []).some((auth) => auth.toLowerCase().includes(articleFilterText.toLowerCase()))
+  const filteredArticles = filterArticlesByText(searchArticles, articleFilterText)
+  const { totalPages: articleTotalDisplayPages, pageItems: pagedDisplayArticles } = paginate(
+    filteredArticles,
+    articleDisplayPage
   )
-  const articleTotalDisplayPages = Math.max(1, Math.ceil(filteredArticles.length / ITEMS_PER_PAGE))
-  const pagedDisplayArticles = filteredArticles.slice(
-    (articleDisplayPage - 1) * ITEMS_PER_PAGE,
-    articleDisplayPage * ITEMS_PER_PAGE
-  )
-
-  const providerLabel = (value: Provider) => {
-    if (value === 'arxiv') return 'arXiv'
-    if (value === 'pubmed') return 'PubMed / NCBI'
-    if (value === 'openaire') return 'OpenAIRE Graph'
-    if (value === 'crossref') return 'Crossref'
-    return 'Semantic Scholar'
-  }
-
-  const runRetrieval = async (
-    query: string,
-    requestedPage: number = 1,
-    forcedProvider?: Provider,
-    options: { replaceExisting?: boolean } = {}
-  ): Promise<{ page: number; hasNextPage: boolean } | null> => {
-    setSearchLoading(true)
-    setError('')
-
-    try {
-      const effectiveProvider = forcedProvider ?? provider
-      const { response, json: payload } = await safeFetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query,
-          limit: pageSize,
-          page: requestedPage,
-          provider: effectiveProvider,
-          locale,
-        }),
-      })
-      const data = payload?.data ?? payload
-
-      if (!response.ok || !payload?.ok) {
-        throw new Error((payload?.details || payload?.error || t('api.searchFailure')) as string)
-      }
-
-      const incomingArticles = Array.isArray(data.articles) ? data.articles : []
-      const nextArticles = options.replaceExisting
-        ? incomingArticles
-        : mergeUniqueArticles(articlesRef.current, incomingArticles)
-
-      setSearchArticles(nextArticles)
-      articlesRef.current = nextArticles
-      setPage(typeof data.page === 'number' ? data.page : requestedPage)
-      setHasNextPage(Boolean(data.hasNextPage))
-      setTotalResults(typeof data.totalResults === 'number' ? data.totalResults : undefined)
-      return {
-        page: typeof data.page === 'number' ? data.page : requestedPage,
-        hasNextPage: Boolean(data.hasNextPage),
-      }
-    } catch (err) {
-      setTotalResults(undefined)
-      setHasNextPage(false)
-      setError(err instanceof Error ? err.message : t('api.searchFailure'))
-      return null
-    } finally {
-      setSearchLoading(false)
-    }
-  }
-
-  const runRetrievalAcrossProviders = async (
-    query: string,
-    requestedPage: number = 1,
-    options: { replaceExisting?: boolean } = {}
-  ): Promise<void> => {
-    setSearchLoading(true)
-    setError('')
-
-    try {
-      let mergedArticles = options.replaceExisting ? [] : articlesRef.current
-      const providerErrors: string[] = []
-
-      for (const providerCandidate of PROVIDER_SEQUENCE) {
-        const { response, json: payload } = await safeFetch('/api/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query,
-            limit: pageSize,
-            page: requestedPage,
-            provider: providerCandidate,
-            locale,
-          }),
-        })
-
-        const data = payload?.data ?? payload
-        if (!response.ok || !payload?.ok) {
-          providerErrors.push(providerLabel(providerCandidate))
-          continue
-        }
-
-        const incomingArticles = Array.isArray(data.articles) ? data.articles : []
-        mergedArticles = mergeUniqueArticles(mergedArticles, incomingArticles)
-      }
-
-      setSearchArticles(mergedArticles)
-      articlesRef.current = mergedArticles
-      setPage(requestedPage)
-      setHasNextPage(false)
-      setTotalResults(mergedArticles.length)
-
-      if (providerErrors.length === PROVIDER_SEQUENCE.length) {
-        throw new Error(
-          isPortuguese
-            ? 'Todos os fornecedores falharam nesta tentativa.'
-            : 'All providers failed in this attempt.'
-        )
-      }
-
-      if (providerErrors.length > 0) {
-        setError(
-          isPortuguese
-            ? `Alguns fornecedores falharam: ${providerErrors.join(', ')}.`
-            : `Some providers failed: ${providerErrors.join(', ')}.`
-        )
-      }
-    } catch (err) {
-      setTotalResults(undefined)
-      setHasNextPage(false)
-      setError(err instanceof Error ? err.message : t('api.searchFailure'))
-    } finally {
-      setSearchLoading(false)
-    }
-  }
 
   const runSearchDesign = async () => {
     if (!finalResearchQuestion?.question) {
@@ -249,68 +117,14 @@ export default function Step2Search() {
         throw new Error((json?.details || json?.error || t('api.genericFailure')) as string)
       }
 
-      const parsed = parseAiJsonWithOptions<{
-        keywords?: string[]
-        synonyms?: string[]
-        boolean_query?: string
-        booleanQuery?: string
-        query?: string
-        search_query?: string
-        search_strings?: SearchDesign['searchStrings']
-        searchStrings?: SearchDesign['searchStrings']
-        strings?: SearchDesign['searchStrings']
-        recommended_databases?: string[]
-        recommendedDatabases?: string[]
-        filters?: string[]
-      }>(payload.output, {
-        validate: (value) => {
-          const booleanQuery = value?.boolean_query || value?.booleanQuery || value?.search_query || value?.query || ''
-          const searchStrings =
-            (Array.isArray(value?.search_strings) && value.search_strings) ||
-            (Array.isArray(value?.searchStrings) && value.searchStrings) ||
-            (Array.isArray(value?.strings) && value.strings) ||
-            []
-          return typeof booleanQuery === 'string' && booleanQuery.trim().length > 0 && searchStrings.length > 0
-        },
+      const parsed = parseAiJsonWithOptions<RawSearchDesign>(payload.output, {
+        validate: (value) => isUsableRawSearchDesign(value),
         errorMessage: isPortuguese
           ? 'A IA devolveu um desenho de pesquisa incompleto. O resultado precisa de incluir boolean_query e search_strings utilizáveis.'
           : 'AI returned an incomplete search design. The result must include usable boolean_query and search_strings.',
       })
 
-      const normalizedSearchStrings =
-        (Array.isArray(parsed?.search_strings) && parsed.search_strings) ||
-        (Array.isArray(parsed?.searchStrings) && parsed.searchStrings) ||
-        (Array.isArray(parsed?.strings) && parsed.strings) ||
-        []
-
-      const normalizedBooleanQuery =
-        parsed?.boolean_query || parsed?.booleanQuery || parsed?.search_query || parsed?.query || ''
-
-      // Fallback: build boolean_query from keywords if model omitted it
-      const fallbackBooleanQuery = normalizedBooleanQuery
-        || (Array.isArray(parsed?.keywords) && parsed.keywords.length > 0
-          ? parsed.keywords.join(' AND ')
-          : '')
-
-      // Fallback: build a single search_strings entry from the boolean query
-      const fallbackSearchStrings = normalizedSearchStrings.length > 0
-        ? normalizedSearchStrings
-        : fallbackBooleanQuery
-          ? [{ database: 'General', query: fallbackBooleanQuery }]
-          : []
-
-      const nextSearchDesign: SearchDesign = {
-        keywords: Array.isArray(parsed?.keywords) ? parsed.keywords : [],
-        synonyms: Array.isArray(parsed?.synonyms) ? parsed.synonyms : [],
-        booleanQuery: fallbackBooleanQuery,
-        searchStrings: fallbackSearchStrings,
-        recommendedDatabases: Array.isArray(parsed?.recommended_databases)
-          ? parsed.recommended_databases
-          : Array.isArray(parsed?.recommendedDatabases)
-            ? parsed.recommendedDatabases
-          : [],
-        filters: Array.isArray(parsed?.filters) ? parsed.filters : [],
-      }
+      const nextSearchDesign: SearchDesign = normalizeSearchDesign(parsed)
 
       if (!nextSearchDesign.booleanQuery || nextSearchDesign.searchStrings.length === 0) {
         throw new Error(
@@ -358,41 +172,6 @@ export default function Step2Search() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const changeProvider = async (nextProvider: Provider) => {
-    setProvider(nextProvider)
-    if (!searchDesign?.booleanQuery) return
-    await runRetrieval(searchDesign.booleanQuery, 1, nextProvider)
-  }
-
-  const selectAllLoadedArticles = () => {
-    const allIds = Array.from(new Set([...selectedSearchArticleIds, ...searchArticles.map((article) => article.id)]))
-    setSelectedSearchArticleIds(allIds)
-  }
-
-  const loadMoreResults = async () => {
-    if (!searchDesign?.booleanQuery || searchLoading || !hasNextPage) return
-    await runRetrieval(searchDesign.booleanQuery, page + 1)
-  }
-
-  const loadAllRemainingResults = async () => {
-    if (!searchDesign?.booleanQuery || searchLoading || bulkLoading || !hasNextPage) return
-
-    setBulkLoading(true)
-    let nextPage = page + 1
-    let shouldContinue: boolean = hasNextPage
-    let safetyCounter = 0
-
-    while (shouldContinue && safetyCounter < 100) {
-      const result = await runRetrieval(searchDesign.booleanQuery, nextPage)
-      if (!result) break
-      shouldContinue = result.hasNextPage
-      nextPage = result.page + 1
-      safetyCounter += 1
-    }
-
-    setBulkLoading(false)
   }
 
   const proceedToEvidence = () => {
@@ -670,66 +449,27 @@ export default function Step2Search() {
             )}
             {searchArticles.length > 0 ? (
               <div className="space-y-3">
-                {pagedDisplayArticles.map((article, index) => {
-                  const globalIndex = (articleDisplayPage - 1) * ITEMS_PER_PAGE + index
-                  return (
-                    <div
-                      key={article.id}
-                      className={`p-4 transition-all duration-200 ${
-                        selectedSearchArticleIds.includes(article.id)
-                          ? 'ai-user-decided rq-active-accent'
-                          : 'bg-[var(--surface_container)] ghost-border hover:bg-[var(--surface_container_low)]'
-                      }`}
-                    >
-                      <div className={`font-label text-[10px] uppercase tracking-[0.1em] ${
-                        selectedSearchArticleIds.includes(article.id) ? 'text-[var(--on_primary)] opacity-70' : 'opacity-50'
-                      }`}>
-                        {t('steps.step2.articleLabel')} {globalIndex + 1} | {article.provider}
-                      </div>
-                      <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold">
-                        <input
-                          type="checkbox"
-                          checked={selectedSearchArticleIds.includes(article.id)}
-                          onChange={() => toggleSearchArticleSelection(article.id)}
-                        />
-                        {isPortuguese ? 'Selecionar para analise' : 'Select for analysis'}
-                      </label>
-                      <div className={`mt-1 font-semibold ${selectedSearchArticleIds.includes(article.id) ? 'text-[var(--on_primary)]' : 'text-[var(--on_surface)]'}`}>{article.title}</div>
-                      <div className="mt-1 text-sm opacity-60">
-                        {(article.authors || []).slice(0, 3).join(', ') || t('common.unknownAuthors')}
-                        {article.year ? ` | ${article.year}` : ''}
-                      </div>
-                      <div className="mt-2 text-sm text-slate-700">
-                        {article.abstract || t('common.noAbstract')}
-                      </div>
-                    </div>
-                  )
-                })}
-                {articleTotalDisplayPages > 1 && (
-                  <div className="flex items-center justify-between gap-2 pt-2">
-                    <button
-                      type="button"
-                      disabled={articleDisplayPage === 1}
-                      onClick={() => setArticleDisplayPage((p) => p - 1)}
-                      className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
-                    >
-                      {isPortuguese ? '← Anterior' : '← Prev'}
-                    </button>
-                    <span className="text-xs text-[var(--on_surface_variant)]">
-                      {isPortuguese
-                        ? `Página ${articleDisplayPage} de ${articleTotalDisplayPages} · ${filteredArticles.length} artigos`
-                        : `Page ${articleDisplayPage} of ${articleTotalDisplayPages} · ${filteredArticles.length} articles`}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={articleDisplayPage === articleTotalDisplayPages}
-                      onClick={() => setArticleDisplayPage((p) => p + 1)}
-                      className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] px-3 py-1.5 text-xs disabled:opacity-40"
-                    >
-                      {isPortuguese ? 'Seguinte →' : 'Next →'}
-                    </button>
-                  </div>
-                )}
+                {pagedDisplayArticles.map((article, index) => (
+                  <SearchArticleCard
+                    key={article.id}
+                    article={article}
+                    index={(articleDisplayPage - 1) * ITEMS_PER_PAGE + index}
+                    selected={selectedSearchArticleIds.includes(article.id)}
+                    onToggle={toggleSearchArticleSelection}
+                  />
+                ))}
+                <Pager
+                  page={articleDisplayPage}
+                  totalPages={articleTotalDisplayPages}
+                  summary={
+                    isPortuguese
+                      ? `Página ${articleDisplayPage} de ${articleTotalDisplayPages} · ${filteredArticles.length} artigos`
+                      : `Page ${articleDisplayPage} of ${articleTotalDisplayPages} · ${filteredArticles.length} articles`
+                  }
+                  prevLabel={isPortuguese ? '← Anterior' : '← Prev'}
+                  nextLabel={isPortuguese ? 'Seguinte →' : 'Next →'}
+                  onChange={setArticleDisplayPage}
+                />
               </div>
             ) : (
               <div className="text-sm text-slate-600">
