@@ -11,6 +11,7 @@ interface NotebookLmExporterProps {
   researchQuestion: string
   evidenceRecords: EvidenceRecord[]
   artifactType: NotebookLmArtifactType
+  audience?: string
   onClose: () => void
 }
 
@@ -20,6 +21,7 @@ export default function NotebookLmExporter({
   researchQuestion,
   evidenceRecords,
   artifactType,
+  audience,
   onClose,
 }: NotebookLmExporterProps) {
   const { t, locale } = useI18n()
@@ -43,6 +45,7 @@ export default function NotebookLmExporter({
           researchQuestion,
           topic,
           evidenceRecords,
+          audience,
         }),
       })
 

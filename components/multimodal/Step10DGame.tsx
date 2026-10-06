@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
+import AudienceSelect from './AudienceSelect'
 import ExportToNotebookButton from '@/components/ExportToNotebookButton'
 import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { retryWithBackoff } from '@/lib/retryHelper'
@@ -19,7 +20,7 @@ export default function Step10DGame({ onBack }: Props) {
   const { locale } = useI18n()
   const {
     projectId, topic, finalResearchQuestion, evidenceRecords,
-    multimodalOutputs, setMultimodalGame, setEvidenceFidelityScore,
+    multimodalOutputs, audience, setMultimodalGame, setEvidenceFidelityScore,
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -45,7 +46,7 @@ export default function Step10DGame({ onBack }: Props) {
               stepId: 'step6_multimodal', stepLabel: 'Science Game',
               rq: finalResearchQuestion?.question ?? '',
               evidence: JSON.stringify(evidenceRecords, null, 2),
-              audience: 'school',
+              audience,
             }),
           }),
         { maxAttempts: 2, initialDelayMs: 1200, maxDelayMs: 3000 }
@@ -81,6 +82,7 @@ export default function Step10DGame({ onBack }: Props) {
       </button>
 
       <div className="flex flex-wrap items-center gap-3">
+        <AudienceSelect />
         <span title={generationSoonLabel} className="inline-flex cursor-not-allowed">
           <button
             type="button"

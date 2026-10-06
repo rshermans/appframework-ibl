@@ -7,6 +7,7 @@ import AppBrand from '@/components/AppBrand'
 import EthicalTip from '@/components/EthicalTip'
 import LocaleSwitcher from '@/components/LocaleSwitcher'
 import { getIblEthicalTip } from '@/lib/iblFramework'
+import AudienceSelect from './multimodal/AudienceSelect'
 import Step10APoster from './multimodal/Step10APoster'
 import Step10BPodcast from './multimodal/Step10BPodcast'
 import Step10CVideocast from './multimodal/Step10CVideocast'
@@ -145,6 +146,15 @@ export default function Stage2Multimodal() {
             : 'Complete Stage 1 (evidence + knowledge structure) before creating multimodal outputs.'}
         </div>
       )}
+
+      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] bg-[var(--surface_container_low)] p-4">
+        <AudienceSelect />
+        <p className="text-xs text-[var(--on_surface_variant)]">
+          {portuguese
+            ? 'A audiência escolhida aplica-se a todos os formatos e às exportações para o NotebookLM.'
+            : 'The chosen audience applies to every format and to NotebookLM exports.'}
+        </p>
+      </div>
 
       {/* Output cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

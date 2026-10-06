@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
+import AudienceSelect from './AudienceSelect'
 import EvidenceWatermark from './EvidenceWatermark'
 import ExportToNotebookButton from '@/components/ExportToNotebookButton'
 import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
@@ -20,7 +21,7 @@ export default function Step10BPodcast({ onBack }: Props) {
   const { locale } = useI18n()
   const {
     projectId, topic, finalResearchQuestion, evidenceRecords,
-    multimodalOutputs, setMultimodalPodcast, setEvidenceFidelityScore,
+    multimodalOutputs, audience, setMultimodalPodcast, setEvidenceFidelityScore,
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -46,7 +47,7 @@ export default function Step10BPodcast({ onBack }: Props) {
               stepId: 'step6_multimodal', stepLabel: 'Podcast Script',
               rq: finalResearchQuestion?.question ?? '',
               evidence: JSON.stringify(evidenceRecords, null, 2),
-              audience: 'general', duration,
+              audience, duration,
             }),
           }),
         { maxAttempts: 2, initialDelayMs: 1200, maxDelayMs: 3000 }
@@ -81,6 +82,7 @@ export default function Step10BPodcast({ onBack }: Props) {
       </button>
 
       <div className="flex flex-wrap items-center gap-3">
+        <AudienceSelect />
         <label className="text-sm font-medium text-[var(--on_surface)]">
           {pt ? 'Duração (min):' : 'Duration (min):'}
         </label>

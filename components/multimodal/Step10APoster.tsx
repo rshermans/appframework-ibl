@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
+import AudienceSelect from './AudienceSelect'
 import EvidenceWatermark from './EvidenceWatermark'
 import ExportToNotebookButton from '@/components/ExportToNotebookButton'
 import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
@@ -20,11 +21,10 @@ export default function Step10APoster({ onBack }: Props) {
   const { locale } = useI18n()
   const {
     projectId, topic, finalResearchQuestion, evidenceRecords, knowledgeStructure,
-    multimodalOutputs, setMultimodalPoster, setEvidenceFidelityScore,
+    multimodalOutputs, audience, setMultimodalPoster, setEvidenceFidelityScore,
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [audience, setAudience] = useState('general')
   const draft = multimodalOutputs.poster
   const pt = locale === 'pt-PT'
   const generationSoonLabel = pt
@@ -84,18 +84,7 @@ export default function Step10APoster({ onBack }: Props) {
       </button>
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm font-medium text-[var(--on_surface)]">
-          {pt ? 'Audiência:' : 'Audience:'}
-        </label>
-        <select
-          value={audience}
-          onChange={(e) => setAudience(e.target.value)}
-          className="rounded-[var(--radius-sm)] border border-[var(--outline)] bg-[var(--surface)] px-3 py-1.5 text-sm text-[var(--on_surface)]"
-        >
-          <option value="general">{pt ? 'Público geral' : 'General public'}</option>
-          <option value="academic">{pt ? 'Académico' : 'Academic'}</option>
-          <option value="school">{pt ? 'Escola (12-18 anos)' : 'School (12-18 yrs)'}</option>
-        </select>
+        <AudienceSelect />
         <span title={generationSoonLabel} className="inline-flex cursor-not-allowed">
           <button
             type="button"

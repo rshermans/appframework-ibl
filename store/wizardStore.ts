@@ -14,6 +14,7 @@ export const useWizardStore = create<WizardState>()(
   userProfile: null,
   aiConsentAccepted: false,
   aiConsentAcceptedAt: null,
+  audience: 'general',
   stage: 1,
   step: 'step0',
   workflowStep: 'step0_generate',
@@ -152,6 +153,9 @@ export const useWizardStore = create<WizardState>()(
     set({ explanationDraft }),
 
   // Stage 2 — Multimodal
+  setAudience: (audience) =>
+    set({ audience }),
+
   setMultimodalPoster: (poster) =>
     set((state) => ({ multimodalOutputs: { ...state.multimodalOutputs, poster } })),
 
@@ -204,6 +208,7 @@ export const useWizardStore = create<WizardState>()(
         userProfile: null,
         aiConsentAccepted: false,
         aiConsentAcceptedAt: null,
+        audience: 'general',
         stage: 1,
         step: 'step0',
         workflowStep: 'step0_generate',
@@ -242,6 +247,7 @@ export const useWizardStore = create<WizardState>()(
         sessionId: state.sessionId,
         aiConsentAccepted: state.aiConsentAccepted,
         aiConsentAcceptedAt: state.aiConsentAcceptedAt,
+        audience: state.audience,
         stage: state.stage,
         step: state.step,
         workflowStep: state.workflowStep,
