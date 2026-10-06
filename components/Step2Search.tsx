@@ -8,6 +8,7 @@ import StepHeader from '@/components/StepHeader'
 import QualityRating from '@/components/QualityRating'
 import Pager from '@/components/Pager'
 import SearchArticleCard from '@/components/search/SearchArticleCard'
+import ArticleDetailDrawer from '@/components/evidence/ArticleDetailDrawer'
 import { useSearchRetrieval } from '@/components/search/useSearchRetrieval'
 import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
@@ -40,6 +41,7 @@ export default function Step2Search() {
   const [qualityRating, setQualityRating] = useState<number | null>(null)
   const [articleFilterText, setArticleFilterText] = useState('')
   const [articleDisplayPage, setArticleDisplayPage] = useState(1)
+  const [openArticleId, setOpenArticleId] = useState<string | null>(null)
   const {
     searchLoading,
     provider,
@@ -456,6 +458,7 @@ export default function Step2Search() {
                     index={(articleDisplayPage - 1) * ITEMS_PER_PAGE + index}
                     selected={selectedSearchArticleIds.includes(article.id)}
                     onToggle={toggleSearchArticleSelection}
+                    onOpenDetails={(target) => setOpenArticleId(target.id)}
                   />
                 ))}
                 <Pager
@@ -489,6 +492,24 @@ export default function Step2Search() {
           </div>
         </div>
       )}
+
+      <ArticleDetailDrawer
+        article={searchArticles.find((candidate) => candidate.id === openArticleId) ?? null}
+        onClose={() => setOpenArticleId(null)}
+        action={
+          openArticleId ? (
+            <button
+              type="button"
+              onClick={() => toggleSearchArticleSelection(openArticleId)}
+              className="primary-gradient min-h-[44px] w-full rounded-[var(--radius-md)] px-4 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110"
+            >
+              {selectedSearchArticleIds.includes(openArticleId)
+                ? isPortuguese ? 'Remover da seleção' : 'Remove from selection'
+                : isPortuguese ? 'Selecionar para análise' : 'Select for analysis'}
+            </button>
+          ) : null
+        }
+      />
     </div>
   )
 }
