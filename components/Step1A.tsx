@@ -62,7 +62,16 @@ export default function Step1A() {
         }
         setComparisonResult(comparisonResult)
       } catch {
-        setComparisonResult(null)
+        // The model answered in prose instead of JSON: keep its text as the comparison so the
+        // learner is not left at a dead end (Step 1B needs a comparison to synthesise from).
+        const prose = typeof payload.output === 'string' ? payload.output.trim() : ''
+        if (!prose) throw new Error(t('api.genericFailure'))
+        setComparisonResult({
+          mode,
+          comparisons: [],
+          recommendedQuestion: '',
+          recommendationReason: prose.slice(0, 1500),
+        })
       }
       setWorkflowStep('step1b_synthesize')
     } catch (err) {

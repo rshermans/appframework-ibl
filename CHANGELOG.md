@@ -14,6 +14,7 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Alterado
 - Layout: aplicação com uma só zona de scroll (barra superior fixa, passos em coluna lateral no desktop e faixa fixa no telemóvel, barra de ações Anterior/Seguinte sempre visível, `100dvh`).
 - Mind map, perfil, progresso e diálogos abrem sobrepostos (componente `Drawer`: Esc, foco, bloqueio de scroll) em vez de empurrar a página; o progresso flutuante passou para a barra superior.
+- Evidências e artigos: lista compacta (afirmação em 2 linhas, resumo em 3) e detalhe completo num painel sobreposto, com Anterior/Seguinte dentro do painel, ligações DOI/URL e ação (analisar/selecionar) no próprio painel.
 - Barra de nove botões substituída por um menu "Mais" (exportar, privacidade, ações destrutivas separadas).
 - Código: `Step3Evidence`, `Step2Search`, `Step4Structure`, `Step5Explanation` e `app/page.tsx` divididos em módulos/hooks/componentes; 112 testes (Vitest) e CI a bloquear em lint, tipos e testes.
 - Stage 1: stepper com progresso, próximo passo recomendado e navegação Anterior/Seguinte.

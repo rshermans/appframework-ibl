@@ -56,3 +56,20 @@ A migração inicial do repositório é SQLite e só cria `Project`/`ProjectInte
 3. Netlify → Logs → Functions: procure `[auth][error]` (nome e mensagem reais do erro) e `[auth]` no arranque.
 4. Confirme que o deploy inclui esta branch; sem isso continua a aparecer a página de erro antiga.
 5. Com o pooler do Supabase (porta 6543) use `?pgbouncer=true` no `DATABASE_URL` e mantenha `DIRECT_URL` na porta 5432.
+
+## Como saber se o site online tem a versão nova
+
+A versão nova tem, no topo, a barra com os botões **Etapa 1 | 2 | 3**, o indicador de progresso e o menu **Mais**.
+Se ainda vê a barra de botões antiga, o deploy publicado não é o do `main` atual:
+
+1. Netlify → *Deploys* → o deploy do topo deve ser o do último commit do `main` e dizer **Published**
+   (um deploy falhado deixa o anterior no ar). Abra o log se disser *Failed*.
+2. Site configuration → *Build & deploy* → *Branches*: o *production branch* tem de ser `main`.
+3. Recarregue sem cache (Ctrl+Shift+R).
+
+## Teste do SQL (feito num Postgres 16 local)
+
+`prisma/supabase-auth-tables.sql` foi aplicado a uma base vazia e a uma base "antiga" (só `Project`/`ProjectInteraction`,
+sem `userId`) com dados: é repetível, preserva os dados e a base nova fica idêntica ao `schema.prisma`.
+Sem as tabelas, o primeiro login falha com `P2021 The table public.Account does not exist`, que o Auth.js mostra
+como *"There is a problem with the server configuration"*; com elas, o login grava utilizador, conta e projeto.

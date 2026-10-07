@@ -9,9 +9,10 @@ interface SearchArticleCardProps {
   index: number
   selected: boolean
   onToggle: (articleId: string) => void
+  onOpenDetails: (article: SearchArticle) => void
 }
 
-export default function SearchArticleCard({ article, index, selected, onToggle }: SearchArticleCardProps) {
+export default function SearchArticleCard({ article, index, selected, onToggle, onOpenDetails }: SearchArticleCardProps) {
   const { locale, t } = useI18n()
   const isPortuguese = locale === 'pt-PT'
 
@@ -41,9 +42,17 @@ export default function SearchArticleCard({ article, index, selected, onToggle }
         {(article.authors || []).slice(0, 3).join(', ') || t('common.unknownAuthors')}
         {article.year ? ` | ${article.year}` : ''}
       </div>
-      <div className="mt-2 text-sm text-slate-700">
+      <div className="mt-2 line-clamp-3 text-sm text-slate-700">
         {article.abstract || t('common.noAbstract')}
       </div>
+      <button
+        type="button"
+        onClick={() => onOpenDetails(article)}
+        aria-label={`${isPortuguese ? 'Ver detalhes' : 'View details'}: ${article.title}`}
+        className="mt-2 min-h-[40px] rounded-[var(--radius-md)] bg-[var(--surface_container_lowest)] px-3 py-1.5 text-xs font-semibold text-[var(--on_surface)] ring-1 ring-[var(--outline_variant)] transition hover:bg-[var(--surface_container_low)]"
+      >
+        {isPortuguese ? 'Ver detalhes' : 'View details'}
+      </button>
     </div>
   )
 }

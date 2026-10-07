@@ -12,6 +12,7 @@ interface ArticleAnalysisCardProps {
   loading: boolean
   canRun: boolean
   onAnalyze: (article: SearchArticle) => void
+  onOpenDetails: (article: SearchArticle) => void
 }
 
 export default function ArticleAnalysisCard({
@@ -22,6 +23,7 @@ export default function ArticleAnalysisCard({
   loading,
   canRun,
   onAnalyze,
+  onOpenDetails,
 }: ArticleAnalysisCardProps) {
   const { locale, t } = useI18n()
   const isPortuguese = locale === 'pt-PT'
@@ -49,10 +51,10 @@ export default function ArticleAnalysisCard({
             {(article.authors || []).slice(0, 4).join(', ') || t('common.unknownAuthors')}
             {article.year ? ` | ${article.year}` : ''}
           </div>
-          <div className="mt-2 text-sm text-[var(--on_surface)] opacity-70">
+          <div className="mt-2 line-clamp-3 text-sm text-[var(--on_surface)] opacity-70">
             {article.abstract || t('common.noAbstract')}
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               onClick={() => onAnalyze(article)}
               disabled={!canRun || loading}
@@ -65,6 +67,14 @@ export default function ArticleAnalysisCard({
                     ? 'Reanalisar este artigo'
                     : 'Reanalyse this article'
                   : t('steps.step3.analyzeButton')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenDetails(article)}
+              aria-label={`${isPortuguese ? 'Ver detalhes' : 'View details'}: ${article.title}`}
+              className="min-h-[40px] rounded-[var(--radius-md)] bg-[var(--surface_container)] px-3 py-2 text-sm font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)]"
+            >
+              {isPortuguese ? 'Ver detalhes' : 'View details'}
             </button>
           </div>
         </div>

@@ -17,12 +17,13 @@ export interface Stage1FlowState {
 
 /**
  * Steps the "next recommended action" may point to, in framework order.
- * Comparison (1A), CRAAP and glossary stay reachable from the stepper but are
+ * CRAAP and glossary stay reachable from the stepper but are
  * not forced on the learner.
  */
 export const RECOMMENDED_STAGE1_PATH: readonly IBLStepKey[] = [
   'step0_generate',
   'step1_select',
+  'step1a_compare',
   'step1b_synthesize',
   'step2_search_design',
   'step3_evidence_extraction',
@@ -35,7 +36,7 @@ export function isStage1StepDone(stepId: IBLStepKey, s: Stage1FlowState): boolea
     case 'step0_generate':
       return s.step0OptionalCompleted || s.candidateResearchQuestions.length > 0 || s.rqCandidates.length > 0
     case 'step1_select':
-      return s.selectedRQs.length > 0
+      return s.selectedRQs.length >= 2 // the comparison needs at least two questions
     case 'step1a_compare':
       return Boolean(s.comparisonResult)
     case 'step1b_synthesize':
@@ -58,6 +59,10 @@ export function isStage1StepDone(stepId: IBLStepKey, s: Stage1FlowState): boolea
 /** i18n key explaining why a step is locked, or null when it is available. */
 export function getStage1LockKey(stepId: IBLStepKey, s: Stage1FlowState): string | null {
   switch (stepId) {
+    case 'step1a_compare':
+      return s.selectedRQs.length >= 2 ? null : 'steps.step1A.invalidSelection'
+    case 'step1b_synthesize':
+      return s.comparisonResult ? null : 'common.lockedStep1B'
     case 'step2_search_design':
       return s.finalResearchQuestion?.approvedByUser ? null : 'common.lockedStep2'
     case 'step3_evidence_extraction':

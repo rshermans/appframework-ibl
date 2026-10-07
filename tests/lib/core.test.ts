@@ -80,7 +80,10 @@ describe('Stage 1 flow (stepper)', () => {
     expect(getNextRecommendedStep(empty)).toBe('step0_generate')
     const s1 = { ...empty, candidateResearchQuestions: [{}] }
     expect(getNextRecommendedStep(s1)).toBe('step1_select')
-    const s2 = { ...s1, selectedRQs: ['q'] }
+    expect(getNextRecommendedStep({ ...s1, selectedRQs: ['only one'] })).toBe('step1_select') // 1A needs two
+    const s1b = { ...s1, selectedRQs: ['q', 'r'] }
+    expect(getNextRecommendedStep(s1b)).toBe('step1a_compare')
+    const s2 = { ...s1b, comparisonResult: {} }
     expect(getNextRecommendedStep(s2)).toBe('step1b_synthesize')
     const s3 = { ...s2, finalResearchQuestion: { approvedByUser: true } }
     expect(getNextRecommendedStep(s3)).toBe('step2_search_design')
@@ -94,6 +97,10 @@ describe('Stage 1 flow (stepper)', () => {
   })
 
   it('locks steps until their prerequisites exist, with the right message key', () => {
+    expect(getStage1LockKey('step1a_compare', { ...empty, selectedRQs: ['one'] })).toBe('steps.step1A.invalidSelection')
+    expect(getStage1LockKey('step1a_compare', { ...empty, selectedRQs: ['a', 'b'] })).toBeNull()
+    expect(getStage1LockKey('step1b_synthesize', empty)).toBe('common.lockedStep1B')
+    expect(getStage1LockKey('step1b_synthesize', { ...empty, comparisonResult: {} })).toBeNull()
     expect(getStage1LockKey('step2_search_design', empty)).toBe('common.lockedStep2')
     expect(getStage1LockKey('step3_evidence_extraction', { ...empty, searchDesign: {} })).toBe('common.lockedStep3')
     expect(getStage1LockKey('step4_knowledge_structure', empty)).toBe('common.lockedStep4')

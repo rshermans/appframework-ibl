@@ -241,6 +241,18 @@ export default function Step1B() {
             className="ghost-input"
           />
         </div>
+        {!comparisonResult && (
+          <div role="status" className="ai-needs-validation mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] p-3 text-sm">
+            <span>{t('steps.step1B.needsComparison')}</span>
+            <button
+              type="button"
+              onClick={() => setWorkflowStep('step1a_compare')}
+              className="min-h-[40px] rounded-[var(--radius-md)] bg-[var(--primary)] px-3 py-2 text-xs font-semibold text-[var(--on_primary)] transition hover:brightness-95"
+            >
+              {t('steps.step1B.goToComparison')}
+            </button>
+          </div>
+        )}
         <button
           onClick={runSynthesis}
           disabled={loading || !comparisonResult}

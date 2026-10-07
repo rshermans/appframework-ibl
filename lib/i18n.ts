@@ -181,6 +181,7 @@ const messages: Record<Locale, MessageTree> = {
       },
     },
     common: {
+      lockedStep1B: 'Bloqueado até existir a comparação das perguntas (Passo 1A).',
       lockedStep2: 'Bloqueado até a pergunta final estar aprovada.',
       lockedStep3: 'Bloqueado até a pesquisa devolver pelo menos um artigo.',
       lockedStep4: 'Bloqueado até existir pelo menos um registo de evidência.',
@@ -243,6 +244,8 @@ const messages: Record<Locale, MessageTree> = {
         continueButton: 'Continuar para a Etapa 2',
         anchorNote: 'A Etapa 2 poderá usar esta pergunta como âncora canónica para o desenho da pesquisa.',
         invalidState: 'Executa a comparação antes de sintetizar a pergunta final.',
+        needsComparison: 'Para gerar a pergunta final é preciso primeiro comparar as perguntas selecionadas (Passo 1A).',
+        goToComparison: 'Ir para o Passo 1A',
       },
       step2: {
         title: 'Etapa 2 - Desenho da pesquisa',
@@ -638,6 +641,7 @@ const messages: Record<Locale, MessageTree> = {
       },
     },
     common: {
+      lockedStep1B: 'Locked until the questions have been compared (Step 1A).',
       lockedStep2: 'Locked until the final question is approved.',
       lockedStep3: 'Locked until search returns at least one article.',
       lockedStep4: 'Locked until at least one evidence record exists.',
@@ -700,6 +704,8 @@ const messages: Record<Locale, MessageTree> = {
         continueButton: 'Continue to Step 2',
         anchorNote: 'Step 2 can now use this question as the canonical anchor for search design.',
         invalidState: 'Run the comparison step before synthesising the final question.',
+        needsComparison: 'To create the final question, first compare the selected questions (Step 1A).',
+        goToComparison: 'Go to Step 1A',
       },
       step2: {
         title: 'Step 2 - Search Design',

@@ -6,7 +6,9 @@ import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
 import Pager from '@/components/Pager'
 import ArticleAnalysisCard from '@/components/evidence/ArticleAnalysisCard'
-import EvidenceRecordCard from '@/components/evidence/EvidenceRecordCard'
+import EvidenceRecordRow from '@/components/evidence/EvidenceRecordRow'
+import EvidenceDetailDrawer from '@/components/evidence/EvidenceDetailDrawer'
+import ArticleDetailDrawer from '@/components/evidence/ArticleDetailDrawer'
 import { useEvidenceExtraction } from '@/components/evidence/useEvidenceExtraction'
 import { useRelatedArticles } from '@/components/evidence/useRelatedArticles'
 import {
@@ -52,6 +54,9 @@ export default function Step3Evidence() {
   const [articlePage, setArticlePage] = useState(1)
   const [evidenceFilterText, setEvidenceFilterText] = useState('')
   const [evidencePage, setEvidencePage] = useState(1)
+  const [openEvidenceId, setOpenEvidenceId] = useState<string | null>(null)
+  const [openArticleId, setOpenArticleId] = useState<string | null>(null)
+  const openArticle = searchArticles.find((candidate) => candidate.id === openArticleId) ?? null
 
   const canRun = Boolean(finalResearchQuestion?.approvedByUser && searchDesign)
   const isPortuguese = locale === 'pt-PT'
@@ -137,6 +142,7 @@ export default function Step3Evidence() {
                 loading={loading}
                 canRun={canRun}
                 onAnalyze={(target) => extractFromSource(buildSourcePayload(target), target.id, target)}
+                onOpenDetails={(target) => setOpenArticleId(target.id)}
               />
             ))}
             <Pager
@@ -245,10 +251,11 @@ export default function Step3Evidence() {
           )}
 
           {pagedEvidenceRecords.map((record, index) => (
-            <EvidenceRecordCard
+            <EvidenceRecordRow
               key={record.id}
               record={record}
               index={(evidencePage - 1) * ITEMS_PER_PAGE + index}
+              onOpen={(target) => setOpenEvidenceId(target.id)}
             />
           ))}
 
@@ -275,6 +282,34 @@ export default function Step3Evidence() {
           </div>
         </div>
       )}
+
+      <EvidenceDetailDrawer
+        records={filteredEvidenceRecords}
+        openId={openEvidenceId}
+        onNavigate={setOpenEvidenceId}
+        onClose={() => setOpenEvidenceId(null)}
+      />
+      <ArticleDetailDrawer
+        article={openArticle}
+        onClose={() => setOpenArticleId(null)}
+        action={
+          openArticle ? (
+            <button
+              type="button"
+              disabled={!canRun || loading}
+              onClick={() => {
+                setOpenArticleId(null)
+                void extractFromSource(buildSourcePayload(openArticle), openArticle.id, openArticle)
+              }}
+              className="primary-gradient min-h-[44px] w-full rounded-[var(--radius-md)] px-4 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
+            >
+              {analyzedSourceIds.has(openArticle.id)
+                ? isPortuguese ? 'Reanalisar este artigo' : 'Reanalyse this article'
+                : t('steps.step3.analyzeButton')}
+            </button>
+          ) : null
+        }
+      />
     </div>
   )
 }
