@@ -74,7 +74,7 @@ const STEP_SUGGESTIONS: Record<string, Array<{ label: string; icon: React.ReactN
   ],
   step7_reflection: [
     { label: 'O que é a reflexão metacognitiva?', icon: <BookOpen className="w-3 h-3" /> },
-    { label: 'Como fazer peer review?', icon: <HelpCircle className="w-3 h-3" /> },
+    { label: 'Como fazer a auto-avaliação?', icon: <HelpCircle className="w-3 h-3" /> },
     { label: 'Dica ética — Stage 3', icon: <Sparkles className="w-3 h-3" /> },
   ],
 }

@@ -73,7 +73,6 @@ export const STAGES: Record<Stage, StageInfo> = {
   3: {
     label: 'Reflect & Improve',
     steps: [
-      { id: 's3-peer', label: 'Peer Review', stageName: 'Review Others' },
       { id: 's3-self', label: 'Self-Assessment', stageName: 'Assess Self' },
       { id: 's3-reflect', label: 'Reflection', stageName: 'Reflect' },
       { id: 's3-extend', label: 'Extension', stageName: 'Extend Work' }

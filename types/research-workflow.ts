@@ -199,7 +199,17 @@ export interface PeerReview {
 }
 
 export interface SelfAssessmentRecord {
-  rubricDimensions: Array<{ dimension: string; score: number; justification: string }>
+  rubricDimensions: Array<{
+    dimension: string
+    /** The learner's own rating (1-5). */
+    score: number
+    /** The learner's note. */
+    justification: string
+    /** Optional AI second opinion; never replaces the learner's score. */
+    aiComment?: string
+    aiSuggestedScore?: number
+    improvementHint?: string
+  }>
   overallReflection: string
   completedAt: string
 }

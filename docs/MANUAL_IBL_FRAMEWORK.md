@@ -14,7 +14,7 @@ O IBL-AI divide a investigação em 4 grandes Stages:
 | **0** | Team Setup | 1 sessão | Formação de equipa e ética |
 | **1** | Ask & Research | 1–2 semanas | 9 Steps de investigação (0–8) |
 | **2** | Explain & Create | 1 semana | Explicação e outputs multimodais (Steps 9–10) |
-| **3** | Reflect & Improve | 1 sessão | Reflexão, peer review e extensão |
+| **3** | Reflect & Improve | 1 sessão | Auto-avaliação, diário reflexivo e extensão |
 
 ---
 
@@ -301,9 +301,8 @@ Gerar outputs que comuniquem os resultados da investigação em diferentes forma
 
 Este Stage fecha o ciclo de investigação com metacognição e planificação do próximo ciclo.
 
-### Peer Review & Reflection
-- Revisão cruzada entre grupos
-- Feedback estruturado com as 8 Rubrics do framework
+### Auto-avaliação
+- Nota de 1 a 5 em cada uma das 8 dimensões da rubrica, com segunda opinião opcional da IA
 
 ### Self-Reflection / Metacognition
 - O que aprendi sobre o processo de investigação?

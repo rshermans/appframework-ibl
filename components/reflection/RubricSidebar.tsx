@@ -1,22 +1,6 @@
 'use client'
 
-interface RubricDimension {
-  id: string
-  label: string
-  descPt: string
-  descEn: string
-}
-
-const RUBRIC_DIMENSIONS: RubricDimension[] = [
-  { id: 'R1', label: 'R1: Research Question Quality', descPt: 'Testabilidade, especificidade e relevância', descEn: 'Testability, specificity and relevance' },
-  { id: 'R2', label: 'R2: Search Strategy',           descPt: 'Abrangência e rigor da pesquisa',          descEn: 'Breadth and rigor of the search' },
-  { id: 'R3', label: 'R3: Evidence Quality',           descPt: 'Qualidade e diversidade das fontes',       descEn: 'Quality and diversity of sources' },
-  { id: 'R4', label: 'R4: Synthesis & Structure',      descPt: 'Coerência da estrutura de conhecimento',   descEn: 'Knowledge structure coherence' },
-  { id: 'R5', label: 'R5: Scientific Explanation',     descPt: 'Clareza e rigor da explicação',            descEn: 'Clarity and rigor of explanation' },
-  { id: 'R6', label: 'R6: Multimodal Communication',   descPt: 'Qualidade e fidelidade dos outputs',       descEn: 'Quality and fidelity of outputs' },
-  { id: 'R7', label: 'R7: Reflection Quality',         descPt: 'Profundidade e honestidade da reflexão',   descEn: 'Depth and honesty of reflection' },
-  { id: 'R8', label: 'R8: Ethical AI Use',             descPt: 'Transparência, atribuição, controlo',      descEn: 'Transparency, attribution, control' },
-]
+import { RUBRIC_DIMENSIONS } from '@/lib/rubric'
 
 interface Props {
   activeDimensions?: string[]
@@ -44,7 +28,7 @@ export default function RubricSidebar({ activeDimensions, scores, pt = true }: P
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium leading-tight text-[var(--on_surface)]">
-                  {pt ? dim.descPt : dim.descEn}
+                  {pt ? dim.desc.pt : dim.desc.en}
                 </p>
                 {typeof score === 'number' && (
                   <div className="mt-1 flex items-center gap-1.5">

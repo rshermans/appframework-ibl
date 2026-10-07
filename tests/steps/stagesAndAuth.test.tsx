@@ -132,10 +132,10 @@ describe('Stage 2 - outputs hub', () => {
 })
 
 describe('Stage 3 - reflection hub', () => {
-  it('lists the four reflection activities and opens each one', () => {
+  it('lists the three reflection activities and opens each one', () => {
     resetStore({ stage: 3, finalResearchQuestion: approvedQuestion })
     renderStep(<Stage3Reflection />)
-    for (const label of [/Revisão por Pares|Peer Review/, /Auto-Avaliação|Self-Assessment/, /Diário de Reflexão|Reflection Journal/, /Planeador de Extensão|Inquiry Extension Planner/]) {
+    for (const label of [/Auto-Avaliação|Self-Assessment/, /Diário Reflexivo|Reflective Journal/, /Planeador de Extensão|Inquiry Extension Planner/]) {
       fireEvent.click(screen.getAllByText(label)[0])
       fireEvent.click(screen.getByRole('button', { name: /^← (Voltar|Back)/ })) // every activity has a way back to the hub
     }
