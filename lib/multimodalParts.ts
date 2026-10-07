@@ -89,33 +89,50 @@ export interface MultimodalPlan {
   items: Array<{ focus: string; evidenceIds: string[] }>
 }
 
-/** Tolerant parse of the plan response; clamps the item count to the kind's range. */
+const PLAN_LIST_KEYS = ['items', 'sections', 'segments', 'scenes', 'slides', 'outline', 'parts', 'branches', 'steps']
+const PLAN_FOCUS_KEYS = ['focus', 'title', 'summary', 'description', 'topic', 'heading', 'label', 'idea', 'text']
+
+function firstText(source: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = source[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
+/**
+ * Tolerant parse of the plan response (models rename the list and the fields); clamps the item
+ * count to the kind's range. A plan one or two items short of the ideal is accepted: failing the
+ * whole generation for that would cost the learner far more than a slightly shorter output.
+ */
 export function normalizePlan(raw: unknown, kind: MultimodalKind, records: EvidenceRecord[]): MultimodalPlan {
   const { minItems, maxItems } = KIND_CONFIG[kind]
-  const source = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const required = Math.min(minItems, 3)
+  const source = (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>
   const knownIds = new Set(records.map((record) => record.id))
 
-  const rawItems = Array.isArray(source.items) ? source.items : []
+  const listKey = PLAN_LIST_KEYS.find((key) => Array.isArray(source[key]))
+  const rawItems: unknown[] = Array.isArray(raw) ? raw : listKey ? (source[listKey] as unknown[]) : []
   const items = rawItems
     .map((entry) => {
       const item = (entry && typeof entry === 'object' ? entry : { focus: entry }) as Record<string, unknown>
-      const focus = typeof item.focus === 'string' ? item.focus.trim() : ''
-      const ids = Array.isArray(item.evidenceIds) ? item.evidenceIds : []
+      const idsSource = item.evidenceIds ?? item.evidence_ids ?? item.evidence ?? item.sources
+      const ids = Array.isArray(idsSource) ? idsSource : []
       return {
-        focus,
+        focus: firstText(item, PLAN_FOCUS_KEYS),
         evidenceIds: ids.filter((id): id is string => typeof id === 'string' && knownIds.has(id)),
       }
     })
     .filter((item) => item.focus.length > 0)
     .slice(0, maxItems)
 
-  if (items.length < minItems) {
-    throw new Error(`Plan has ${items.length} item(s); at least ${minItems} are required.`)
+  if (items.length < required) {
+    throw new Error(`Plan has ${items.length} item(s); at least ${required} are required.`)
   }
 
   return {
-    title: typeof source.title === 'string' && source.title.trim() ? source.title.trim() : 'Untitled',
-    layoutSuggestion: typeof source.layoutSuggestion === 'string' ? source.layoutSuggestion.trim() : '',
+    title: firstText(source, ['title', 'name']) || 'Untitled',
+    layoutSuggestion: firstText(source, ['layoutSuggestion', 'layout_suggestion', 'objective', 'goal']),
     items,
   }
 }
@@ -160,6 +177,120 @@ export function normalizeAnchors(
     }
   }
   return anchors
+}
+
+type Obj = Record<string, unknown>
+const isObj = (value: unknown): value is Obj => Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+const ALIASES: Record<MultimodalKind, Record<string, string[]>> = {
+  poster: {
+    label: ['label', 'title', 'heading', 'name', 'section'],
+    content: ['content', 'text', 'body', 'description'],
+  },
+  podcast: {
+    timestamp: ['timestamp', 'time', 'start'],
+    speaker: ['speaker', 'voice', 'host', 'narrator', 'role'],
+    text: ['text', 'script', 'dialogue', 'content', 'line', 'speech', 'narration'],
+  },
+  video: {
+    description: ['description', 'action', 'scene', 'narration', 'summary', 'content'],
+    visualNote: ['visualNote', 'visual_note', 'visual', 'visuals', 'visualElement', 'visual_element', 'imagery'],
+  },
+  game: {
+    id: ['id', 'name'],
+    prompt: ['prompt', 'scenario', 'narrative', 'situation', 'description', 'text'],
+    choices: ['choices', 'options', 'decisions', 'alternatives'],
+  },
+  oral: {
+    heading: ['heading', 'title', 'headline'],
+    bulletPoints: ['bulletPoints', 'bullet_points', 'bullets', 'points', 'content'],
+    speakerNotes: ['speakerNotes', 'speaker_notes', 'notes', 'script', 'narration'],
+  },
+}
+
+/** A part is recognisable when its main content field exists under any accepted name. */
+const CONTENT_FIELD: Record<MultimodalKind, string[]> = {
+  poster: ['content'],
+  podcast: ['text'],
+  video: ['description'],
+  game: ['prompt'],
+  oral: ['heading', 'bulletPoints'],
+}
+
+function pickField(source: Obj, names: string[]): unknown {
+  for (const name of names) {
+    const value = source[name]
+    // A nested object is a wrapper (e.g. {"scene": {...}}), not a value for this field.
+    if (value === undefined || value === null || value === '' || isObj(value)) continue
+    if (Array.isArray(value) && value.length === 0) continue
+    return value
+  }
+  return undefined
+}
+
+function normalizeRawAnchors(value: unknown): unknown[] {
+  if (!Array.isArray(value)) return []
+  return value.map((entry) => {
+    if (typeof entry === 'string') return { evidenceRecordId: entry }
+    if (!isObj(entry)) return {}
+    return {
+      claimText: pickField(entry, ['claimText', 'claim_text', 'claim', 'text']),
+      evidenceRecordId: pickField(entry, ['evidenceRecordId', 'evidence_record_id', 'evidenceId', 'evidence_id', 'id']),
+    }
+  })
+}
+
+function canonicalize(kind: MultimodalKind, source: Obj): Obj | null {
+  const aliases = ALIASES[kind]
+  const out: Obj = {}
+  for (const [field, names] of Object.entries(aliases)) {
+    const value = pickField(source, names)
+    if (value !== undefined) out[field] = value
+  }
+  if (!CONTENT_FIELD[kind].some((field) => out[field] !== undefined)) return null
+
+  if (kind === 'game') {
+    const choices = Array.isArray(out.choices) ? out.choices : []
+    out.choices = choices.map((choice, index) => {
+      const entry = isObj(choice) ? choice : { text: choice }
+      return {
+        id: pickField(entry, ['id', 'key']) ?? String.fromCharCode(97 + index),
+        text: pickField(entry, ['text', 'label', 'option', 'choice', 'title', 'description']),
+        consequence: pickField(entry, ['consequence', 'outcome', 'result', 'feedback']),
+      }
+    })
+    const ids = pickField(source, ['evidenceIds', 'evidence_ids', 'evidence', 'sources'])
+    out.evidenceIds = Array.isArray(ids) ? ids.filter((id) => typeof id === 'string') : []
+  } else {
+    out.anchors = normalizeRawAnchors(pickField(source, ['anchors', 'sources', 'references', 'evidence']))
+  }
+  if (kind === 'oral' && typeof out.bulletPoints === 'string') {
+    out.bulletPoints = (out.bulletPoints as string).split(/\n|;|•/).map((line) => line.trim()).filter(Boolean)
+  }
+  return out
+}
+
+/**
+ * JSON mode forces an object, so models wrap a single part ({"segment": {...}}, {"segments": [{...}]}),
+ * rename fields (script/dialogue instead of text) or return a one-item array. Find the part inside
+ * whatever came back and map it to the canonical field names, or throw a clear error.
+ */
+export function unwrapPart(raw: unknown, kind: MultimodalKind): Obj {
+  const queue: unknown[] = [raw]
+  const visited = new Set<unknown>()
+  for (let depth = 0; queue.length > 0 && depth < 40; depth += 1) {
+    const current = queue.shift()
+    if (!current || typeof current !== 'object' || visited.has(current)) continue
+    visited.add(current)
+    if (Array.isArray(current)) {
+      queue.push(...current)
+      continue
+    }
+    const found = canonicalize(kind, current as Obj)
+    if (found) return found
+    queue.push(...Object.values(current as Obj))
+  }
+  throw new Error(`The model returned a ${kind} part without usable content.`)
 }
 
 export interface AssembleMeta {

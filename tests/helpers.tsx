@@ -84,3 +84,11 @@ export const readBlobBinary = (blob: Blob): Promise<string> =>
     reader.onerror = () => reject(reader.error)
     reader.readAsBinaryString(blob)
   })
+
+export const readBlobArrayBuffer = (blob: Blob): Promise<ArrayBuffer> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsArrayBuffer(blob)
+  })

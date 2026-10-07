@@ -14,6 +14,7 @@ import {
   buildEvidenceDigest,
   normalizePlan,
   runPool,
+  unwrapPart,
   type MultimodalKind,
 } from '@/lib/multimodalParts'
 
@@ -31,12 +32,21 @@ interface GenerateOptions {
   durationMinutes?: number
 }
 
+/** A failure with a learner-facing message and a technical detail they can copy to report it. */
+class GenerationError extends Error {
+  constructor(message: string, public detail: string) {
+    super(message)
+    this.name = 'GenerationError'
+  }
+}
+
 export function useMultimodalGeneration(kind: MultimodalKind) {
   const { locale } = useI18n()
   const pt = locale === 'pt-PT'
   const store = useWizardStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [errorDetail, setErrorDetail] = useState('')
   const [progress, setProgress] = useState<GenerationProgress | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -102,6 +112,7 @@ export function useMultimodalGeneration(kind: MultimodalKind) {
       abortRef.current = controller
       setLoading(true)
       setError('')
+      setErrorDetail('')
 
       try {
         const config = KIND_CONFIG[kind]
@@ -119,32 +130,51 @@ export function useMultimodalGeneration(kind: MultimodalKind) {
           },
           controller.signal
         )
-        const plan = normalizePlan(rawPlan, kind, records)
+        let plan
+        try {
+          plan = normalizePlan(rawPlan, kind, records)
+        } catch (planError) {
+          throw new GenerationError(
+            pt ? 'A IA não devolveu um plano utilizável. Tente de novo.' : 'The AI did not return a usable plan. Please try again.',
+            planError instanceof Error ? planError.message : String(planError)
+          )
+        }
         const planJson = JSON.stringify(plan)
 
         setProgress({ phase: 'parts', done: 0, total: plan.items.length })
         let done = 0
         const parts = await runPool(
           plan.items.map((item, index) => async () => {
-            const part = await callAi(
-              {
-                promptId: 'multimodal_part',
-                stepLabel: `Part ${index + 1}/${plan.items.length} - ${ARTIFACT_LABELS[kind]}`,
-                evidence: digest,
-                plan: planJson,
-                partIndex: index + 1,
-                partTotal: plan.items.length,
-                partFocus: item.focus,
-                shape: config.shape,
-              },
-              controller.signal
-            )
-            setProgress({ phase: 'parts', done: ++done, total: plan.items.length })
-            const record = Array.isArray(part) ? part[0] : part
-            if (!record || typeof record !== 'object') {
-              throw new Error(pt ? `Parte ${index + 1} inválida.` : `Part ${index + 1} was invalid.`)
+            let lastIssue = ''
+            // One extra attempt when the answer arrives without usable content (e.g. empty or off-schema).
+            for (let attempt = 1; attempt <= 2; attempt += 1) {
+              const part = await callAi(
+                {
+                  promptId: 'multimodal_part',
+                  stepLabel: `Part ${index + 1}/${plan.items.length} - ${ARTIFACT_LABELS[kind]}`,
+                  evidence: digest,
+                  plan: planJson,
+                  partIndex: index + 1,
+                  partTotal: plan.items.length,
+                  partFocus: item.focus,
+                  shape: config.shape,
+                },
+                controller.signal
+              )
+              try {
+                const record = unwrapPart(part, kind)
+                setProgress({ phase: 'parts', done: ++done, total: plan.items.length })
+                return record
+              } catch (partError) {
+                lastIssue = partError instanceof Error ? partError.message : String(partError)
+              }
             }
-            return record as Record<string, unknown>
+            throw new GenerationError(
+              pt
+                ? `A parte ${index + 1} de ${plan.items.length} veio sem conteúdo utilizável. Tente gerar de novo.`
+                : `Part ${index + 1} of ${plan.items.length} came back without usable content. Please try again.`,
+              lastIssue
+            )
           }),
           PART_CONCURRENCY,
           controller.signal
@@ -171,8 +201,12 @@ export function useMultimodalGeneration(kind: MultimodalKind) {
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {
           setError(pt ? 'Geração cancelada.' : 'Generation cancelled.')
+        } else if (err instanceof GenerationError) {
+          setError(err.message)
+          setErrorDetail(err.detail)
         } else {
           setError(err instanceof Error ? err.message : String(err))
+          setErrorDetail(err instanceof Error ? `${err.name}: ${err.message}` : String(err))
         }
       } finally {
         setLoading(false)
@@ -183,5 +217,5 @@ export function useMultimodalGeneration(kind: MultimodalKind) {
     [callAi, canGenerate, kind, loading, pt, store]
   )
 
-  return { generate, cancel, loading, error, progress, canGenerate }
+  return { generate, cancel, loading, error, errorDetail, progress, canGenerate }
 }

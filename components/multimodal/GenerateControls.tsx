@@ -8,21 +8,23 @@ interface GenerateControlsProps {
   kind: MultimodalKind
   durationMinutes?: number
   hasDraft: boolean
+  /** Override the button wording, e.g. "Gerar guião" when the output is a script, not the final media. */
+  labels?: { generate: string; regenerate: string }
 }
 
 /** Generate / cancel button with progress, shared by the five Stage 2 outputs. */
-export default function GenerateControls({ kind, durationMinutes, hasDraft }: GenerateControlsProps) {
+export default function GenerateControls({ kind, durationMinutes, hasDraft, labels }: GenerateControlsProps) {
   const { locale } = useI18n()
   const pt = locale === 'pt-PT'
-  const { generate, cancel, loading, error, progress, canGenerate } = useMultimodalGeneration(kind)
+  const { generate, cancel, loading, error, errorDetail, progress, canGenerate } = useMultimodalGeneration(kind)
 
   const label = loading
     ? progress?.phase === 'parts'
       ? pt ? `A gerar partes ${progress.done}/${progress.total}…` : `Generating parts ${progress.done}/${progress.total}…`
       : pt ? 'A planear…' : 'Planning…'
     : hasDraft
-      ? pt ? 'Gerar novamente' : 'Regenerate'
-      : pt ? 'Gerar com IA' : 'Generate with AI'
+      ? labels?.regenerate ?? (pt ? 'Gerar novamente' : 'Regenerate')
+      : labels?.generate ?? (pt ? 'Gerar com IA' : 'Generate with AI')
 
   return (
     <div className="flex flex-col gap-2">
@@ -60,9 +62,15 @@ export default function GenerateControls({ kind, durationMinutes, hasDraft }: Ge
         </p>
       )}
       {error && (
-        <p role="alert" className="text-sm text-red-600">
-          {error}
-        </p>
+        <div role="alert" className="space-y-1 text-sm text-red-600">
+          <p>{error}</p>
+          {errorDetail && (
+            <details className="text-xs text-[var(--on_surface_variant)]">
+              <summary className="cursor-pointer">{pt ? 'Detalhes técnicos' : 'Technical details'}</summary>
+              <code className="mt-1 block break-words rounded bg-[var(--surface_container)] p-2">{errorDetail}</code>
+            </details>
+          )}
+        </div>
       )}
     </div>
   )
