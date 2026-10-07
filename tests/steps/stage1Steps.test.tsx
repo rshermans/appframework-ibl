@@ -105,14 +105,24 @@ describe('Step 1A - compare questions', () => {
     expect(api.calls).toHaveLength(0)
   })
 
-  it('keeps going (comparison null) when the model answer is not JSON', async () => {
+  it('keeps the prose as the comparison when the model does not answer in JSON (no dead end in 1B)', async () => {
     resetStore({ selectedRQs: ['Alpha?', 'Beta?'] })
     mockFetch({ ai: () => aiOk('free text analysis') })
     renderStep(<Step1A />)
     fireEvent.click(button(msg('steps.step1A.run')))
     await waitFor(() => expect(state().workflowStep).toBe('step1b_synthesize'))
-    expect(state().comparisonResult).toBeNull()
+    expect(state().comparisonResult).toMatchObject({ comparisons: [], recommendationReason: 'free text analysis' })
     expect(state().analysis).toBe('free text analysis')
+  })
+
+  it('shows an error and stays in 1A when the answer is empty', async () => {
+    resetStore({ selectedRQs: ['Alpha?', 'Beta?'] })
+    mockFetch({ ai: () => aiOk('   ') })
+    renderStep(<Step1A />)
+    fireEvent.click(button(msg('steps.step1A.run')))
+    expect(await screen.findByText(msg('api.genericFailure'))).toBeInTheDocument()
+    expect(state().workflowStep).not.toBe('step1b_synthesize')
+    expect(state().comparisonResult).toBeNull()
   })
 })
 
@@ -143,10 +153,20 @@ describe('Step 1B - final question', () => {
     expect(state().finalResearchQuestion).toBeNull()
   })
 
-  it('cannot synthesise before a comparison exists', () => {
+  it('explains why synthesis is unavailable and offers the way to Step 1A', () => {
     resetStore({ selectedRQs: ['Alpha?', 'Beta?'], comparisonResult: null })
     renderStep(<Step1B />)
     expect(button(/Gerar ou refazer pergunta final|Generate or redo final question/)).toBeDisabled()
+    expect(screen.getByText(msg('steps.step1B.needsComparison'))).toBeInTheDocument()
+    fireEvent.click(button(msg('steps.step1B.goToComparison')))
+    expect(state().workflowStep).toBe('step1a_compare')
+  })
+
+  it('shows no warning and an enabled button once the comparison exists', () => {
+    resetStore({ selectedRQs: ['Alpha?', 'Beta?'], comparisonResult: comparison })
+    renderStep(<Step1B />)
+    expect(screen.queryByText(msg('steps.step1B.needsComparison'))).not.toBeInTheDocument()
+    expect(button(/Gerar ou refazer pergunta final|Generate or redo final question/)).toBeEnabled()
   })
 })
 

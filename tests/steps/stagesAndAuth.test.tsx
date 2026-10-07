@@ -26,7 +26,7 @@ describe('Stage 1 - stepper and navigation', () => {
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '11')
     const recommended = screen.getByRole('button', { name: /Próximo passo recomendado/ })
     fireEvent.click(recommended)
-    expect(state().workflowStep).toBe('step1b_synthesize')
+    expect(state().workflowStep).toBe('step1a_compare') // compare first; 1B stays locked until a comparison exists
   })
 
   it('locks steps whose prerequisites are missing and explains why', () => {
@@ -58,7 +58,7 @@ describe('Stage 1 - stepper and navigation', () => {
 
   it('keeps Previous/Next in the always-visible bar while earlier steps are open', () => {
     resetStore({
-      stage: 1, workflowStep: 'step1_select', step0OptionalCompleted: true,
+      stage: 1, workflowStep: 'step1_select', step0OptionalCompleted: true, selectedRQs: ['a', 'b'],
       explanationDraft: { outline: ['x'], argumentCore: 'c', evidenceReferences: [], bibliography: ['b'] },
     })
     renderStep(<Stage1Research />)
