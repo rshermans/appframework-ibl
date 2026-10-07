@@ -7,6 +7,7 @@ import { getMissingRequiredFields, resolveWorkflowStepId } from '@/lib/workflow'
 import { getMessage, normalizeLocale, type Locale } from '@/lib/i18n'
 import { withTimeout, TimeoutError, isAbortedError } from '@/lib/timeoutHelper'
 import { API_CONFIG, getTimeRemaining, canContinueProcessing } from '@/lib/apiTimeout'
+import { buildPromptVariables, getAiLimits } from '@/lib/promptVariables'
 
 export async function POST(req: Request) {
   const startTime = Date.now()
@@ -69,28 +70,7 @@ export async function POST(req: Request) {
       rq ||
       finalRQ ||
       (typeof finalResearchQuestion?.question === 'string' ? finalResearchQuestion.question : '')
-    const promptVariables = {
-      TOPIC: topic || '',
-      RQ: resolvedRQ,
-      LEVEL: body.level || '',
-      SOURCE: body.source || '',
-      EVIDENCE: body.evidence || '',
-      AUDIENCE: body.audience || '',
-      CONTENT: content || '',
-      CONTEXT: context || '',
-      FINAL_RQ: finalRQ || resolvedRQ,
-      SELECTED_RQS: Array.isArray(selectedRQs) ? selectedRQs.join('\n') : resolvedRQ,
-      // Stage 2 chunked generation (plan + parts)
-      KIND: typeof body.kind === 'string' ? body.kind : '',
-      DURATION: body.duration !== undefined ? String(body.duration) : '',
-      MIN_ITEMS: body.minItems !== undefined ? String(body.minItems) : '',
-      MAX_ITEMS: body.maxItems !== undefined ? String(body.maxItems) : '',
-      PLAN: typeof body.plan === 'string' ? body.plan : '',
-      PART_INDEX: body.partIndex !== undefined ? String(body.partIndex) : '',
-      PART_TOTAL: body.partTotal !== undefined ? String(body.partTotal) : '',
-      PART_FOCUS: typeof body.partFocus === 'string' ? body.partFocus : '',
-      SHAPE: typeof body.shape === 'string' ? body.shape : '',
-    }
+    const promptVariables = buildPromptVariables(body, { resolvedRQ, stage: parsedStage })
     const missingFields = resolvedWorkflowStep
       ? getMissingRequiredFields(resolvedWorkflowStep, {
           topic,
@@ -177,7 +157,7 @@ export async function POST(req: Request) {
 
     // Call ChatGPT with timeout enforcement + hybrid model selection
     const { content: aiOutput, tokens, model: usedModel } = await withTimeout(
-      callChatGPT(systemPrompt, userMessage, safeStepId),
+      callChatGPT(systemPrompt, userMessage, safeStepId, getAiLimits(resolvedPromptId)),
       { timeoutMs: API_CONFIG.FUNCTION_TIMEOUT_MS - 3000 } // 22s timeout for API level
     )
 

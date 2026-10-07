@@ -3,11 +3,9 @@
  *  1. Task complexity (derived from workflow step)
  *  2. Fallback rotation on errors (downgrade → alternate model)
  *
- * Model tiers:
- *  heavy  → gpt-4.1-mini  (deep analysis, evidence extraction, knowledge structure, step 9)
- *  medium → gpt-4.1-mini  (balanced: search design, explanations, multimodal)
- *  fast   → gpt-4o-mini   (quick: topic generation, selection, chat-like tasks)
- *  default→ gpt-4o-mini   (ultimate fallback — cheap & reliable)
+ * Primary model: gpt-6-luna for every tier. If it is unavailable for the API key (or errors),
+ * the chain falls back to gpt-4.1-mini and then gpt-4o-mini, so a bad model id never blocks the app.
+ * Set OPENAI_MODEL in the environment to force another primary model.
  */
 
 export type TaskComplexity = 'heavy' | 'medium' | 'fast'
@@ -20,10 +18,12 @@ export interface ModelSelection {
 }
 
 // ─── Model tiers ────────────────────────────────────────────────────
+export const PRIMARY_MODEL = 'gpt-6-luna'
+
 const MODEL_TIERS: Record<TaskComplexity, string> = {
-  heavy: 'gpt-4.1-mini',
-  medium: 'gpt-4.1-mini',
-  fast: 'gpt-4o-mini',
+  heavy: PRIMARY_MODEL,
+  medium: PRIMARY_MODEL,
+  fast: PRIMARY_MODEL,
 }
 
 const ULTIMATE_FALLBACK = 'gpt-4o-mini'
@@ -33,9 +33,9 @@ const ULTIMATE_FALLBACK = 'gpt-4o-mini'
  * When a model fails we try the next one in the chain.
  */
 const FALLBACK_CHAINS: Record<TaskComplexity, string[]> = {
-  heavy: ['gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini'],
-  medium: ['gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini'],
-  fast: ['gpt-4o-mini'],
+  heavy: [PRIMARY_MODEL, 'gpt-4.1-mini', 'gpt-4o-mini'],
+  medium: [PRIMARY_MODEL, 'gpt-4.1-mini', 'gpt-4o-mini'],
+  fast: [PRIMARY_MODEL, 'gpt-4o-mini'],
 }
 
 // ─── Step → Complexity mapping ──────────────────────────────────────

@@ -20,7 +20,6 @@ export type PromptId =
   | 'multimodal_oral'
   | 'multimodal_plan'
   | 'multimodal_part'
-  | 'peer_review_guide'
   | 'self_assessment'
   | 'reflection_journal'
   | 'inquiry_extension'
@@ -593,30 +592,6 @@ Rules:
 Respond with valid JSON only, using exactly this shape for the part:
 [SHAPE]`,
   },
-  peer_review_guide: {
-    id: 'peer_review_guide',
-    template: `You are a peer review facilitator for IBL research projects.
-
-Reviewer Team: [REVIEWER]
-Reviewed Project Topic: [TOPIC]
-Rubric Dimension: [DIMENSION]
-Work Sample: [WORK_SAMPLE]
-
-Generate guiding prompts to help the reviewer provide constructive rubric-aligned feedback.
-
-Rules:
-- Prompts must require human judgement.
-- Do not write the feedback itself; write prompts that elicit it.
-- Keep the prompts specific to the rubric dimension.
-
-Respond with valid JSON only:
-{
-  "strengths_prompt": "Question to help reviewer articulate what is strong",
-  "improvements_prompt": "Question to help reviewer identify improvements",
-  "evidence_check": "Specific thing to verify in the evidence chain",
-  "ethical_note": "One relevant ethical consideration for this dimension"
-}`,
-  },
   self_assessment: {
     id: 'self_assessment',
     template: `You are an IBL self-assessment facilitator.
@@ -816,10 +791,6 @@ export function buildDefaultUserMessage(
       return portuguese
         ? 'Escreve apenas esta parte do output e devolve JSON válido.'
         : 'Write only this part of the output and return valid JSON.'
-    case 'peer_review_guide':
-      return portuguese
-        ? 'Gera prompts guiados para revisão por pares alinhados com a rúbrica IBL.'
-        : 'Generate guided prompts for peer review aligned with the IBL rubric.'
     case 'self_assessment':
       return portuguese
         ? 'Mapeia o trabalho realizado contra as dimensões da rúbrica IBL R1–R8.'
