@@ -67,3 +67,20 @@ export const knowledgeStructure = {
   conceptMapEdges: [{ from: 'CO2', to: 'Warming', relation: 'causes' }], mindMapMarkdown: '- RQ\n  - Climate',
   glossary: [{ term: 'Bleaching', definition: 'Loss of algae' }],
 }
+
+/** jsdom's Blob lacks text()/arrayBuffer(); FileReader works. */
+export const readBlobText = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsText(blob)
+  })
+
+export const readBlobBinary = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsBinaryString(blob)
+  })
