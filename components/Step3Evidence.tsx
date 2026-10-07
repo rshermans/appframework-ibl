@@ -11,6 +11,7 @@ import EvidenceDetailDrawer from '@/components/evidence/EvidenceDetailDrawer'
 import ArticleDetailDrawer from '@/components/evidence/ArticleDetailDrawer'
 import { useEvidenceExtraction } from '@/components/evidence/useEvidenceExtraction'
 import { useRelatedArticles } from '@/components/evidence/useRelatedArticles'
+import { PROVIDER_SEQUENCE, providerLabel } from '@/lib/searchProviders'
 import {
   ITEMS_PER_PAGE,
   buildSourcePayload,
@@ -190,11 +191,9 @@ export default function Step3Evidence() {
               onChange={(event) => setRelatedProvider(event.target.value as Provider)}
               className="ml-2 ghost-input inline-block w-auto"
             >
-              <option value="crossref">Crossref</option>
-              <option value="openaire">OpenAIRE Graph</option>
-              <option value="semantic_scholar">Semantic Scholar</option>
-              <option value="arxiv">arXiv</option>
-              <option value="pubmed">PubMed / NCBI</option>
+              {PROVIDER_SEQUENCE.map((candidate) => (
+                <option key={candidate} value={candidate}>{providerLabel(candidate)}</option>
+              ))}
             </select>
           </label>
           <button

@@ -10,6 +10,7 @@ import {
   simplifyRelatedQuery,
   uniqueProviders,
 } from '@/lib/evidenceHelpers'
+import { PROVIDER_SEQUENCE } from '@/lib/searchProviders'
 import type { EvidenceRecord, SearchArticle } from '@/types/research-workflow'
 
 const article = (over: Partial<SearchArticle> = {}): SearchArticle => ({
@@ -38,7 +39,7 @@ describe('Step 3 evidence helpers', () => {
     const list = uniqueProviders('arxiv')
     expect(list[0]).toBe('arxiv')
     expect(new Set(list).size).toBe(list.length)
-    expect(list).toHaveLength(5)
+    expect(list).toHaveLength(PROVIDER_SEQUENCE.length) // every provider is still tried as a fallback
   })
 
   it('buildRelatedQueryCandidates is ordered, de-duplicated and skips blanks', () => {
