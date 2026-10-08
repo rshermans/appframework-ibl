@@ -4,12 +4,11 @@ import { useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
 import EthicalTip from '@/components/EthicalTip'
-import StepPeerReview from './StepPeerReview'
 import StepSelfAssessment from './StepSelfAssessment'
 import StepReflection from './StepReflection'
 import StepExtension from './StepExtension'
 
-type ReflectionSubStep = 'hub' | 'peer' | 'self' | 'reflect' | 'extend'
+type ReflectionSubStep = 'hub' | 'self' | 'reflect' | 'extend'
 
 const STEPS: Array<{
   id: ReflectionSubStep
@@ -20,22 +19,20 @@ const STEPS: Array<{
   descPt: string
   descEn: string
 }> = [
-  { id: 'peer',    emoji: '👥', badge: 'S3-Peer',    labelPt: 'Revisão por Pares',    labelEn: 'Peer Review',              descPt: 'Feedback por rúbrica com anonimato',            descEn: 'Rubric-based feedback with anonymity' },
-  { id: 'self',    emoji: '🪞', badge: 'S3-Self',    labelPt: 'Auto-Avaliação',        labelEn: 'Self-Assessment',          descPt: 'Mapeamento das dimensões R1–R8',                descEn: 'Map your work against R1–R8' },
-  { id: 'reflect', emoji: '📓', badge: 'S3-Reflect', labelPt: 'Diário de Reflexão',   labelEn: 'Reflection Journal',       descPt: 'Micro-prompts metacognitivos com journaling',   descEn: 'Metacognitive micro-prompts and journaling' },
+  { id: 'self',    emoji: '🪞', badge: 'S3-Self',    labelPt: 'Auto-Avaliação',        labelEn: 'Self-Assessment',          descPt: 'Dê uma nota de 1 a 5 a cada dimensão R1–R8', descEn: 'Rate each dimension R1–R8 from 1 to 5' },
+  { id: 'reflect', emoji: '📓', badge: 'S3-Diary', labelPt: 'Diário Reflexivo',    labelEn: 'Reflective Journal',       descPt: 'Responda a 3 perguntas sobre o que aprendeu',   descEn: 'Answer 3 questions about what you learned' },
   { id: 'extend',  emoji: '🔭', badge: 'S3-Extend',  labelPt: 'Planeador de Extensão', labelEn: 'Inquiry Extension Planner', descPt: 'Deteção de lacunas e 3 caminhos possíveis',   descEn: 'Gap detection and 3 extension paths' },
 ]
 
 export default function Stage3Reflection() {
   const { locale, t } = useI18n()
-  const { setStage, peerReviews, selfAssessment, reflectionJournal, extensionPlan, finalResearchQuestion } =
+  const { setStage, selfAssessment, reflectionJournal, extensionPlan, finalResearchQuestion } =
     useWizardStore()
   const [activeSubStep, setActiveSubStep] = useState<ReflectionSubStep>('hub')
   const isPortuguese = locale === 'pt-PT'
 
   const isDone: Record<ReflectionSubStep, boolean> = {
     hub:     false,
-    peer:    peerReviews.length > 0,
     self:    selfAssessment !== null,
     reflect: reflectionJournal.length > 0,
     extend:  extensionPlan !== null,
@@ -44,7 +41,6 @@ export default function Stage3Reflection() {
   if (activeSubStep !== 'hub') {
     const back = () => setActiveSubStep('hub')
     switch (activeSubStep) {
-      case 'peer':    return <div className="space-y-6 mt-6"><StepPeerReview onBack={back} /></div>
       case 'self':    return <div className="space-y-6 mt-6"><StepSelfAssessment onBack={back} /></div>
       case 'reflect': return <div className="space-y-6 mt-6"><StepReflection onBack={back} /></div>
       case 'extend':  return <div className="space-y-6 mt-6"><StepExtension onBack={back} /></div>
@@ -66,8 +62,8 @@ export default function Stage3Reflection() {
             </h2>
             <p className="max-w-3xl text-slate-700">
               {isPortuguese
-                ? 'Fecha o ciclo IBL com reflexão metacognitiva, revisão por pares e extensão da investigação.'
-                : 'Close the IBL cycle with metacognitive reflection, peer review, and inquiry extension.'}
+                ? 'Feche o ciclo IBL: avalie o seu próprio trabalho, escreva o que aprendeu e planeie como continuar. Tudo fica consigo — nada é partilhado.'
+                : 'Close the IBL cycle: assess your own work, write what you learned and plan how to continue. Everything stays with you — nothing is shared.'}
             </p>
             <EthicalTip
               title={t('common.stageEthicalTip')}
@@ -124,7 +120,7 @@ export default function Stage3Reflection() {
       </div>
 
       {/* Step cards */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         {STEPS.map((step) => (
           <button
             key={step.id}

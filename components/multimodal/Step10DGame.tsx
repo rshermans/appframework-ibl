@@ -7,6 +7,9 @@ import StepHeader from '@/components/StepHeader'
 import AudienceSelect from './AudienceSelect'
 import GenerateControls from './GenerateControls'
 import ExportToNotebookButton from '@/components/ExportToNotebookButton'
+import CreationGuide from './CreationGuide'
+import GamePlayer from './GamePlayer'
+import { gameScriptText } from '@/lib/outputExports'
 
 interface Props {
   onBack: () => void
@@ -28,8 +31,8 @@ export default function Step10DGame({ onBack }: Props) {
         stepId="step6_multimodal"
         title={pt ? 'Jogo de Ciência' : 'Science Game'}
         subtitle={pt
-          ? 'Jogo de decisão com ramificações narrativas baseadas em evidência.'
-          : 'Decision-based game with evidence-grounded branching narrative.'}
+          ? 'Cenário de decisões com consequências baseadas na evidência. Pode jogá-lo aqui mesmo e levar o guião para o usar na aula.'
+          : 'Decision scenario with evidence-grounded consequences. You can play it right here and take the script to use in class.'}
       />
       <button type="button" onClick={onBack} className="text-sm text-[var(--on_surface_variant)] hover:underline">
         ← {pt ? 'Voltar ao hub' : 'Back to hub'}
@@ -37,7 +40,11 @@ export default function Step10DGame({ onBack }: Props) {
 
       <div className="flex flex-wrap items-center gap-3">
         <AudienceSelect />
-        <GenerateControls kind="game" hasDraft={Boolean(draft)} />
+        <GenerateControls
+          kind="game"
+          hasDraft={Boolean(draft)}
+          labels={{ generate: pt ? 'Gerar jogo' : 'Generate game', regenerate: pt ? 'Gerar outro jogo' : 'Generate another game' }}
+        />
         <ExportToNotebookButton
           projectId={projectId}
           topic={topic}
@@ -49,8 +56,14 @@ export default function Step10DGame({ onBack }: Props) {
         />
       </div>
 
+      {draft && <GamePlayer scenario={draft} />}
+
       {draft && (
-        <div className="space-y-4">
+        <details className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-[var(--on_surface)]">
+            {pt ? 'Ver a estrutura do jogo (para quem vai conduzir a atividade)' : 'View the game structure (for whoever runs the activity)'}
+          </summary>
+        <div className="mt-4 space-y-4">
           <div>
             <h3 className="font-semibold text-[var(--on_surface)]">{draft.title}</h3>
             <p className="mt-1 text-sm text-[var(--on_surface_variant)]">
@@ -99,6 +112,18 @@ export default function Step10DGame({ onBack }: Props) {
             </div>
           )}
         </div>
+        </details>
+      )}
+
+      {draft && (
+        <CreationGuide
+          title={pt ? 'Levar o jogo para a aula' : 'Take the game to class'}
+          description={pt ? 'Copie ou descarregue o cenário completo (decisões e consequências) para o projetar, imprimir ou adaptar.' : 'Copy or download the full scenario (decisions and consequences) to project, print or adapt.'}
+          actions={[
+            { id: 'copy-script', label: pt ? 'Copiar cenário' : 'Copy scenario', copyText: gameScriptText(draft, pt), primary: true },
+            { id: 'download', label: pt ? 'Descarregar cenário (.md)' : 'Download scenario (.md)', download: { filename: 'jogo-cenario.md', text: gameScriptText(draft, pt) } },
+          ]}
+        />
       )}
     </div>
   )

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { searchScientificArticles, isSearchProvider, type SearchProvider } from '@/lib/search'
+import { searchScientificArticles, isSearchProvider, SUPPORTED_PROVIDERS, type SearchProvider } from '@/lib/search'
 import { getMessage, normalizeLocale, type Locale } from '@/lib/i18n'
 import { withTimeout, TimeoutError, isAbortedError } from '@/lib/timeoutHelper'
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
           ok: false,
           error: getMessage(locale, 'api.searchFailure'),
           details: `Unsupported provider: ${requestedProvider}`,
-          supportedProviders: ['crossref', 'openaire', 'semantic_scholar', 'arxiv', 'pubmed'],
+          supportedProviders: SUPPORTED_PROVIDERS,
         },
         { status: 400 }
       )

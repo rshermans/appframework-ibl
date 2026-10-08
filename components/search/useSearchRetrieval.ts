@@ -5,7 +5,13 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { SearchArticle } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import { safeFetch } from '@/lib/safeFetch'
-import { PROVIDER_SEQUENCE, mergeUniqueArticles, providerLabel, type Provider } from '@/lib/searchProviders'
+import {
+  PROVIDER_SEQUENCE,
+  describeProviderFailure,
+  mergeUniqueArticles,
+  providerLabel,
+  type Provider,
+} from '@/lib/searchProviders'
 
 /** Multi-provider article retrieval with paging, "load all" and selection helpers. */
 export function useSearchRetrieval(setError: (message: string) => void) {
@@ -25,6 +31,7 @@ export function useSearchRetrieval(setError: (message: string) => void) {
   const [totalResults, setTotalResults] = useState<number | undefined>(undefined)
   const [hasNextPage, setHasNextPage] = useState(false)
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [retrievalNotice, setRetrievalNotice] = useState('')
   const articlesRef = useRef<SearchArticle[]>(searchArticles)
 
   useEffect(() => {
@@ -90,33 +97,52 @@ export function useSearchRetrieval(setError: (message: string) => void) {
   ): Promise<void> => {
     setSearchLoading(true)
     setError('')
+    setRetrievalNotice('')
 
     try {
-      let mergedArticles = options.replaceExisting ? [] : articlesRef.current
-      const providerErrors: string[] = []
-
-      for (const providerCandidate of PROVIDER_SEQUENCE) {
-        const { response, json: payload } = await safeFetch('/api/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query,
-            limit: pageSize,
-            page: requestedPage,
-            provider: providerCandidate,
-            locale,
-          }),
+      // All providers in parallel: a slow or rate-limited one no longer delays the others.
+      const outcomes = await Promise.all(
+        PROVIDER_SEQUENCE.map(async (providerCandidate) => {
+          try {
+            const { response, json: payload } = await safeFetch('/api/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                query,
+                limit: pageSize,
+                page: requestedPage,
+                provider: providerCandidate,
+                locale,
+              }),
+            })
+            const data = payload?.data ?? payload
+            if (!response.ok || !payload?.ok) {
+              return {
+                provider: providerCandidate,
+                articles: [] as SearchArticle[],
+                failure: describeProviderFailure(String(payload?.details || payload?.error || ''), response.status, isPortuguese),
+              }
+            }
+            return {
+              provider: providerCandidate,
+              articles: (Array.isArray(data.articles) ? data.articles : []) as SearchArticle[],
+              failure: null as string | null,
+            }
+          } catch (error) {
+            return {
+              provider: providerCandidate,
+              articles: [] as SearchArticle[],
+              failure: describeProviderFailure(error instanceof Error ? error.message : '', undefined, isPortuguese),
+            }
+          }
         })
+      )
 
-        const data = payload?.data ?? payload
-        if (!response.ok || !payload?.ok) {
-          providerErrors.push(providerLabel(providerCandidate))
-          continue
-        }
-
-        const incomingArticles = Array.isArray(data.articles) ? data.articles : []
-        mergedArticles = mergeUniqueArticles(mergedArticles, incomingArticles)
+      let mergedArticles = options.replaceExisting ? [] : articlesRef.current
+      for (const outcome of outcomes) {
+        mergedArticles = mergeUniqueArticles(mergedArticles, outcome.articles)
       }
+      const failures = outcomes.filter((outcome) => outcome.failure)
 
       setSearchArticles(mergedArticles)
       articlesRef.current = mergedArticles
@@ -124,7 +150,7 @@ export function useSearchRetrieval(setError: (message: string) => void) {
       setHasNextPage(false)
       setTotalResults(mergedArticles.length)
 
-      if (providerErrors.length === PROVIDER_SEQUENCE.length) {
+      if (failures.length === PROVIDER_SEQUENCE.length) {
         throw new Error(
           isPortuguese
             ? 'Todos os fornecedores falharam nesta tentativa.'
@@ -132,11 +158,12 @@ export function useSearchRetrieval(setError: (message: string) => void) {
         )
       }
 
-      if (providerErrors.length > 0) {
-        setError(
+      if (failures.length > 0) {
+        const detail = failures.map((outcome) => `${providerLabel(outcome.provider)} (${outcome.failure})`).join('; ')
+        setRetrievalNotice(
           isPortuguese
-            ? `Alguns fornecedores falharam: ${providerErrors.join(', ')}.`
-            : `Some providers failed: ${providerErrors.join(', ')}.`
+            ? `Resultados de ${PROVIDER_SEQUENCE.length - failures.length} de ${PROVIDER_SEQUENCE.length} fornecedores. Sem resposta: ${detail}.`
+            : `Results from ${PROVIDER_SEQUENCE.length - failures.length} of ${PROVIDER_SEQUENCE.length} providers. No response: ${detail}.`
         )
       }
     } catch (err) {
@@ -192,6 +219,7 @@ export function useSearchRetrieval(setError: (message: string) => void) {
     totalResults,
     hasNextPage,
     bulkLoading,
+    retrievalNotice,
     runRetrieval,
     runRetrievalAcrossProviders,
     changeProvider,

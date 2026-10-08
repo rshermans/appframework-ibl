@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Maximize2, X, RefreshCw, Download } from 'lucide-react'
+import { Maximize2, RefreshCw, Download } from 'lucide-react'
+import Drawer from '@/components/ui/Drawer'
 import type { Markmap } from 'markmap-view'
 
 interface MarkmapPreviewProps {
@@ -125,6 +126,7 @@ function downloadSvg(svg: SVGSVGElement | null) {
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
   clone.setAttribute('width', String(Math.round(rect.width)))
   clone.setAttribute('height', String(Math.round(rect.height)))
+  clone.style.background = '#ffffff'
 
   // Markmap styles live in a <style> tag in the document head; inline them so
   // the exported file renders correctly outside the page.
@@ -153,15 +155,6 @@ export default function MarkmapPreview({ markdown, className }: MarkmapPreviewPr
   const [retryKey, setRetryKey] = useState(0)
   const inlineSvgRef = useRef<SVGSVGElement | null>(null)
 
-  useEffect(() => {
-    if (!isMaximized) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsMaximized(false)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isMaximized])
-
   if (error) {
     return (
       <div className={`rounded-[var(--radius-xl)] bg-[var(--surface_container_lowest)] p-6 text-sm text-[var(--on_surface)] ghost-border flex flex-col items-center gap-4 ${className || ''}`}>
@@ -183,7 +176,7 @@ export default function MarkmapPreview({ markdown, className }: MarkmapPreviewPr
 
   return (
     <>
-      <div className={`group relative overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface_container_lowest)] p-2 ghost-border transition-all hover:ambient-shadow ${className || ''}`}>
+      <div className={`group relative overflow-hidden rounded-[var(--radius-xl)] bg-white p-2 ghost-border transition-all hover:ambient-shadow ${className || ''}`}>
         <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           <button
             onClick={() => downloadSvg(inlineSvgRef.current)}
@@ -211,26 +204,19 @@ export default function MarkmapPreview({ markdown, className }: MarkmapPreviewPr
         />
       </div>
 
-      {isMaximized && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsMaximized(false)} />
-          <div className="relative w-full max-w-6xl h-[90vh] glass-panel-heavy rounded-[var(--radius-2xl)] ambient-shadow overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--outline_variant)]">
-              <h3 className="font-display font-semibold text-[var(--on_surface)]">Mapa Mental Interativo</h3>
-              <button
-                onClick={() => setIsMaximized(false)}
-                className="p-2 rounded-full hover:bg-[var(--surface_container_highest)] text-[var(--on_surface)] transition-colors"
-                aria-label="Fechar"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="flex-1 bg-[var(--surface_container_lowest)] relative overflow-hidden">
-              <MarkmapCanvas markdown={markdown} height="100%" onError={setError} />
-            </div>
-          </div>
+      <Drawer
+        open={isMaximized}
+        onClose={() => setIsMaximized(false)}
+        variant="dialog"
+        size="full"
+        title="Mapa Mental Interativo"
+        closeLabel="Fechar"
+      >
+        {/* Solid white behind the map so the text is always readable */}
+        <div className="h-[70dvh] overflow-hidden rounded-[var(--radius-md)] bg-white ring-1 ring-[var(--outline_variant)]">
+          <MarkmapCanvas markdown={markdown} height="100%" onError={setError} />
         </div>
-      )}
+      </Drawer>
     </>
   )
 }

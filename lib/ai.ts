@@ -46,10 +46,21 @@ function buildJsonInput(userMessage: string): string {
     : userMessage + '\n\nReturn JSON.'
 }
 
+export interface ChatOptions {
+  /** Overrides the per-complexity output cap (smaller = faster). */
+  maxOutputTokens?: number
+  /** Overrides the per-attempt timeout. */
+  attemptTimeoutMs?: number
+}
+
+/** Total time one call may spend across all fallback models (the route allows ~25s). */
+const CALL_BUDGET_MS = API_CONFIG.FUNCTION_TIMEOUT_MS - 3000
+
 export async function callChatGPT(
   systemPrompt: string,
   userMessage: string,
-  stepId: string = 'generic_guidance'
+  stepId: string = 'generic_guidance',
+  options: ChatOptions = {}
 ): Promise<{ content: string; tokens: number; model: string }> {
   const startTime = Date.now()
   const failedModels = new Set<string>()
@@ -67,15 +78,24 @@ export async function callChatGPT(
     try {
       // Attempt with current model + JSON format
       console.log(`[ChatGPT] Attempting ${modelLogTag(selection)} with JSON format...`)
+      // Each attempt gets at most what is left of the budget, so a slow first model
+      // cannot starve the fallback (that produced "Request timeout after 25000ms").
+      const remaining = CALL_BUDGET_MS - (Date.now() - startTime)
+      const attemptTimeout = Math.max(
+        3000,
+        Math.min(options.attemptTimeoutMs ?? (selection.complexity === 'fast' ? 10000 : 15000), remaining - 2000)
+      )
       const response = await withTimeout(
         openai.responses.create({
           model,
           instructions,
           input,
-          max_output_tokens: selection.complexity === 'heavy' ? 3000 : selection.complexity === 'fast' ? 1500 : 2000,
+          max_output_tokens:
+            options.maxOutputTokens ??
+            (selection.complexity === 'heavy' ? 3000 : selection.complexity === 'fast' ? 1500 : 2000),
           text: { format: { type: 'json_object' } },
         }),
-        { timeoutMs: selection.complexity === 'fast' ? 10000 : 15000 }
+        { timeoutMs: attemptTimeout }
       )
 
       let content = extractResponseText(response)

@@ -16,7 +16,7 @@ const STEP_CONTEXT: Record<string, string> = {
   'step8_glossary':           'Stage 1 · Step 8 → Scientific Glossary: defining key terms from sources with precision.',
   'step9_explanation':        'Stage 2 · Step 9 → Scientific Explanation Scaffolder: building the evidence-based scientific argument and first draft.',
   'step6_multimodal':         'Stage 2 · Step 10 → Multimodal Output Generator: creating posters, podcast scripts, videocasts, science games, or oral presentations.',
-  'step7_reflection':         'Stage 3 → Reflect & Improve: peer review, self-reflection/metacognition, and inquiry extension planning.',
+  'step7_reflection':         'Stage 3 → Reflect & Improve: self-assessment against the rubric, a reflective journal, and inquiry extension planning.',
 }
 
 function loadManual(): string {

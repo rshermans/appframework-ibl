@@ -7,6 +7,7 @@ import { useI18n } from '@/components/I18nProvider'
 import { safeFetch } from '@/lib/safeFetch'
 import { persistInteractionEvent } from '@/lib/interactionClient'
 import { buildRelatedQueryCandidates, uniqueProviders, type Provider } from '@/lib/evidenceHelpers'
+import { PROVIDER_SEQUENCE, isProvider } from '@/lib/searchProviders'
 
 /** "Fetch new related article": tries several providers/queries and merges new results. */
 export function useRelatedArticles(onError: (message: string) => void) {
@@ -27,44 +28,27 @@ export function useRelatedArticles(onError: (message: string) => void) {
   const [relatedLoading, setRelatedLoading] = useState(false)
   const [relatedProvider, setRelatedProvider] = useState<Provider>('crossref')
   const [relatedQueryInput, setRelatedQueryInput] = useState('')
-  const [relatedPageByProvider, setRelatedPageByProvider] = useState<Record<Provider, number>>({
-    semantic_scholar: 1,
-    crossref: 1,
-    openaire: 1,
-    arxiv: 1,
-    pubmed: 1,
-  })
+  const [relatedPageByProvider, setRelatedPageByProvider] = useState<Record<Provider, number>>(
+    () => Object.fromEntries(PROVIDER_SEQUENCE.map((candidate) => [candidate, 1])) as Record<Provider, number>
+  )
   const [relatedFeedback, setRelatedFeedback] = useState('')
 
   useEffect(() => {
-    const firstProvider = searchArticles.find(
-      (article) =>
-        article.provider === 'semantic_scholar' ||
-        article.provider === 'crossref' ||
-        article.provider === 'openaire' ||
-        article.provider === 'arxiv' ||
-        article.provider === 'pubmed'
-    )?.provider
-
-    if (
-      firstProvider === 'semantic_scholar' ||
-      firstProvider === 'crossref' ||
-      firstProvider === 'openaire' ||
-      firstProvider === 'arxiv' ||
-      firstProvider === 'pubmed'
-    ) {
+    const firstProvider = searchArticles.find((article) => isProvider(article.provider))?.provider
+    if (firstProvider && isProvider(firstProvider)) {
       setRelatedProvider(firstProvider)
     }
   }, [searchArticles])
 
   useEffect(() => {
-    setRelatedPageByProvider({
-      semantic_scholar: searchArticles.some((article) => article.provider === 'semantic_scholar') ? 2 : 1,
-      crossref: searchArticles.some((article) => article.provider === 'crossref') ? 2 : 1,
-      openaire: searchArticles.some((article) => article.provider === 'openaire') ? 2 : 1,
-      arxiv: searchArticles.some((article) => article.provider === 'arxiv') ? 2 : 1,
-      pubmed: searchArticles.some((article) => article.provider === 'pubmed') ? 2 : 1,
-    })
+    setRelatedPageByProvider(
+      Object.fromEntries(
+        PROVIDER_SEQUENCE.map((candidate) => [
+          candidate,
+          searchArticles.some((article) => article.provider === candidate) ? 2 : 1,
+        ])
+      ) as Record<Provider, number>
+    )
     setRelatedFeedback('')
   }, [searchArticles, searchDesign?.booleanQuery])
 

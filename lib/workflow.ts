@@ -75,7 +75,6 @@ export const LEGACY_WORKFLOW_STEP_ALIASES: Record<string, WorkflowStepId> = {
   step10b: 'step6_multimodal',
   step10c: 'step6_multimodal',
   step10d: 'step6_multimodal',
-  's3-peer': 'step7_reflection',
   's3-self': 'step7_reflection',
   's3-reflect': 'step7_reflection',
   's3-extend': 'step7_reflection',

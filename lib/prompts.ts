@@ -20,7 +20,6 @@ export type PromptId =
   | 'multimodal_oral'
   | 'multimodal_plan'
   | 'multimodal_part'
-  | 'peer_review_guide'
   | 'self_assessment'
   | 'reflection_journal'
   | 'inquiry_extension'
@@ -593,80 +592,56 @@ Rules:
 Respond with valid JSON only, using exactly this shape for the part:
 [SHAPE]`,
   },
-  peer_review_guide: {
-    id: 'peer_review_guide',
-    template: `You are a peer review facilitator for IBL research projects.
-
-Reviewer Team: [REVIEWER]
-Reviewed Project Topic: [TOPIC]
-Rubric Dimension: [DIMENSION]
-Work Sample: [WORK_SAMPLE]
-
-Generate guiding prompts to help the reviewer provide constructive rubric-aligned feedback.
-
-Rules:
-- Prompts must require human judgement.
-- Do not write the feedback itself; write prompts that elicit it.
-- Keep the prompts specific to the rubric dimension.
-
-Respond with valid JSON only:
-{
-  "strengths_prompt": "Question to help reviewer articulate what is strong",
-  "improvements_prompt": "Question to help reviewer identify improvements",
-  "evidence_check": "Specific thing to verify in the evidence chain",
-  "ethical_note": "One relevant ethical consideration for this dimension"
-}`,
-  },
   self_assessment: {
     id: 'self_assessment',
-    template: `You are an IBL self-assessment facilitator.
+    template: `You are an IBL self-assessment coach. The learner has ALREADY rated themselves on each rubric dimension. Your job is honest, evidence-based feedback on those ratings - not to replace them.
 
 Research Question: [RQ]
-Evidence Summary: [EVIDENCE]
-Explanation Draft: [EXPLANATION]
+Project summary: [CONTEXT]
+Evidence (id - citation - claim): [EVIDENCE]
+Explanation core: [EXPLANATION]
+Learner ratings (1 = weak, 5 = excellent): [LEARNER_RATINGS]
 
-Map the work against IBL rubric dimensions R1–R8 and generate self-assessment prompts.
+For each dimension R1-R8 give:
+- "comment": max 30 words - is the learner's rating supported by the work above? say why or why not
+- "suggestedScore": your own 1-5 score (it may equal the learner's)
+- "improvementHint": max 20 words - one concrete action to raise it
 
 Rules:
-- Scores must be plausible and justified from the supplied work.
-- Improvement hints must be specific and actionable.
-- Avoid inflated scoring when the evidence is incomplete.
+- Base every comment on the project summary and evidence above; do not invent work that is not mentioned.
+- Do not inflate: if evidence or outputs are missing, say so and score accordingly.
+- Be encouraging but specific; address the learner as "you".
 
 Respond with valid JSON only:
 {
-  "rubricDimensions": [
-    {
-      "dimension": "R1: Research Question Quality",
-      "score": 3,
-      "justification": "Evidence-based justification for the score",
-      "improvementHint": "Specific suggestion to raise score"
-    }
+  "dimensions": [
+    { "id": "R1", "comment": "Short, specific comment", "suggestedScore": 3, "improvementHint": "One concrete action" }
   ],
-  "overallReflection": "Synthesised reflection across all dimensions"
+  "overallReflection": "At most two sentences summarising strengths and the main next step"
 }`,
   },
   reflection_journal: {
     id: 'reflection_journal',
-    template: `You are a metacognition facilitator guiding reflective journaling.
+    template: `You are a metacognition coach helping a student write a reflective journal about their own research project.
 
 Research Question: [RQ]
-Stage: [STAGE]
-Context: [CONTEXT]
+Project summary: [CONTEXT]
+Current stage: [STAGE]
 
-Generate 3 short reflective micro-prompts to trigger authentic metacognition.
-One prompt per epistemic dimension: what was learned, what was difficult, what would be done differently.
+Write 3 personal reflection questions tailored to THIS project (mention its topic or choices), one for each theme:
+1) what changed in my understanding, 2) what was hard and how I coped, 3) what I would do differently.
 
 Rules:
-- Prompts must invite authentic personal reflection rather than generic summaries.
-- Avoid asking for factual recall only.
-- Keep each prompt short enough to answer in 3-6 sentences.
+- Each question is one sentence, in the second person, answerable in 3-6 sentences.
+- Ask about the student's own thinking and decisions, not about facts from the sources.
+- Do not give answers or model responses.
 
 Respond with valid JSON only:
 {
   "prompts": [
-    { "id": "learned", "prompt": "What is the most important thing you learned through this inquiry?" },
-    { "id": "challenge", "prompt": "What was the hardest part and why?" },
-    { "id": "redo", "prompt": "If you could redo one decision, what would it be and why?" }
+    { "id": "learned", "prompt": "..." },
+    { "id": "challenge", "prompt": "..." },
+    { "id": "redo", "prompt": "..." }
   ]
 }`,
   },
@@ -816,10 +791,6 @@ export function buildDefaultUserMessage(
       return portuguese
         ? 'Escreve apenas esta parte do output e devolve JSON válido.'
         : 'Write only this part of the output and return valid JSON.'
-    case 'peer_review_guide':
-      return portuguese
-        ? 'Gera prompts guiados para revisão por pares alinhados com a rúbrica IBL.'
-        : 'Generate guided prompts for peer review aligned with the IBL rubric.'
     case 'self_assessment':
       return portuguese
         ? 'Mapeia o trabalho realizado contra as dimensões da rúbrica IBL R1–R8.'

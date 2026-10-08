@@ -66,6 +66,7 @@
     "nextjs-toploader": "^3.9.17",
     "openai": "^6.34.0",
     "postcss": "^8.4.31",
+    "pptxgenjs": "^4.0.1",
     "prisma": "^5.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

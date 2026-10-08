@@ -1,10 +1,13 @@
 import type { SearchArticle, SearchPagination } from '@/types/research-workflow'
 
-export type SearchProvider = 'semantic_scholar' | 'crossref' | 'openaire' | 'arxiv' | 'pubmed'
-const SUPPORTED_PROVIDERS: SearchProvider[] = ['semantic_scholar', 'crossref', 'openaire', 'arxiv', 'pubmed']
+import { PROVIDER_SEQUENCE, isProvider, type Provider } from '@/lib/searchProviders'
+import { searchDoaj, searchOpenAlexPortuguese } from '@/lib/searchOpenAccess'
+
+export type SearchProvider = Provider
+export const SUPPORTED_PROVIDERS: SearchProvider[] = [...PROVIDER_SEQUENCE]
 
 export function isSearchProvider(value: string): value is SearchProvider {
-  return SUPPORTED_PROVIDERS.includes(value as SearchProvider)
+  return isProvider(value)
 }
 
 const SEMANTIC_SCHOLAR_MIN_INTERVAL_MS = 1100
@@ -18,7 +21,7 @@ interface SearchInput {
   provider?: SearchProvider
 }
 
-interface SearchOutput {
+export interface SearchOutput {
   provider: SearchProvider
   articles: SearchArticle[]
   pagination: SearchPagination
@@ -48,6 +51,14 @@ export async function searchScientificArticles(input: SearchInput): Promise<Sear
 
   if (provider === 'semantic_scholar') {
     return searchSemanticScholar(query, pageSize, page)
+  }
+
+  if (provider === 'openalex_pt') {
+    return searchOpenAlexPortuguese(query, pageSize, page)
+  }
+
+  if (provider === 'doaj') {
+    return searchDoaj(query, pageSize, page)
   }
 
   throw new Error(`Unsupported provider: ${provider}`)
@@ -94,6 +105,15 @@ async function searchSemanticScholar(
       cache: 'no-store',
     })
   )
+
+  if (response.status === 429) {
+    // Public tier is shared and throttled: wait briefly (Retry-After, capped) and try once more.
+    const retryAfter = Number(response.headers.get('retry-after'))
+    await delay(Math.min(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1500, 4000))
+    response = await runSemanticScholarRequest(() =>
+      fetch(url.toString(), { method: 'GET', headers, cache: 'no-store' })
+    )
+  }
 
   if (!response.ok) {
     const details = await safeReadText(response)
@@ -621,7 +641,7 @@ function simplifyQueryForProvider(provider: SearchProvider, query: string): stri
     return simplifySemanticScholarQuery(cleaned)
   }
 
-  if (provider === 'openaire' || provider === 'arxiv' || provider === 'pubmed') {
+  if (provider === 'openaire' || provider === 'arxiv' || provider === 'pubmed' || provider === 'openalex_pt' || provider === 'doaj') {
     return simplifyPortalQuery(cleaned)
   }
 

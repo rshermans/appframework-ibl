@@ -12,13 +12,16 @@ export interface DrawerProps {
   /** `drawer`: side panel on desktop, full screen on phones. `dialog`: centred card. */
   variant?: 'drawer' | 'dialog'
   /** Tailwind max-width for the panel on >= md screens. */
-  size?: 'md' | 'lg' | 'xl'
+  size?: 'md' | 'lg' | 'xl' | 'full'
   closeLabel?: string
   /** Rendered pinned below the scrolling body (e.g. action buttons). */
   footer?: React.ReactNode
 }
 
-const SIZE_CLASS = { md: 'md:max-w-lg', lg: 'md:max-w-2xl', xl: 'md:max-w-5xl' } as const
+const SIZE_CLASS = { md: 'md:max-w-lg', lg: 'md:max-w-2xl', xl: 'md:max-w-5xl', full: 'md:max-w-[96vw]' } as const
+
+/** Open overlays, oldest first. Only the last one answers to Escape/Tab (e.g. a map opened from a drawer). */
+const overlayStack: symbol[] = []
 const FOCUSABLE = 'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])'
 
 /**
@@ -44,6 +47,9 @@ export default function Drawer({
   useEffect(() => {
     if (!open) return
 
+    const id = Symbol('overlay')
+    overlayStack.push(id)
+    const isTop = () => overlayStack[overlayStack.length - 1] === id
     const previouslyFocused = document.activeElement as HTMLElement | null
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -57,6 +63,7 @@ export default function Drawer({
     focusFirst()
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!isTop()) return
       if (event.key === 'Escape') {
         event.stopPropagation()
         onCloseRef.current()
@@ -79,8 +86,12 @@ export default function Drawer({
 
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
-      delete document.body.dataset.overlay
+      const position = overlayStack.indexOf(id)
+      if (position >= 0) overlayStack.splice(position, 1)
+      if (overlayStack.length === 0) {
+        document.body.style.overflow = previousOverflow
+        delete document.body.dataset.overlay
+      }
       previouslyFocused?.focus?.()
     }
   }, [open])

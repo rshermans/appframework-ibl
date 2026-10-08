@@ -38,10 +38,11 @@ describe('Step 2 search design normalisation', () => {
 })
 
 describe('search providers', () => {
-  it('labels providers and lists five in a fixed order', () => {
+  it('labels providers and lists them all in a fixed order', () => {
     expect(providerLabel('arxiv')).toBe('arXiv')
     expect(providerLabel('semantic_scholar')).toBe('Semantic Scholar')
-    expect(PROVIDER_SEQUENCE).toHaveLength(5)
+    expect(PROVIDER_SEQUENCE).toHaveLength(7)
+    expect(new Set(PROVIDER_SEQUENCE).size).toBe(PROVIDER_SEQUENCE.length)
     expect(PROVIDER_SEQUENCE[0]).toBe('crossref')
   })
 

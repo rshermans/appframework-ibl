@@ -30,7 +30,7 @@ function useProgressSteps(): ProgressStep[] {
 
 export function useProgressSummary() {
   const { t, locale } = useI18n()
-  const { stage, multimodalOutputs, peerReviews, selfAssessment, reflectionJournal, extensionPlan, explanationDraft } = useWizardStore()
+  const { stage, multimodalOutputs, selfAssessment, reflectionJournal, extensionPlan, explanationDraft } = useWizardStore()
   const pt = locale === 'pt-PT'
   const stage1Steps = useProgressSteps()
   const stage1Completed = stage1Steps.filter((s) => s.done).length
@@ -50,7 +50,6 @@ export function useProgressSummary() {
   const stage2Pct = Math.round((stage2Completed / stage2Total) * 100)
 
   const stage3Done = [
-    peerReviews.length > 0,
     Boolean(selfAssessment),
     reflectionJournal.length > 0,
     Boolean(extensionPlan),
@@ -65,7 +64,7 @@ export function useProgressSummary() {
   const overallPct = Math.round((stage1Pct + stage2Pct + stage3Pct) / 3)
 
   return {
-    t, pt, stage, stage1Steps, multimodalOutputs, peerReviews, selfAssessment, reflectionJournal, extensionPlan, explanationDraft,
+    t, pt, stage, stage1Steps, multimodalOutputs, selfAssessment, reflectionJournal, extensionPlan, explanationDraft,
     stage1Pct, stage2Pct, stage3Pct, overallPct, activeStagePct, activeStageCompleted, activeStageTotal,
   }
 }
@@ -92,7 +91,7 @@ export function ProgressPill({ onClick }: { onClick: () => void }) {
 /** Detailed progress, shown inside a Drawer. */
 export default function ProgressPanel() {
   const {
-    t, pt, stage, stage1Steps, multimodalOutputs, peerReviews, selfAssessment, reflectionJournal, extensionPlan, explanationDraft,
+    t, pt, stage, stage1Steps, multimodalOutputs, selfAssessment, reflectionJournal, extensionPlan, explanationDraft,
     stage1Pct, stage2Pct, stage3Pct, activeStagePct, activeStageCompleted, activeStageTotal,
   } = useProgressSummary()
 
@@ -163,9 +162,8 @@ export default function ProgressPanel() {
       {stage === 3 && (
         <div className="space-y-1">
           {[
-            { id: 'peer', done: peerReviews.length > 0, labelPt: 'Revisão por pares', labelEn: 'Peer review' },
             { id: 'self', done: Boolean(selfAssessment), labelPt: 'Auto-avaliação', labelEn: 'Self-assessment' },
-            { id: 'reflect', done: reflectionJournal.length > 0, labelPt: 'Reflexão', labelEn: 'Reflection journal' },
+            { id: 'reflect', done: reflectionJournal.length > 0, labelPt: 'Diário reflexivo', labelEn: 'Reflective journal' },
             { id: 'extend', done: Boolean(extensionPlan), labelPt: 'Extensão', labelEn: 'Extension planner' },
           ].map((item) => (
             <div key={item.id} className="flex items-center gap-2 py-0.5">

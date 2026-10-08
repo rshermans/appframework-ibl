@@ -8,6 +8,8 @@ import AudienceSelect from './AudienceSelect'
 import GenerateControls from './GenerateControls'
 import EvidenceWatermark from './EvidenceWatermark'
 import ExportToNotebookButton from '@/components/ExportToNotebookButton'
+import CreationGuide from './CreationGuide'
+import { podcastScriptText } from '@/lib/outputExports'
 
 interface Props {
   onBack: () => void
@@ -81,6 +83,18 @@ export default function Step10BPodcast({ onBack }: Props) {
             ))}
           </div>
         </div>
+      )}
+
+      {draft && (
+        <CreationGuide
+          kind="podcast"
+          title={pt ? 'Do guião ao episódio' : 'From script to episode'}
+          description={pt ? 'Copie ou descarregue o guião e grave-o numa destas ferramentas.' : 'Copy or download the script and record it in one of these tools.'}
+          actions={[
+            { id: 'copy-script', label: pt ? 'Copiar guião' : 'Copy script', copyText: podcastScriptText(draft, pt), primary: true },
+            { id: 'download', label: pt ? 'Descarregar guião (.md)' : 'Download script (.md)', download: { filename: 'guiao-podcast.md', text: podcastScriptText(draft, pt) } },
+          ]}
+        />
       )}
     </div>
   )

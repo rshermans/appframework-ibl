@@ -71,4 +71,30 @@ describe('Drawer (overlay used instead of pushing the page)', () => {
     expect(screen.getByRole('dialog').className).toMatch(/rounded/)
     expect(screen.getByRole('dialog').className).not.toMatch(/h-dvh/)
   })
+
+  it('stacked overlays: Escape closes only the top one and the page unlocks once all are closed', () => {
+    function Nested() {
+      const [outer, setOuter] = useState(true)
+      const [inner, setInner] = useState(true)
+      return (
+        <>
+          <Drawer open={outer} onClose={() => setOuter(false)} title="Outer"><p>outer body</p></Drawer>
+          <Drawer open={inner} onClose={() => setInner(false)} title="Inner"><p>inner body</p></Drawer>
+        </>
+      )
+    }
+    render(<Nested />)
+    expect(screen.getAllByRole('dialog')).toHaveLength(2)
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: 'Inner' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Outer' })).toBeInTheDocument()
+    expect(document.body.style.overflow).toBe('hidden') // still locked: one overlay remains
+    expect(document.body.dataset.overlay).toBe('open')
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(document.body.style.overflow).toBe('')
+    expect(document.body.dataset.overlay).toBeUndefined()
+  })
 })

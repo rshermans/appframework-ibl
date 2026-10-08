@@ -14,7 +14,7 @@ import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { safeFetch } from '@/lib/safeFetch'
 import { persistInteractionEvent } from '@/lib/interactionClient'
 import { ITEMS_PER_PAGE, filterArticlesByText, paginate } from '@/lib/evidenceHelpers'
-import { providerLabel, type Provider } from '@/lib/searchProviders'
+import { PROVIDER_SEQUENCE, providerLabel, type Provider } from '@/lib/searchProviders'
 import { isUsableRawSearchDesign, normalizeSearchDesign, type RawSearchDesign } from '@/lib/searchDesign'
 
 export default function Step2Search() {
@@ -51,6 +51,7 @@ export default function Step2Search() {
     totalResults,
     hasNextPage,
     bulkLoading,
+    retrievalNotice,
     runRetrieval,
     runRetrievalAcrossProviders,
     changeProvider,
@@ -279,8 +280,14 @@ export default function Step2Search() {
       )}
 
       {error && (
-        <div className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
+        <div role="alert" className="ai-needs-validation rounded-[var(--radius-md)] p-3 text-sm">
           {error}
+        </div>
+      )}
+
+      {retrievalNotice && !error && (
+        <div role="status" className="rounded-[var(--radius-md)] border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          {retrievalNotice}
         </div>
       )}
 
@@ -354,11 +361,9 @@ export default function Step2Search() {
                   onChange={(event) => void changeProvider(event.target.value as Provider)}
                   className="ghost-input ml-2 inline-block w-auto"
                 >
-                  <option value="crossref">{providerLabel('crossref')}</option>
-                  <option value="openaire">{providerLabel('openaire')}</option>
-                  <option value="semantic_scholar">{providerLabel('semantic_scholar')}</option>
-                  <option value="arxiv">{providerLabel('arxiv')}</option>
-                  <option value="pubmed">{providerLabel('pubmed')}</option>
+                  {PROVIDER_SEQUENCE.map((candidate) => (
+                    <option key={candidate} value={candidate}>{providerLabel(candidate)}</option>
+                  ))}
                 </select>
               </label>
               <button

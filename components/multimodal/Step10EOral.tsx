@@ -8,6 +8,10 @@ import AudienceSelect from './AudienceSelect'
 import GenerateControls from './GenerateControls'
 import EvidenceWatermark from './EvidenceWatermark'
 import ExportToNotebookButton from '@/components/ExportToNotebookButton'
+import CreationGuide from './CreationGuide'
+import { AUDIENCE_LABELS } from '@/lib/audience'
+import { slidesCanvasPrompt } from '@/lib/outputExports'
+import { buildPptxBlob } from '@/lib/pptxExport'
 
 interface Props {
   onBack: () => void
@@ -17,7 +21,7 @@ export default function Step10EOral({ onBack }: Props) {
   const { locale } = useI18n()
   const {
     projectId, topic, finalResearchQuestion, evidenceRecords,
-    multimodalOutputs,
+    multimodalOutputs, audience,
   } = useWizardStore()
   const [duration, setDuration] = useState('10')
   const [activeSlide, setActiveSlide] = useState(0)
@@ -30,8 +34,8 @@ export default function Step10EOral({ onBack }: Props) {
         stepId="step6_multimodal"
         title={pt ? 'Apresentação Oral' : 'Oral Presentation'}
         subtitle={pt
-          ? 'Outline de slides com notas de orador e âncoras de evidência.'
-          : 'Slide outline with speaker notes and evidence anchors.'}
+          ? 'Cria os slides com notas do orador e fontes, e descarrega-os em PowerPoint (.pptx) ou prepara um prompt para o Gemini (Canvas).'
+          : 'Creates the slides with speaker notes and sources, and downloads them as PowerPoint (.pptx) or prepares a prompt for Gemini (Canvas).'}
       />
       <button type="button" onClick={onBack} className="text-sm text-[var(--on_surface_variant)] hover:underline">
         ← {pt ? 'Voltar ao hub' : 'Back to hub'}
@@ -49,7 +53,12 @@ export default function Step10EOral({ onBack }: Props) {
         >
           {['5', '10', '15', '20', '30'].map((d) => <option key={d} value={d}>{d} min</option>)}
         </select>
-        <GenerateControls kind="oral" durationMinutes={Number(duration)} hasDraft={Boolean(draft)} />
+        <GenerateControls
+          kind="oral"
+          durationMinutes={Number(duration)}
+          hasDraft={Boolean(draft)}
+          labels={{ generate: pt ? 'Gerar slides' : 'Generate slides', regenerate: pt ? 'Gerar slides novamente' : 'Regenerate slides' }}
+        />
         <ExportToNotebookButton
           projectId={projectId}
           topic={topic}
@@ -116,6 +125,43 @@ export default function Step10EOral({ onBack }: Props) {
             </div>
           )}
         </div>
+      )}
+
+      {draft && (
+        <CreationGuide
+          kind="oral"
+          title={pt ? 'Dos slides à apresentação' : 'From slides to presentation'}
+          description={
+            pt
+              ? 'O conteúdo (títulos, tópicos, notas e fontes) é gerado pela IA; o ficheiro PowerPoint é montado aqui, sem chamadas extra. Abre no PowerPoint, no Google Slides e no Canva.'
+              : 'The content (headings, bullets, notes and sources) is AI-generated; the PowerPoint file is assembled here with no extra calls. It opens in PowerPoint, Google Slides and Canva.'
+          }
+          actions={[
+            {
+              id: 'pptx',
+              label: pt ? 'Descarregar PowerPoint (.pptx)' : 'Download PowerPoint (.pptx)',
+              primary: true,
+              onClick: async () => {
+                const blob = await buildPptxBlob(draft, {
+                  researchQuestion: finalResearchQuestion?.question ?? topic,
+                  audienceLabel: AUDIENCE_LABELS[audience][pt ? 'pt' : 'en'],
+                  pt,
+                })
+                const url = URL.createObjectURL(blob)
+                const anchor = document.createElement('a')
+                anchor.href = url
+                anchor.download = 'apresentacao-ibl.pptx'
+                anchor.click()
+                URL.revokeObjectURL(url)
+              },
+            },
+            {
+              id: 'copy-canvas',
+              label: pt ? 'Copiar prompt para o Gemini (Canvas)' : 'Copy prompt for Gemini (Canvas)',
+              copyText: slidesCanvasPrompt(draft, { researchQuestion: finalResearchQuestion?.question ?? topic, audienceLabel: AUDIENCE_LABELS[audience][pt ? 'pt' : 'en'], pt }),
+            },
+          ]}
+        />
       )}
     </div>
   )

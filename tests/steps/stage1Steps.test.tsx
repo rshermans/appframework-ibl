@@ -181,7 +181,7 @@ describe('Step 2 - search design and retrieval', () => {
     expect(screen.getByText(msg('steps.step2.locked'))).toBeInTheDocument()
   })
 
-  it('stores the design (accepting alternative key names) and retrieves from all five providers', async () => {
+  it('stores the design (accepting alternative key names) and retrieves from all seven providers', async () => {
     resetStore({ finalResearchQuestion: approvedQuestion })
     const api = mockFetch({
       ai: () => aiOk({ keywords: ['co2'], booleanQuery: 'co2 AND reefs', searchStrings: [{ database: 'Scopus', query: 'co2 AND reefs' }] }),
@@ -191,10 +191,36 @@ describe('Step 2 - search design and retrieval', () => {
     fireEvent.click(button(msg('steps.step2.generateButton')))
 
     await waitFor(() => expect(state().searchDesign?.booleanQuery).toBe('co2 AND reefs'))
-    await waitFor(() => expect(api.search()).toHaveLength(5))
-    expect(api.search().map((c) => c.body.provider).sort()).toEqual(['arxiv', 'crossref', 'openaire', 'pubmed', 'semantic_scholar'])
+    await waitFor(() => expect(api.search()).toHaveLength(7))
+    expect(api.search().map((c) => c.body.provider).sort()).toEqual(['arxiv', 'crossref', 'doaj', 'openaire', 'openalex_pt', 'pubmed', 'semantic_scholar'])
     await waitFor(() => expect(state().searchArticles.map((a) => a.id)).toEqual(['a1', 'a2'])) // merged & de-duplicated across providers
     expect(api.ai()[0].body).toMatchObject({ promptId: 'step2', rq: approvedQuestion.question })
+  })
+
+  it('keeps going when one provider is rate limited and explains it as a notice, not an error', async () => {
+    resetStore({ finalResearchQuestion: approvedQuestion })
+    mockFetch({
+      ai: () => aiOk({ keywords: ['co2'], boolean_query: 'co2 AND reefs', search_strings: [{ database: 'X', query: 'co2 AND reefs' }] }),
+      search: (body) =>
+        body.provider === 'semantic_scholar'
+          ? jsonResponse({ ok: false, error: 'failed', details: 'Semantic Scholar search failed (429): Too Many Requests' }, 500)
+          : jsonResponse({ ok: true, data: { articles: [article(`${body.provider}-1`)], page: 1, hasNextPage: false, totalResults: 1 } }),
+    })
+    renderStep(<Step2Search />)
+    fireEvent.click(button(msg('steps.step2.generateButton')))
+
+    const notice = await screen.findByRole('status')
+    expect(notice).toHaveTextContent(/6 de 7 fornecedores/)
+    expect(notice).toHaveTextContent(/Semantic Scholar \(limite de pedidos/)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    await waitFor(() => expect(state().searchArticles).toHaveLength(6))
+  })
+
+  it('offers the Portuguese-focused and the open-access multilingual sources in the provider menu', () => {
+    resetStore({ finalResearchQuestion: approvedQuestion, searchDesign, searchArticles: [article('a1')], selectedSearchArticleIds: ['a1'] })
+    renderStep(<Step2Search />)
+    const options = screen.getAllByRole('option').map((option) => option.textContent)
+    expect(options).toEqual(expect.arrayContaining([expect.stringMatching(/OpenAlex · Português/), expect.stringMatching(/DOAJ/)]))
   })
 
   it('rejects an incomplete design and keeps the previous one', async () => {

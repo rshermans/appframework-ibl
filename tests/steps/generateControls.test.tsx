@@ -87,3 +87,59 @@ describe('GenerateControls (chunked direct generation)', () => {
     expect(screen.getByText(/Step 9/)).toBeInTheDocument()
   })
 })
+
+describe('GenerateControls - real-world model answers and failures', () => {
+  beforeEach(() => seedStore())
+  afterEach(() => vi.restoreAllMocks())
+
+  const planOf4 = { title: 'Episódio', items: [1, 2, 3, 4].map((n) => ({ focus: `Parte ${n}`, evidenceIds: ['e1'] })) }
+
+  it('podcast: wrapped and renamed part answers still produce a stored, valid script', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const body = JSON.parse(String((init as RequestInit).body))
+      if (body.promptId === 'multimodal_plan') return ok({ title: 'Episódio', segments: planOf4.items.map((i) => ({ title: i.focus, evidence: i.evidenceIds })) })
+      return ok({ segment: { voice: 'Host', script: `Texto ${body.partIndex}`, time: '00:00' } })
+    })
+    render(<I18nProvider><GenerateControls kind="podcast" durationMinutes={10} hasDraft={false} /></I18nProvider>)
+    fireEvent.click(screen.getByRole('button', { name: /Gerar com IA|Generate with AI/ }))
+    await waitFor(() => expect(useWizardStore.getState().multimodalOutputs.podcast).toBeTruthy(), { timeout: 5000 })
+    const podcast = useWizardStore.getState().multimodalOutputs.podcast!
+    expect(podcast.segments.map((s) => s.text)).toEqual(['Texto 1', 'Texto 2', 'Texto 3', 'Texto 4'])
+    expect(podcast.segments[0].anchors[0].evidenceRecordId).toBe('e1') // grounded through the plan when the part has no anchors
+  })
+
+  it('retries a part once when its first answer has no usable content', async () => {
+    const calls: Record<number, number> = {}
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const body = JSON.parse(String((init as RequestInit).body))
+      if (body.promptId === 'multimodal_plan') return ok(planOf4)
+      calls[body.partIndex] = (calls[body.partIndex] ?? 0) + 1
+      if (body.partIndex === 2 && calls[2] === 1) return ok({ note: 'sorry, here is nothing useful' })
+      return ok({ speaker: 'Host', text: `Texto ${body.partIndex}` })
+    })
+    render(<I18nProvider><GenerateControls kind="podcast" durationMinutes={10} hasDraft={false} /></I18nProvider>)
+    fireEvent.click(screen.getByRole('button', { name: /Gerar com IA|Generate with AI/ }))
+    await waitFor(() => expect(useWizardStore.getState().multimodalOutputs.podcast).toBeTruthy(), { timeout: 5000 })
+    expect(calls[2]).toBe(2)
+  })
+
+  it('names the failing part and offers technical details when it keeps failing', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const body = JSON.parse(String((init as RequestInit).body))
+      if (body.promptId === 'multimodal_plan') return ok(planOf4)
+      return body.partIndex === 3 ? ok({ nothing: true }) : ok({ speaker: 'Host', text: 'ok' })
+    })
+    render(<I18nProvider><GenerateControls kind="podcast" durationMinutes={10} hasDraft={false} /></I18nProvider>)
+    fireEvent.click(screen.getByRole('button', { name: /Gerar com IA|Generate with AI/ }))
+    const alert = await screen.findByRole('alert', undefined, { timeout: 5000 })
+    expect(alert).toHaveTextContent(/parte 3 de 4/i)
+    expect(alert).toHaveTextContent(/Detalhes técnicos|Technical details/)
+    expect(alert).toHaveTextContent(/podcast part without usable content/)
+    expect(useWizardStore.getState().multimodalOutputs.podcast).toBeUndefined()
+  })
+
+  it('lets the output page word the button for a script (not the final media)', () => {
+    render(<I18nProvider><GenerateControls kind="video" hasDraft={false} labels={{ generate: 'Gerar guião do vídeo', regenerate: 'Gerar guião novamente' }} /></I18nProvider>)
+    expect(screen.getByRole('button', { name: 'Gerar guião do vídeo' })).toBeInTheDocument()
+  })
+})

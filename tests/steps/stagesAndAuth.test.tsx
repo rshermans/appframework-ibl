@@ -16,6 +16,8 @@ vi.mock('next-auth/react', () => ({
 }))
 
 const state = () => useWizardStore.getState()
+// Each format words its button for what it produces (poster/podcast: AI; video: script; game; slides).
+const GENERATE_LABEL = /Gerar com IA|Generate with AI|Gerar guião do vídeo|Gerar jogo|Gerar slides/
 afterEach(() => vi.restoreAllMocks())
 
 describe('Stage 1 - stepper and navigation', () => {
@@ -104,7 +106,7 @@ describe('Stage 2 - outputs hub', () => {
     const view = renderStep(<Stage2Multimodal />)
     for (const step of ['10A', '10B', '10C', '10D', '10E']) {
       fireEvent.click(screen.getByRole('button', { name: new RegExp(`Step ${step}`) }))
-      expect(screen.getByRole('button', { name: /Gerar com IA|Generate with AI/ })).toBeDisabled()
+      expect(screen.getByRole('button', { name: GENERATE_LABEL })).toBeDisabled()
       expect(screen.getByRole('button', { name: /Exportar para NotebookLM|Exportar Apresentação/ })).toBeInTheDocument()
       fireEvent.click(screen.getByText(/Voltar ao hub|Back to hub/))
     }
@@ -113,7 +115,7 @@ describe('Stage 2 - outputs hub', () => {
     resetStore({ ...unlocked, explanationDraft: { outline: ['x'], argumentCore: 'c', evidenceReferences: [], bibliography: ['b'] } })
     renderStep(<Stage2Multimodal />)
     fireEvent.click(screen.getByRole('button', { name: /Step 10A/ }))
-    expect(screen.getByRole('button', { name: /Gerar com IA|Generate with AI/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: GENERATE_LABEL })).toBeEnabled()
   })
 
   it('shows a stored draft with its fidelity score', () => {
@@ -130,10 +132,10 @@ describe('Stage 2 - outputs hub', () => {
 })
 
 describe('Stage 3 - reflection hub', () => {
-  it('lists the four reflection activities and opens each one', () => {
+  it('lists the three reflection activities and opens each one', () => {
     resetStore({ stage: 3, finalResearchQuestion: approvedQuestion })
     renderStep(<Stage3Reflection />)
-    for (const label of [/Revisão por Pares|Peer Review/, /Auto-Avaliação|Self-Assessment/, /Diário de Reflexão|Reflection Journal/, /Planeador de Extensão|Inquiry Extension Planner/]) {
+    for (const label of [/Auto-Avaliação|Self-Assessment/, /Diário Reflexivo|Reflective Journal/, /Planeador de Extensão|Inquiry Extension Planner/]) {
       fireEvent.click(screen.getAllByText(label)[0])
       fireEvent.click(screen.getByRole('button', { name: /^← (Voltar|Back)/ })) // every activity has a way back to the hub
     }

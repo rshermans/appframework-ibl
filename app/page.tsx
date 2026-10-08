@@ -18,7 +18,8 @@ import {
   setSessionProjectCookie,
 } from '@/lib/sessionClient'
 import { persistInteractionEvent } from '@/lib/interactionClient'
-import { buildGoogleDocMarkdown, buildSessionExport, buildShareEmail } from '@/lib/sessionExport'
+import { buildSessionExport, buildShareEmail } from '@/lib/sessionExport'
+import { buildSessionReport, reportToHtml, reportToMarkdown, reportToPdf } from '@/lib/sessionReport'
 import OnboardingModal from '@/components/OnboardingModal'
 import DeleteDataModal from '@/components/DeleteDataModal'
 import ProfileCard from '@/components/ProfileCard'
@@ -296,22 +297,23 @@ export default function Home() {
 
     try {
       setShareMessage('')
-      const res = await fetch(`/api/export/${projectId}`)
-      if (!res.ok) {
-        const details = await res.text()
-        throw new Error(details || 'PDF export failed')
+      // Built in the browser from the learner's own progress: no server or database round-trip.
+      const report = buildSessionReport(useWizardStore.getState(), pt)
+      if (report.sections.length === 0) {
+        setShareMessage(pt ? 'Ainda não há conteúdo para exportar.' : 'There is no content to export yet.')
+        return
       }
-
-      const blob = await res.blob()
+      const blob = await reportToPdf(report)
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = `research-${projectId}.pdf`
+      anchor.download = `ibl-${projectId}.pdf`
       anchor.click()
       URL.revokeObjectURL(url)
 
       setShareMessage(t('home.pdfSuccess'))
-    } catch {
+    } catch (error) {
+      console.error('[export] PDF failed', error)
       setShareMessage(t('home.pdfError'))
     }
   }
@@ -342,12 +344,31 @@ export default function Home() {
 
   const handleShareGoogleDoc = async () => {
     if (!projectId) return
-    const markdown = buildGoogleDocMarkdown(buildSessionExport(useWizardStore.getState()))
+    const report = buildSessionReport(useWizardStore.getState(), pt)
+    const markdown = reportToMarkdown(report)
+    const html = reportToHtml(report)
 
+    // Copy first: opening the new tab takes focus away and would make the clipboard write fail.
     try {
-      await navigator.clipboard.writeText(markdown)
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([markdown], { type: 'text/plain' }),
+          }),
+        ])
+      } else {
+        await navigator.clipboard.writeText(markdown)
+      }
       setShareMessage(t('home.googleDocsCopied'))
     } catch {
+      // Clipboard blocked: hand over the same content as a file instead.
+      const url = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `ibl-${projectId}.md`
+      anchor.click()
+      URL.revokeObjectURL(url)
       setShareMessage(t('home.googleDocsCopyFailed'))
     }
 
