@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 import { withTimeout, TimeoutError, isAbortedError } from '@/lib/timeoutHelper'
 import { API_CONFIG, getTimeRemaining, canContinueProcessing } from '@/lib/apiTimeout'
-import { chooseModel, getNextFallbackModel, modelLogTag, type ModelSelection } from '@/lib/modelSelector'
+import { chooseModel, getNextFallbackModel, isReasoningModel, modelLogTag, type ModelSelection } from '@/lib/modelSelector'
 
 const apiKey = process.env.OPENAI_API_KEY
 if (!apiKey) {
@@ -53,6 +53,17 @@ export interface ChatOptions {
   attemptTimeoutMs?: number
 }
 
+/** Models the API said do not exist for this key: skipped for the life of the server instance. */
+const unavailableModels = new Set<string>()
+
+/** Hidden reasoning shares max_output_tokens, so reasoning models get headroom to still write the JSON. */
+const REASONING_HEADROOM_TOKENS = 1500
+
+const isModelMissing = (error: unknown): boolean => {
+  const e = error as { status?: number; code?: string; message?: string } | null
+  return e?.status === 404 || e?.code === 'model_not_found' || /model.*(does not exist|not found)/i.test(e?.message ?? '')
+}
+
 /** Total time one call may spend across all fallback models (the route allows ~25s). */
 const CALL_BUDGET_MS = API_CONFIG.FUNCTION_TIMEOUT_MS - 3000
 
@@ -63,17 +74,20 @@ export async function callChatGPT(
   options: ChatOptions = {}
 ): Promise<{ content: string; tokens: number; model: string }> {
   const startTime = Date.now()
-  const failedModels = new Set<string>()
+  const failedModels = new Set<string>(unavailableModels)
+  const failureReasons: string[] = []
 
   const instructions = buildJsonInstructions(systemPrompt)
   const input = buildJsonInput(userMessage)
 
   // Pick the primary model based on step complexity
   let selection = chooseModel(stepId)
+  if (failedModels.has(selection.model)) selection = getNextFallbackModel(stepId, failedModels) ?? selection
   console.log(`🤖 [ChatGPT] Step: ${stepId} → Model: ${modelLogTag(selection)}`)
 
   while (true) {
     const { model } = selection
+    const reasoning = isReasoningModel(model)
 
     try {
       // Attempt with current model + JSON format
@@ -91,9 +105,11 @@ export async function callChatGPT(
           instructions,
           input,
           max_output_tokens:
-            options.maxOutputTokens ??
-            (selection.complexity === 'heavy' ? 3000 : selection.complexity === 'fast' ? 1500 : 2000),
+            (options.maxOutputTokens ??
+              (selection.complexity === 'heavy' ? 3000 : selection.complexity === 'fast' ? 1500 : 2000)) +
+            (reasoning ? REASONING_HEADROOM_TOKENS : 0),
           text: { format: { type: 'json_object' } },
+          ...(reasoning ? { reasoning: { effort: 'low' as const } } : {}),
         }),
         { timeoutMs: attemptTimeout }
       )
@@ -109,7 +125,8 @@ export async function callChatGPT(
             model,
             instructions,
             input,
-            max_output_tokens: 3000,
+            max_output_tokens: 3000 + (reasoning ? REASONING_HEADROOM_TOKENS : 0),
+            ...(reasoning ? { reasoning: { effort: 'low' as const } } : {}),
           }),
           { timeoutMs: 12000 }
         )
@@ -122,11 +139,14 @@ export async function callChatGPT(
       }
 
       // Content still empty → treat as failure for this model
-      console.warn(`[ChatGPT] ${model} returned empty content`)
+      console.warn(`[ChatGPT] ${model} returned empty content (status: ${response.status ?? '?'}, incomplete: ${JSON.stringify(response.incomplete_details ?? null)})`)
+      failureReasons.push(`${model}: empty output${response.incomplete_details?.reason ? ` (${response.incomplete_details.reason})` : ''}`)
       failedModels.add(model)
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error)
       console.warn(`[ChatGPT] ${model} failed: ${errMsg}`)
+      failureReasons.push(`${model}: ${errMsg.slice(0, 160)}`)
+      if (isModelMissing(error)) unavailableModels.add(model)
       failedModels.add(model)
     }
 
@@ -153,7 +173,7 @@ export async function callChatGPT(
   
   throw new Error(
     `ChatGPT call failed: all models reached timeout or error (${failedList}). ` +
-    `Step: ${stepId}, total_elapsed: ${totalTime}ms`
+    `Step: ${stepId}, total_elapsed: ${totalTime}ms. Reasons: ${failureReasons.join(' | ') || 'n/a'}`
   )
 }
 

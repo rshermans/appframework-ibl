@@ -66,10 +66,12 @@ describe('model selection', () => {
     expect(chooseModel('step9_explanation').model).toBe('gpt-5-mini')
   })
 
-  it('falls back from gpt-6-luna to gpt-4.1-mini and then gpt-4o-mini', () => {
+  it('falls back from gpt-6-luna to gpt-5.6-luna, then gpt-5-mini, then gpt-4o-mini', () => {
     const failed = new Set(['gpt-6-luna'])
-    expect(getNextFallbackModel('step9_explanation', failed)?.model).toBe('gpt-4.1-mini')
-    failed.add('gpt-4.1-mini')
+    expect(getNextFallbackModel('step9_explanation', failed)?.model).toBe('gpt-5.6-luna')
+    failed.add('gpt-5.6-luna')
+    expect(getNextFallbackModel('step9_explanation', failed)?.model).toBe('gpt-5-mini')
+    failed.add('gpt-5-mini')
     expect(getNextFallbackModel('step9_explanation', failed)?.model).toBe('gpt-4o-mini')
     failed.add('gpt-4o-mini')
     expect(getNextFallbackModel('step9_explanation', failed)).toBeNull()
@@ -93,10 +95,11 @@ describe('callChatGPT', () => {
     const { callChatGPT } = await import('@/lib/ai')
     const result = await callChatGPT('system', 'user', 'step7_reflection', { maxOutputTokens: 600, attemptTimeoutMs: 9000 })
 
-    expect(result).toMatchObject({ content: '{"ok":true}', model: 'gpt-4.1-mini', tokens: 42 })
+    expect(result).toMatchObject({ content: '{"ok":true}', model: 'gpt-5.6-luna', tokens: 42 })
     expect(create).toHaveBeenCalledTimes(2)
-    expect(create.mock.calls[0][0]).toMatchObject({ model: 'gpt-6-luna', max_output_tokens: 600 })
-    expect(create.mock.calls[1][0]).toMatchObject({ model: 'gpt-4.1-mini', max_output_tokens: 600 })
+    // reasoning models get headroom (hidden reasoning shares the cap) and low reasoning effort
+    expect(create.mock.calls[0][0]).toMatchObject({ model: 'gpt-6-luna', max_output_tokens: 2100, reasoning: { effort: 'low' } })
+    expect(create.mock.calls[1][0]).toMatchObject({ model: 'gpt-5.6-luna', max_output_tokens: 2100 })
   })
 
   it('succeeds on the primary model without touching the fallbacks', async () => {
@@ -109,6 +112,21 @@ describe('callChatGPT', () => {
   it('reports every model tried when all fail', async () => {
     create.mockRejectedValue(new Error('boom'))
     const { callChatGPT } = await import('@/lib/ai')
-    await expect(callChatGPT('s', 'u', 'step9_explanation')).rejects.toThrow(/gpt-6-luna.*gpt-4\.1-mini.*gpt-4o-mini/)
+    await expect(callChatGPT('s', 'u', 'step9_explanation')).rejects.toThrow(/gpt-6-luna.*gpt-5\.6-luna.*gpt-5-mini.*Reasons:.*boom/)
+  })
+
+  it('explains empty output instead of a bare timeout, and remembers models that do not exist', async () => {
+    create
+      .mockRejectedValueOnce(Object.assign(new Error('The model `gpt-6-luna` does not exist'), { status: 404 }))
+      .mockResolvedValueOnce({ output_text: '', status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } })
+      .mockResolvedValueOnce({ output_text: '', status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } })
+      .mockResolvedValueOnce({ output_text: '{"ok":1}', usage: { total_tokens: 3 } })
+    const { callChatGPT } = await import('@/lib/ai')
+    const result = await callChatGPT('s', 'u', 'step2')
+    expect(result.model).toBe('gpt-5-mini')
+
+    create.mockResolvedValueOnce({ output_text: '{"ok":2}', usage: { total_tokens: 3 } })
+    await callChatGPT('s', 'u', 'step2')
+    expect(create.mock.calls.at(-1)?.[0].model).toBe('gpt-5.6-luna') // gpt-6-luna is not retried on the next call
   })
 })
