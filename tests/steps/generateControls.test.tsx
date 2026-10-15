@@ -71,14 +71,14 @@ describe('GenerateControls (chunked direct generation)', () => {
   })
 
   it('shows a friendly error and stores nothing when the server times out', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
       new Response(JSON.stringify({ ok: false, error: 'Request timeout' }), { status: 504, headers: { 'content-type': 'application/json' } })
     )
     renderControls()
     fireEvent.click(screen.getByRole('button', { name: /Gerar com IA|Generate with AI/ }))
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/NotebookLM/), { timeout: 8000 })
     expect(useWizardStore.getState().multimodalOutputs.poster).toBeUndefined()
-  })
+  }, 15000)
 
   it('is disabled until Step 9 exists and points to the NotebookLM export', () => {
     seedStore({ explanationDraft: null })

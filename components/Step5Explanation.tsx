@@ -83,7 +83,7 @@ export default function Step5Explanation() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody),
           }),
-        { maxAttempts: 2, initialDelayMs: 1200, maxDelayMs: 3000 }
+        { maxAttempts: 1 }
       )
 
       const data = payload?.data ?? payload

@@ -63,7 +63,7 @@ export function useStage3Ai() {
               ...extra,
             }),
           }),
-        { maxAttempts: 2, initialDelayMs: 1500, maxDelayMs: 3000 }
+        { maxAttempts: 1 }
       )
       if (!response.ok || !payload?.ok) throw new Error(String(payload?.details || payload?.error || 'API error'))
       const data = payload?.data ?? payload
