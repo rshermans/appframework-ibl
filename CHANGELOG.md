@@ -12,6 +12,7 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Mind map (Markmap) e mapa conceptual desenhado como grafo; filtros e acesso da telemetria.
 
 ### Alterado
+- Pedidos à IA: indicador de progresso global (segundos decorridos, aviso quando demora), repetição automática (até 3 tentativas) em timeouts/erros de gateway e ligações perdidas; a pesquisa repete 1 vez por fonte.
 - Stage 3 redesenhado: removida a revisão por pares; auto-avaliação em que o aluno dá a nota (1–5) e a IA é opcional (segunda opinião, sem bloquear); diário reflexivo com 3 perguntas por defeito (IA opcional para personalizar); planeador de extensão com lacunas locais e leitura tolerante da resposta; erros de timeout com mensagem clara.
 - Modelo OpenAI por defeito: `gpt-6-luna` (com fallback e `OPENAI_MODEL` como override).
 - Step 2: novas fontes OpenAlex (PT) e DOAJ, retry no Semantic Scholar e aviso quando um fornecedor falha.

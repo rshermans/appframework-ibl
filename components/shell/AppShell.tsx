@@ -1,3 +1,5 @@
+import AiActivityBanner from '@/components/AiActivityBanner'
+
 /**
  * One scroll region: the top bar stays put and only the workspace scrolls
  * (100dvh avoids the jumping address bar on phones). Stage content decides its own
@@ -10,6 +12,7 @@ export default function AppShell({ topBar, children }: { topBar: React.ReactNode
       <main id="workspace" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {children}
       </main>
+      <AiActivityBanner />
     </div>
   )
 }

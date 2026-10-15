@@ -18,3 +18,7 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
 }
 Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? (() => {})
+
+// No real waiting between automatic retries in tests.
+import { fetchPatience } from '@/lib/safeFetch'
+fetchPatience.delayMs = 0

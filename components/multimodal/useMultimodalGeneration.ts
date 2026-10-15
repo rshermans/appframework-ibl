@@ -75,7 +75,7 @@ export function useMultimodalGeneration(kind: MultimodalKind) {
               ...extra,
             }),
           }),
-        { maxAttempts: 2, initialDelayMs: 800, maxDelayMs: 2000 }
+        { maxAttempts: 1 }
       )
 
       if (!response.ok || !payload?.ok) {
