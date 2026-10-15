@@ -4,7 +4,8 @@
  *  2. Fallback rotation on errors (downgrade → alternate model)
  *
  * Primary model: gpt-6-luna for every tier. If it is unavailable for the API key (or errors),
- * the chain falls back to gpt-4.1-mini and then gpt-4o-mini, so a bad model id never blocks the app.
+ * the chain falls back to gpt-5.6-luna and then gpt-5-mini (then gpt-4o-mini as a last resort),
+ * so a bad model id never blocks the app.
  * Set OPENAI_MODEL in the environment to force another primary model.
  */
 
@@ -33,9 +34,9 @@ const ULTIMATE_FALLBACK = 'gpt-4o-mini'
  * When a model fails we try the next one in the chain.
  */
 const FALLBACK_CHAINS: Record<TaskComplexity, string[]> = {
-  heavy: [PRIMARY_MODEL, 'gpt-4.1-mini', 'gpt-4o-mini'],
-  medium: [PRIMARY_MODEL, 'gpt-4.1-mini', 'gpt-4o-mini'],
-  fast: [PRIMARY_MODEL, 'gpt-4o-mini'],
+  heavy: [PRIMARY_MODEL, 'gpt-5.6-luna', 'gpt-5-mini'],
+  medium: [PRIMARY_MODEL, 'gpt-5.6-luna', 'gpt-5-mini'],
+  fast: [PRIMARY_MODEL, 'gpt-5.6-luna', 'gpt-5-mini'],
 }
 
 // ─── Step → Complexity mapping ──────────────────────────────────────
@@ -137,6 +138,11 @@ export function getNextFallbackModel(
   }
 
   return null // Nothing left to try
+}
+
+/** Reasoning-family models spend part of max_output_tokens on hidden reasoning. */
+export function isReasoningModel(model: string): boolean {
+  return /^(gpt-5|gpt-6|o\d)/i.test(model)
 }
 
 /**

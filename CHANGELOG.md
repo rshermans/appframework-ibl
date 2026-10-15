@@ -14,7 +14,7 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Alterado
 - Pedidos à IA: indicador de progresso global (segundos decorridos, aviso quando demora), repetição automática (até 3 tentativas) em timeouts/erros de gateway e ligações perdidas; a pesquisa repete 1 vez por fonte.
 - Stage 3 redesenhado: removida a revisão por pares; auto-avaliação em que o aluno dá a nota (1–5) e a IA é opcional (segunda opinião, sem bloquear); diário reflexivo com 3 perguntas por defeito (IA opcional para personalizar); planeador de extensão com lacunas locais e leitura tolerante da resposta; erros de timeout com mensagem clara.
-- Modelo OpenAI por defeito: `gpt-6-luna` (com fallback e `OPENAI_MODEL` como override).
+- Modelo OpenAI por defeito: `gpt-6-luna` → `gpt-5.6-luna` → `gpt-5-mini` (último recurso `gpt-4o-mini`); `OPENAI_MODEL` continua a sobrepor. Modelos de raciocínio recebem margem de tokens e esforço baixo (evita resposta vazia no Step 2); modelos inexistentes são ignorados nas chamadas seguintes e o erro final indica o motivo de cada modelo.
 - Step 2: novas fontes OpenAlex (PT) e DOAJ, retry no Semantic Scholar e aviso quando um fornecedor falha.
 - Layout: aplicação com uma só zona de scroll (barra superior fixa, passos em coluna lateral no desktop e faixa fixa no telemóvel, barra de ações Anterior/Seguinte sempre visível, `100dvh`).
 - Mind map, perfil, progresso e diálogos abrem sobrepostos (componente `Drawer`: Esc, foco, bloqueio de scroll) em vez de empurrar a página; o progresso flutuante passou para a barra superior.
