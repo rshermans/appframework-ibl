@@ -1,26 +1,26 @@
 # 📘 Manual de Utilização: IBL-AI Framework
 **Versão 2.0 — Plataforma IBL-AI · Universidade do Minho**
 
-Bem-vindo ao guia completo da plataforma **IBL-AI**. Este manual documenta as 4 Stages e 12 Steps da investigação científica orientada por Inquiry-Based Learning (IBL), combinando rigor metodológico com ferramentas de IA responsável.
+Bem-vindo ao guia completo da plataforma **IBL-AI**. Este manual documenta as 4 Estágios e 12 Etapas da investigação científica orientada por Inquiry-Based Learning (IBL), combinando rigor metodológico com ferramentas de IA responsável.
 
 ---
 
 ## 🗺️ Visão Geral do Framework
 
-O IBL-AI divide a investigação em 4 grandes Stages:
+O IBL-AI divide a investigação em 4 grandes Estágios:
 
-| Stage | Nome | Duração típica | Foco |
+| Estágio | Nome | Duração típica | Foco |
 |---|---|---|---|
 | **0** | Team Setup | 1 sessão | Formação de equipa e ética |
-| **1** | Ask & Research | 1–2 semanas | 9 Steps de investigação (0–8) |
-| **2** | Explain & Create | 1 semana | Explicação e outputs multimodais (Steps 9–10) |
+| **1** | Ask & Research | 1–2 semanas | 9 Etapas de investigação (0–8) |
+| **2** | Explain & Create | 1 semana | Explicação e outputs multimodais (Etapas 9–10) |
 | **3** | Reflect & Improve | 1 sessão | Auto-avaliação, diário reflexivo e extensão |
 
 ---
 
-## 🏗️ Stage 0 — Team Setup & Role Distribution
+## 🏗️ Estágio 0 — Team Setup & Role Distribution
 
-### O que é este Stage?
+### O que é este Estágio?
 Antes de iniciar qualquer investigação, a equipa define a sua estrutura: papéis, responsabilidades, protocolo de comunicação e contrato ético de uso da IA.
 
 ### Ações concretas
@@ -33,23 +33,23 @@ Antes de iniciar qualquer investigação, a equipa define a sua estrutura: papé
 - **Clustered by expertise**: cada membro lidera uma área, os restantes contribuem
 
 ### 🛡️ Dica Ética
-> Os papéis sugeridos pela IA são propostas, nunca mandatos. A distribuição final deve ser decidida colaborativamente pela equipa — considera competências individuais, disponibilidade e preferências. Documenta o acordo por escrito antes de avançar para o Stage 1.
+> Os papéis sugeridos pela IA são propostas, nunca mandatos. A distribuição final deve ser decidida colaborativamente pela equipa — considere competências individuais, disponibilidade e preferências. Documente o acordo por escrito antes de avançar para o Estágio 1.
 
 ---
 
-## 🔎 Stage 1 — Ask & Research (9 Steps)
+## 🔎 Estágio 1 — Ask & Research (9 Etapas)
 
-Este Stage é o núcleo da investigação. Segue os 9 Steps em sequência.
+Este Estágio é o núcleo da investigação. Siga as 9 Etapas em sequência.
 
 ---
 
-### Step 0 — Candidate Research Questions (Perguntas Candidatas)
+### Etapa 0 — Candidate Research Questions (Perguntas Candidatas)
 
 #### Objetivo
-Gerar 4–6 perguntas de investigação candidatas antes de selecionar uma. Este passo explora o espaço de possibilidades.
+Gerar 4–6 perguntas de investigação candidatas antes de selecionar uma. Esta etapa explora o espaço de possibilidades.
 
 #### O que fazer
-1. Introduz o teu tópico amplo na plataforma
+1. Introduza o seu tópico amplo na plataforma
 2. A IA gera 6 candidatas com tipo epistemológico, viabilidade (1–5) e metodologia sugerida
 3. A equipa avalia cada candidata: *É investigável? O âmbito é alcançável? Reflete o nosso interesse real?*
 
@@ -61,17 +61,17 @@ Gerar 4–6 perguntas de investigação candidatas antes de selecionar uma. Este
 - **Avaliativa**: qual abordagem é mais eficaz
 
 #### 🛡️ Dica Ética
-> As perguntas geradas pela IA são pontos de partida, não conclusões. A decisão de seleção deve ser completamente humana. Avalia cada candidata de forma independente antes de partilhar a tua escolha com a equipa.
+> As perguntas geradas pela IA são pontos de partida, não conclusões. A decisão de seleção deve ser completamente humana. Avalie cada candidata de forma independente antes de partilhar a sua escolha com a equipa.
 
 ---
 
-### Step 1A — Final RQ Synthesis (Síntese da Pergunta Final) ✦ NOVO
+### Etapa 1A — Final RQ Synthesis (Síntese da Pergunta Final) ✦ NOVO
 
 #### Objetivo
 Comparar sistematicamente todas as RQs candidatas e **construir** (não apenas selecionar) a pergunta de investigação final mais rigorosa.
 
 #### Quando usar
-Após gerar as candidatas no Step 0 e antes de iniciar a análise epistemológica (Step 1B).
+Após gerar as candidatas no Etapa 0 e antes de iniciar a análise epistemológica (Etapa 1B).
 
 #### Framework de avaliação (8 dimensões)
 1. Alinhamento com o fenómeno central
@@ -93,10 +93,10 @@ Após gerar as candidatas no Step 0 e antes de iniciar a análise epistemológic
 
 ---
 
-### Step 1B — Epistemological Analysis (Análise Epistemológica)
+### Etapa 1B — Epistemological Analysis (Análise Epistemológica)
 
 #### Objetivo
-Analisar profundamente a Pergunta de Investigação Final do Step 1A para garantir que é investigável, clara e metodologicamente sólida.
+Analisar profundamente a Pergunta de Investigação Final do Etapa 1A para garantir que é investigável, clara e metodologicamente sólida.
 
 #### O que é analisado
 - Tipo de afirmação de conhecimento
@@ -109,11 +109,11 @@ Analisar profundamente a Pergunta de Investigação Final do Step 1A para garant
 - Possível refinamento da pergunta
 
 #### 🛡️ Dica Ética
-> Usa a análise da IA para *testar* a tua pergunta, não para substituir o teu pensamento. Se a IA sugerir uma versão refinada da tua RQ, discute-a em equipa antes de aceitar. Nunca adotas alterações de âmbito sem compreender *por que razão* melhoram a pergunta.
+> Use a análise da IA para *testar* a sua pergunta, não para substituir o seu pensamento. Se a IA sugerir uma versão refinada da sua RQ, discuta-a em equipa antes de aceitar. Nunca adote alterações de âmbito sem compreender *por que razão* melhoram a pergunta.
 
 ---
 
-### Step 2 — Search String Builder (Construção de Strings de Pesquisa)
+### Etapa 2 — Search String Builder (Construção de Strings de Pesquisa)
 
 #### Objetivo
 Construir strings de pesquisa booleanas de alta qualidade para bases de dados académicas (Web of Science, Scopus, PubMed, ERIC, Google Scholar, RCAAP, OpenAIRE).
@@ -125,17 +125,17 @@ Construir strings de pesquisa booleanas de alta qualidade para bases de dados ac
 - 10 termos MeSH ou descritores temáticos sugeridos
 
 #### Regra de ouro
-Testa cada string manualmente. Simplifica qualquer string que devolva menos de 5 ou mais de 500 resultados.
+Teste cada string manualmente. Simplifique qualquer string que devolva menos de 5 ou mais de 500 resultados.
 
 #### 🛡️ Dica Ética
-> Strings geradas por IA podem ser demasiado complexas para algumas bases de dados. A estratégia de pesquisa é tua — a IA fornece rascunhos, não ferramentas acabadas. Documenta sempre os resultados de cada pesquisa.
+> Strings geradas por IA podem ser demasiado complexas para algumas bases de dados. A estratégia de pesquisa é sua — a IA fornece rascunhos, não ferramentas acabadas. Documente sempre os resultados de cada pesquisa.
 
 ---
 
-### Step 3 — Database Search & Source Evaluation (Pesquisa e Avaliação de Fontes)
+### Etapa 3 — Database Search & Source Evaluation (Pesquisa e Avaliação de Fontes)
 
 #### Objetivo
-Usar as strings do Step 2 para encontrar artigos académicos e avaliar a sua qualidade antes de os incluir na análise.
+Usar as strings do Etapa 2 para encontrar artigos académicos e avaliar a sua qualidade antes de os incluir na análise.
 
 #### Fontes integradas na plataforma
 - **Crossref** — base de dados multidisciplinar
@@ -153,11 +153,11 @@ Wikipedia · Studocu · SlideShare · Course Hero · blogs pessoais · literatur
 - Presença de DOI e ISSN
 
 #### 🛡️ Dica Ética
-> A IA não consegue verificar de forma independente os fatores de impacto de journals ou o estado de retração de artigos. Fornece sempre DOIs quando disponíveis. Se uma fonte não tem DOI nem ISSN, trata-a com extrema cautela. Verifica pelo menos 2 fontes usando **Scimago** ou **Sherpa Romeo**.
+> A IA não consegue verificar de forma independente os fatores de impacto de journals ou o estado de retração de artigos. Forneça sempre DOIs quando disponíveis. Se uma fonte não tem DOI nem ISSN, trate-a com extrema cautela. Verifique pelo menos 2 fontes usando **Scimago** ou **Sherpa Romeo**.
 
 ---
 
-### Step 4 — Evidence Extractor (Extração de Evidência)
+### Etapa 4 — Evidence Extractor (Extração de Evidência)
 
 #### Objetivo
 Analisar papers ou abstracts e extrair evidências estruturadas alinhadas com a pergunta de investigação.
@@ -168,21 +168,21 @@ Analisar papers ou abstracts e extrair evidências estruturadas alinhadas com a 
 - **Methodology** — método de investigação usado
 - **Findings** — resultados concretos (lista)
 - **Limitations** — limitações reconhecidas pelos autores
-- **Relevance Score** — pontuação de relevância para a tua RQ (0–5)
+- **Relevance Score** — pontuação de relevância para a sua RQ (0–5)
 - **Citation** — citação formatada
 
 #### Processo
-1. Seleciona artigos da lista recuperada no Step 3
-2. Clica "Analisar este artigo"
+1. Selecione artigos da lista recuperada no Etapa 3
+2. Clique em "Analisar este artigo"
 3. A IA extrai a estrutura de evidência
-4. Valida manualmente: *A IA encontrou algo que o texto não diz?*
+4. Valide manualmente: *A IA encontrou algo que o texto não diz?*
 
 #### 🛡️ Dica Ética
-> A IA extrai do que tu forneces — não acede ao paper completo. Se só colares um abstract, a extração será limitada ao que o abstract diz. Nunca assumas que a IA encontrou algo que o texto não afirma. Em caso de discrepância, o paper original prevalece.
+> A IA extrai do que você fornece — não acede ao paper completo. Se só colar um abstract, a extração será limitada ao que o abstract diz. Nunca assuma que a IA encontrou algo que o texto não afirma. Em caso de discrepância, o paper original prevalece.
 
 ---
 
-### Step 5 — Source Selection & CRAAP Analysis
+### Etapa 5 — Source Selection & CRAAP Analysis
 
 #### Objetivo
 Aplicar o teste CRAAP a cada fonte para garantir qualidade científica antes de incluí-la na investigação.
@@ -191,7 +191,7 @@ Aplicar o teste CRAAP a cada fonte para garantir qualidade científica antes de 
 | Dimensão | Descrição |
 |---|---|
 | **C**urrency | Quando foi publicado? Quão recente? |
-| **R**elevance | É relevante para a tua RQ específica? |
+| **R**elevance | É relevante para a sua RQ específica? |
 | **A**uthority | Credenciais do autor, qualidade do journal |
 | **A**ccuracy | Qualidade da evidência, foi revisto por pares? |
 | **P**urpose | Por que foi publicado? Há algum enviesamento? |
@@ -202,42 +202,42 @@ Aplicar o teste CRAAP a cada fonte para garantir qualidade científica antes de 
 - **EXCLUIR** (<15/25)
 
 #### 🛡️ Dica Ética
-> Uma fonte que pontua bem no teste CRAAP continua a ser *tua responsabilidade*. O CRAAP avalia credibilidade — deves também avaliar a **relevância para a tua RQ específica**. Uma fonte altamente credível no tema errado não deve ser incluída apenas por ser bem avaliada.
+> Uma fonte que pontua bem no teste CRAAP continua a ser *sua responsabilidade*. O CRAAP avalia credibilidade — deve também avaliar a **relevância para a sua RQ específica**. Uma fonte altamente credível no tema errado não deve ser incluída apenas por ser bem avaliada.
 
 ---
 
-### Step 6 — Topic & Subtopic Mapper (Mapa de Tópicos)
+### Etapa 6 — Topic & Subtopic Mapper (Mapa de Tópicos)
 
 #### Objetivo
 Organizar as evidências em estrutura temática coerente — o esqueleto do conhecimento construído.
 
 #### Processo
-1. Fornece o sumário das evidências extraídas nos Steps 4 e 5
+1. Forneça o sumário das evidências extraídas nos Etapas 4 e 5
 2. A IA gera uma hierarquia de tópicos e subtópicos alinhada com as evidências
 3. A equipa valida: *Cada subtópico corresponde a pelo menos uma fonte que lemos?*
 
 #### Regra de ouro
-Se um subtópico aparece sem âncora de fonte, encontra uma fonte ou remove-o. A IA pode usar categorias genéricas do campo — vai além delas.
+Se um subtópico aparece sem âncora de fonte, encontre uma fonte ou remova-o. A IA pode usar categorias genéricas do campo — vá além delas.
 
 #### 🛡️ Dica Ética
-> O mapa deve refletir *as tuas evidências*, não uma visão genérica do campo. Antes de aceitar a estrutura gerada pela IA, pergunta: *Consigo apontar uma fonte para cada nó?* Elimina nós sem âncora bibliográfica.
+> O mapa deve refletir *as suas evidências*, não uma visão genérica do campo. Antes de aceitar a estrutura gerada pela IA, pergunte: *Consigo apontar uma fonte para cada nó?* Elimine nós sem âncora bibliográfica.
 
 ---
 
-### Step 7 — Mind Map Generator
+### Etapa 7 — Mind Map Generator
 
 #### Objetivo
-Transformar a estrutura de tópicos do Step 6 num mapa mental visual hierárquico para comunicação e síntese do conhecimento.
+Transformar a estrutura de tópicos do Etapa 6 num mapa mental visual hierárquico para comunicação e síntese do conhecimento.
 
 #### Formato de output
 O mapa é gerado em formato Markmap (compatível com exportação para NotebookLM e outros formatos).
 
 #### 🛡️ Dica Ética
-> Verifica cada nó do mapa: "Consigo apontar uma fonte para isto?" Elimina nós sem âncora bibliográfica. O mapa de mente é um espelho da tua revisão de literatura — deve ser honesto sobre o que sabes e o que ainda não investigaste.
+> Verifique cada nó do mapa: "Consigo apontar uma fonte para isto?" Elimine nós sem âncora bibliográfica. O mapa de mente é um espelho da sua revisão de literatura — deve ser honesto sobre o que sabe e o que ainda não investigaste.
 
 ---
 
-### Step 8 — Scientific Glossary Builder (Glossário Científico)
+### Etapa 8 — Scientific Glossary Builder (Glossário Científico)
 
 #### Objetivo
 Definir os termos-chave da investigação com base na literatura revista, garantindo precisão terminológica.
@@ -253,18 +253,18 @@ Definir os termos-chave da investigação com base na literatura revista, garant
 - Termos genéricos sem especificidade científica
 
 #### 🛡️ Dica Ética
-> Inclui apenas termos das tuas fontes. Remove jargão da IA que não esteja no teu tópico. O glossário representa o léxico preciso da tua investigação — não é um dicionário geral.
+> Inclua apenas termos das suas fontes. Remova jargão da IA que não esteja no seu tópico. O glossário representa o léxico preciso da sua investigação — não é um dicionário geral.
 
 ---
 
-## 💡 Stage 2 — Explain & Create
+## 💡 Estágio 2 — Explain & Create
 
-Este Stage transforma a investigação em explicação e em outputs multimodais.
+Este Estágio transforma a investigação em explicação e em outputs multimodais.
 
-### Step 9 — Scientific Explanation Scaffolder (Andaime de Explicação)
+### Etapa 9 — Scientific Explanation Scaffolder (Andaime de Explicação)
 
 #### Objetivo
-Estruturar uma explicação científica rigorosa baseada nas evidências do Stage 1, como primeiro rascunho da resposta à pergunta de investigação.
+Estruturar uma explicação científica rigorosa baseada nas evidências do Estágio 1, como primeiro rascunho da resposta à pergunta de investigação.
 
 #### Estrutura da explicação científica
 1. **Contextualização** — o problema e a sua relevância
@@ -274,11 +274,11 @@ Estruturar uma explicação científica rigorosa baseada nas evidências do Stag
 5. **Conclusão** — implicações e próximos passos
 
 #### 🛡️ Dica Ética
-> Todas as explicações devem ser fiéis às evidências do Stage 1. O conteúdo gerado pela IA é teu para rever e validar. Nunca apresentes como afirmação própria algo que a IA inventou sem base nas fontes.
+> Todas as explicações devem ser fiéis às evidências do Estágio 1. O conteúdo gerado pela IA é seu para rever e validar. Nunca apresente como afirmação própria algo que a IA inventou sem base nas fontes.
 
 ---
 
-### Step 10 — Multimodal Output Generator
+### Etapa 10 — Multimodal Output Generator
 
 #### Objetivo
 Gerar outputs que comuniquem os resultados da investigação em diferentes formatos, adequados a diferentes audiências.
@@ -293,13 +293,13 @@ Gerar outputs que comuniquem os resultados da investigação em diferentes forma
 | **10E** | Oral Presentation | Estrutura para apresentação formal |
 
 #### 🛡️ Dica Ética
-> Visuais gerados por IA podem representar incorretamente estruturas científicas. Compara sempre com figuras de artigos revistos por pares. Nunca apresentes um visual como sendo "retirado de um estudo" se foi gerado pela IA.
+> Visuais gerados por IA podem representar incorretamente estruturas científicas. Compare sempre com figuras de artigos revistos por pares. Nunca apresente um visual como sendo "retirado de um estudo" se foi gerado pela IA.
 
 ---
 
-## 🧠 Stage 3 — Reflect & Improve
+## 🧠 Estágio 3 — Reflect & Improve
 
-Este Stage fecha o ciclo de investigação com metacognição e planificação do próximo ciclo.
+Este Estágio fecha o ciclo de investigação com metacognição e planificação do próximo ciclo.
 
 ### Auto-avaliação
 - Nota de 1 a 5 em cada uma das 8 dimensões da rubrica, com segunda opinião opcional da IA
@@ -315,7 +315,7 @@ Este Stage fecha o ciclo de investigação com metacognição e planificação d
 - Qual seria o próximo passo lógico de investigação?
 
 #### 🛡️ Dica Ética
-> A reflexão é humana. A IA pode *estimular* — as respostas honestas têm de vir de ti. Não uses a IA para escrever a tua reflexão. A metacognição é o momento mais importante do processo de aprendizagem.
+> A reflexão é humana. A IA pode *estimular* — as respostas honestas têm de vir de si. Não use a IA para escrever a sua reflexão. A metacognição é o momento mais importante do processo de aprendizagem.
 
 ---
 
@@ -324,7 +324,7 @@ Este Stage fecha o ciclo de investigação com metacognição e planificação d
 | # | Rubric | O que avalia |
 |---|---|---|
 | R1 | Scientific Explanation | Clareza, rigor, ancoragem em evidências |
-| R2 | Research Process | Qualidade do processo de investigação (Steps 0–8) |
+| R2 | Research Process | Qualidade do processo de investigação (Etapas 0–8) |
 | R3 | Poster/Infographic | Impacto visual e fidelidade científica |
 | R4 | Podcast | Comunicação oral e acessibilidade |
 | R5 | Science Game | Criatividade e correção científica |
@@ -346,26 +346,26 @@ Cada critério é pontuado de 1 a 4:
 2. **Transparência**: Declarar sempre onde a IA foi utilizada no processo.
 3. **Soberania Humana**: A equipa tem sempre a palavra final sobre qualquer sugestão da IA.
 4. **Fidedignidade**: Não apresentar outputs da IA como trabalho 100% próprio.
-5. **Verificação Cruzada**: Validar sempre as extração da IA contra as fontes originais.
+5. **Verificação Cruzada**: Validar sempre as extrações da IA contra as fontes originais.
 
 ---
 
 ## ❓ Perguntas Frequentes por Etapa
 
-### "Posso pular steps?"
-Não. Os Steps são sequenciais — cada um alimenta o seguinte. Saltar o Step 1A significa que a tua Pergunta de Investigação não foi construída metodicamente.
+### "Posso saltar etapas?"
+Não. As Etapas são sequenciais — cada uma alimenta a seguinte. Saltar a Etapa 1A significa que a sua Pergunta de Investigação não foi construída metodicamente.
 
 ### "A IA deu-me uma resposta errada. O que faço?"
-Isto é esperado. A regra é: *o paper original prevalece*. Usa a IA como rascunho, não como verdade final.
+Isto é esperado. A regra é: *o paper original prevalece*. Use a IA como rascunho, não como verdade final.
 
-### "Quantas fontes devo ter no Step 4?"
+### "Quantas fontes devo ter no Etapa 4?"
 O mínimo recomendado é 5 fontes de qualidade (CRAAP ≥ 20/25). Para projetos de nível universitário, 8–12 fontes é considerado robusto.
 
 ### "Em que língua posso usar a plataforma?"
-A plataforma suporta **Português Europeu (pt-PT)** e **Inglês (en)**. O assistente responde na língua da tua pergunta.
+A plataforma suporta **Português Europeu (pt-PT)** e **Inglês (en)**. O assistente responde na língua da sua pergunta.
 
 ### "Como exporto o meu trabalho?"
-Usa o botão "Exportar para NotebookLM" disponível em cada Step para criar um podcast de estudo personalizado. Também podes exportar o mapa mental ou o glossário em formato Markdown.
+Use o botão "Exportar para NotebookLM" disponível em cada Etapa para criar um podcast de estudo personalizado. Também pode exportar o mapa mental ou o glossário em formato Markdown.
 
 ---
 

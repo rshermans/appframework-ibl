@@ -128,7 +128,7 @@ export default function Step3Evidence() {
             {selectedSearchArticleIds.length > 0
               ? t('steps.step3.noRetrievedArticles')
               : isPortuguese
-                ? 'Sem artigos selecionados. Volta à etapa anterior para selecionar artigos.'
+                ? 'Sem artigos selecionados. Volte à etapa anterior para selecionar artigos.'
                 : 'No articles selected. Go back to the previous step and select articles.'}
           </div>
         ) : (
@@ -168,7 +168,7 @@ export default function Step3Evidence() {
         </div>
         <div className="bg-[var(--surface_container_low)] p-3 text-sm text-[var(--on_surface)]">
           {isPortuguese
-            ? 'Se precisares de mais fontes, este botão tenta automaticamente vários fornecedores e uma pesquisa simplificada antes da análise manual.'
+            ? 'Se precisar de mais fontes, este botão tenta automaticamente vários fornecedores e uma pesquisa simplificada antes da análise manual.'
             : 'If you need more sources, this button automatically tries several providers and a simplified query before manual analysis.'}
         </div>
 

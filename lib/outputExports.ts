@@ -59,7 +59,7 @@ export function slidesCanvasPrompt(
     .join('\n\n')
 
   return pt
-    ? `Cria uma apresentação de slides (Canvas) com ${presentation.slides.length + 2} slides, em português de Portugal, para o público: ${audienceLabel}.\n\nTema/pergunta de investigação: ${researchQuestion}\nTítulo: ${presentation.title}\nDuração: ~${presentation.totalDurationMinutes} minutos.\n\nRegras:\n- Usa APENAS o conteúdo abaixo; não acrescentes factos nem dados novos.\n- Mantém as fontes indicadas em cada slide (rodapé) e acrescenta um slide final de Referências.\n- Design limpo, pouco texto por slide, bom contraste; sugere um gráfico ou imagem quando fizer sentido.\n- Põe as notas do orador nas notas de cada slide.\n\nConteúdo:\n\n${slides}\n`
+    ? `Crie uma apresentação de slides (Canvas) com ${presentation.slides.length + 2} slides, em português de Portugal, para o público: ${audienceLabel}.\n\nTema/pergunta de investigação: ${researchQuestion}\nTítulo: ${presentation.title}\nDuração: ~${presentation.totalDurationMinutes} minutos.\n\nRegras:\n- Usa APENAS o conteúdo abaixo; não acrescentes factos nem dados novos.\n- Mantém as fontes indicadas em cada slide (rodapé) e acrescenta um slide final de Referências.\n- Design limpo, pouco texto por slide, bom contraste; sugere um gráfico ou imagem quando fizer sentido.\n- Põe as notas do orador nas notas de cada slide.\n\nConteúdo:\n\n${slides}\n`
     : `Create a slide deck (Canvas) with ${presentation.slides.length + 2} slides, in English, for this audience: ${audienceLabel}.\n\nResearch question/topic: ${researchQuestion}\nTitle: ${presentation.title}\nLength: ~${presentation.totalDurationMinutes} minutes.\n\nRules:\n- Use ONLY the content below; do not add new facts or data.\n- Keep the sources shown on each slide (footer) and add a final References slide.\n- Clean design, little text per slide, good contrast; suggest a chart or image where it helps.\n- Put the speaker notes in each slide's notes.\n\nContent:\n\n${slides}\n`
 }
 
@@ -67,7 +67,7 @@ export function slidesCanvasPrompt(
 export function videoToolPrompt(board: VideostoryBoard, context: { researchQuestion: string; audienceLabel: string; pt: boolean }): string {
   const { researchQuestion, audienceLabel, pt } = context
   return (pt
-    ? `Cria um vídeo curto (3-5 min) a partir deste storyboard, para o público: ${audienceLabel}. Tema: ${researchQuestion}. Usa só o conteúdo indicado e mostra as fontes no ecrã.\n\n`
+    ? `Crie um vídeo curto (3-5 min) a partir deste storyboard, para o público: ${audienceLabel}. Tema: ${researchQuestion}. Use só o conteúdo indicado e mostre as fontes no ecrã.\n\n`
     : `Create a short video (3-5 min) from this storyboard for this audience: ${audienceLabel}. Topic: ${researchQuestion}. Use only the content given and show the sources on screen.\n\n`) + videoScriptText(board, pt)
 }
 

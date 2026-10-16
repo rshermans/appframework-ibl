@@ -31,7 +31,7 @@ export default function Step10CVideocast({ onBack }: Props) {
         stepId="step6_multimodal"
         title={pt ? 'Storyboard de Videocast' : 'Videocast Storyboard'}
         subtitle={pt
-          ? 'Cria o guião e o storyboard por cenas (não o vídeo final), com notas visuais e fontes. Abaixo indicamos onde o transformar em vídeo.'
+          ? 'Crie o guião e o storyboard por cenas (não o vídeo final), com notas visuais e fontes. Abaixo indicamos onde o transformar em vídeo.'
           : 'Creates the script and scene storyboard (not the final video), with visual notes and sources. Below we point to where to turn it into a video.'}
       />
       <button type="button" onClick={onBack} className="text-sm text-[var(--on_surface_variant)] hover:underline">

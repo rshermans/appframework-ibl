@@ -86,7 +86,7 @@ describe('Stage 2 - outputs hub', () => {
   it('locks every format until Stage 1 produced evidence and a structure', () => {
     resetStore({ stage: 2 })
     renderStep(<Stage2Multimodal />)
-    expect(screen.getByText(/Completa pelo menos o Estágio 1|Complete Stage 1/)).toBeInTheDocument()
+    expect(screen.getByText(/Complete pelo menos o Estágio 1|Complete Stage 1/)).toBeInTheDocument()
     screen.getAllByRole('button', { name: /Step 10[A-E]/ }).forEach((card) => expect(card).toBeDisabled())
   })
 

@@ -169,35 +169,35 @@ export const IBL_ETHICAL_TIPS_PT: Record<IBLStageKey | IBLStepKey, string> = {
   stage0:
     'As atribuições de papéis por IA são propostas, não ordens. A distribuição final de tarefas deve ser decidida em equipa.',
   stage1:
-    'Valida sempre cada saída face ao objetivo da investigação e aos critérios de qualidade das fontes.',
+    'Valide sempre cada saída face ao objetivo da investigação e aos critérios de qualidade das fontes.',
   stage2:
     'Todas as explicações e outputs devem manter fidelidade a evidência validada no Estágio 1.',
   stage3:
-    'A reflexão e trabalho humano. A IA pode sugerir, mas as conclusões honestas devem ser escritas pela equipa.',
+    'A reflexão é trabalho humano. A IA pode sugerir, mas as conclusões honestas devem ser escritas pela equipa.',
   step0_generate:
     'As perguntas geradas por IA são pontos de partida. A avaliação e seleção continuam a ser decisões humanas.',
   step1_select:
-    'Classifica as perguntas candidatas de forma independente antes de ver recomendações da IA para reduzir enviesamento de ancoragem.',
+    'Classifique as perguntas candidatas de forma independente antes de ver recomendações da IA para reduzir enviesamento de ancoragem.',
   step1a_compare:
-    'Usa a comparação da IA para testar alternativas, não para substituir o raciocínio disciplinar.',
+    'Use a comparação da IA para testar alternativas, não para substituir o raciocínio disciplinar.',
   step1b_synthesize:
-    'A IA pode sugerir sinteses, mas a validade da pergunta final depende do teu julgamento metodológico.',
+    'A IA pode sugerir sínteses, mas a validade da pergunta final depende do seu julgamento metodológico.',
   step2_search_design:
-    'Testa manualmente cada string de pesquisa. Simplifica as strings que devolvem menos de 5 ou mais de 500 resultados.',
+    'Teste manualmente cada string de pesquisa. Simplifique as strings que devolvem menos de 5 ou mais de 500 resultados.',
   step3_evidence_extraction:
     'A IA extrai apenas do texto fornecido. Se a evidência for ambígua, a interpretação do artigo tem prioridade.',
   step5_source_selection:
-    'O CRAAP avalia credibilidade, mas a relevância para a tua pergunta continua a ser teu julgamento. Cruza pelo menos 2 fontes com Scimago ou Sherpa Romeo. Exclui: Wikipedia, Studocu, SlideShare.',
+    'O CRAAP avalia credibilidade, mas a relevância para a sua pergunta continua a ser seu julgamento. Cruze pelo menos 2 fontes com Scimago ou Sherpa Romeo. Exclua: Wikipedia, Studocu, SlideShare.',
   step4_knowledge_structure:
     'Cada tópico e cada nó do mapa deve estar ancorado em pelo menos uma fonte já revista pela equipa.',
   step8_glossary:
-    'Inclui apenas termos presentes nas fontes revistas. Remove jargão gerado por IA que não aparece na literatura do tópico.',
+    'Inclua apenas termos presentes nas fontes revistas. Remova jargão gerado por IA que não aparece na literatura do tópico.',
   step9_explanation:
     'A explicação científica deve manter fidelidade a evidência. Revise os rascunhos da IA antes de publicar.',
   step6_multimodal:
-    'Elementos visuais gerados por IA podem distorcer estruturas. Cruza sempre com referências revistas por pares antes de finalizar.',
+    'Elementos visuais gerados por IA podem distorcer estruturas. Cruze sempre com referências revistas por pares antes de finalizar.',
   step7_reflection:
-    'Usa prompts de IA apenas como gatilhos. As declarações de reflexão devem ser autênticas e escritas pela equipa.',
+    'Use prompts de IA apenas como gatilhos. As declarações de reflexão devem ser autênticas e escritas pela equipa.',
 }
 
 export function getIblStepMeta(stepId: IBLStepKey): IBLStepMeta {

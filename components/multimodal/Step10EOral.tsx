@@ -34,7 +34,7 @@ export default function Step10EOral({ onBack }: Props) {
         stepId="step6_multimodal"
         title={pt ? 'Apresentação Oral' : 'Oral Presentation'}
         subtitle={pt
-          ? 'Cria os slides com notas do orador e fontes, e descarrega-os em PowerPoint (.pptx) ou prepara um prompt para o Gemini (Canvas).'
+          ? 'Crie os slides com notas do orador e fontes, e descarregue-os em PowerPoint (.pptx) ou prepare um prompt para o Gemini (Canvas).'
           : 'Creates the slides with speaker notes and sources, and downloads them as PowerPoint (.pptx) or prepares a prompt for Gemini (Canvas).'}
       />
       <button type="button" onClick={onBack} className="text-sm text-[var(--on_surface_variant)] hover:underline">

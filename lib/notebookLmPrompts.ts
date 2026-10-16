@@ -302,7 +302,7 @@ Para cada decisão:
 ### Exemplos de Mecânicas
 - **Ponto**: +1 para escolha baseada em evidência, -1 para mito comum
 - **Tempo**: Limite de tempo por decisão (cria pressão realista)
-- **Recursos**: Orçamento finito (ex: "tens €100 para investigação, gasta-os")
+- **Recursos**: Orçamento finito (ex: "tem 100 € para a investigação, gaste-os")
 - **Consequência em Cadeia**: Escolha 1 afeta opções em Escolha 2
 
 ### Plataformas

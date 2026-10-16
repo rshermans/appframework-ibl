@@ -199,7 +199,7 @@ export default function Step0() {
             onChange={(event) => setManualQuestion(event.target.value)}
             placeholder={
               isPortuguese
-                ? 'Escreve uma pergunta de investigação manual'
+                ? 'Escreva uma pergunta de investigação manual'
                 : 'Write a manual research question'
             }
             className="ghost-input min-w-[260px] flex-1"

@@ -138,7 +138,7 @@ export default function Stage2Multimodal() {
         <div className="rounded-[var(--radius-md)] border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
           ⚠{' '}
           {portuguese
-            ? 'Completa pelo menos o Estágio 1 (evidência + estrutura de conhecimento) antes de criar outputs multimodais.'
+            ? 'Complete pelo menos o Estágio 1 (evidência + estrutura de conhecimento) antes de criar outputs multimodais.'
             : 'Complete Stage 1 (evidence + knowledge structure) before creating multimodal outputs.'}
         </div>
       )}
