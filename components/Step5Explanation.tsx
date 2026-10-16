@@ -283,7 +283,7 @@ export default function Step5Explanation() {
         <div className="space-y-5 ai-user-decided rq-active-accent p-5">
           <QualityRating
             label={isPortuguese ? 'Como avalias esta explicação?' : 'How do you rate this explanation?'}
-            helperText={isPortuguese ? 'Usa esta nota para registar se o esboço está utilizável ou precisa de refazer.' : 'Use this to record whether the scaffold is usable or needs another pass.'}
+            helperText={isPortuguese ? 'Use esta nota para registar se o esboço está utilizável ou precisa de refazer.' : 'Use this to record whether the scaffold is usable or needs another pass.'}
             value={qualityRating}
             onChange={handleQualityRating}
           />

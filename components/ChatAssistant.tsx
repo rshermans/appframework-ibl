@@ -256,9 +256,9 @@ export default function ChatAssistant() {
                   <MessageCircle className="w-6 h-6 text-blue-500" />
                 </div>
                 <p className="text-sm text-slate-600 px-4 leading-relaxed">
-                  Olá! Sou o teu Copiloto IBL-AI. Tenho o manual completo do framework carregado.
+                  Olá! Sou o seu Copiloto IBL-AI. Tenho o manual completo do framework carregado.
                   {stepDisplayName && (
-                    <> Vejo que estás em <strong className="text-blue-600">{stepDisplayName}</strong>.</>
+                    <> Vejo que está em <strong className="text-blue-600">{stepDisplayName}</strong>.</>
                   )}
                   {' '}Como posso ajudar?
                 </p>

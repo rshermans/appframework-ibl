@@ -113,7 +113,7 @@ export default function Step1B() {
 
   const useSelectedQuestionAsFinal = () => {
     if (!selectedRQChoice.trim()) {
-      setError(isPortuguese ? 'Seleciona uma pergunta antes de continuar.' : 'Select one question before continuing.')
+      setError(isPortuguese ? 'Selecione uma pergunta antes de continuar.' : 'Select one question before continuing.')
       return
     }
 
