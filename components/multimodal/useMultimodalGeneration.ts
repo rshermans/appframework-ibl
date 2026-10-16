@@ -102,7 +102,7 @@ export function useMultimodalGeneration(kind: MultimodalKind) {
       if (!canGenerate) {
         setError(
           pt
-            ? 'Complete o Step 9 (explicação científica) e a evidência antes de gerar.'
+            ? 'Complete a Etapa 9 (explicação científica) e a evidência antes de gerar.'
             : 'Complete Step 9 (scientific explanation) and the evidence before generating.'
         )
         return

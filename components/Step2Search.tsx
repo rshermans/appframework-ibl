@@ -85,7 +85,7 @@ export default function Step2Search() {
 
     const refinementBlock = [
       userRefinementPrompt.trim()
-        ? `${isPortuguese ? 'Instrucoes adicionais' : 'Additional instructions'}: ${userRefinementPrompt.trim()}`
+        ? `${isPortuguese ? 'Instruções adicionais' : 'Additional instructions'}: ${userRefinementPrompt.trim()}`
         : '',
       userRefinementKeywords.trim()
         ? `${isPortuguese ? 'Palavras complementares' : 'Complementary keywords'}: ${userRefinementKeywords.trim()}`
@@ -108,7 +108,7 @@ export default function Step2Search() {
           rq: finalResearchQuestion.question,
           finalResearchQuestion,
           content: refinementBlock
-            ? `${isPortuguese ? 'Pergunta de investigacao' : 'Research question'}: ${finalResearchQuestion.question}\n${refinementBlock}\n\n${isPortuguese ? 'Devolve obrigatoriamente um JSON com os campos \"boolean_query\" (string nao vazia) e \"search_strings\" (array com pelo menos 2 entradas).' : 'You MUST return JSON with non-empty "boolean_query" (string) and "search_strings" (array with at least 2 entries).'}`
+            ? `${isPortuguese ? 'Pergunta de investigação' : 'Research question'}: ${finalResearchQuestion.question}\n${refinementBlock}\n\n${isPortuguese ? 'Devolve obrigatoriamente um JSON com os campos \"boolean_query\" (string não vazia) e \"search_strings\" (array com pelo menos 2 entradas).' : 'You MUST return JSON with non-empty "boolean_query" (string) and "search_strings" (array with at least 2 entries).'}`
             : undefined,
           locale,
         }),
@@ -255,7 +255,7 @@ export default function Step2Search() {
             onChange={(event) => setUserRefinementPrompt(event.target.value)}
             placeholder={
               isPortuguese
-                ? 'Ex.: foco em estudos europeus e revisoes sistematicas'
+                ? 'Ex.: foco em estudos europeus e revisões sistemáticas'
                 : 'e.g. focus on European studies and systematic reviews'
             }
             className="ghost-input"
@@ -348,7 +348,7 @@ export default function Step2Search() {
               <div className="text-sm font-semibold text-slate-800">{t('steps.step2.retrievalTitle')}</div>
               <div className="text-xs text-slate-600">
                 {isPortuguese
-                  ? `Paginacao: ${pageSize} resultados por pagina`
+                  ? `Paginacao: ${pageSize} resultados por página`
                   : `Paging: ${pageSize} results per page`}
               </div>
             </div>
@@ -374,7 +374,7 @@ export default function Step2Search() {
                 {searchLoading ? t('steps.step2.retrieving') : t('steps.step2.retrieveButton')}
               </button>
               <label className="text-sm text-[var(--on_surface)] opacity-70">
-                {isPortuguese ? 'Resultados por pagina' : 'Results per page'}:
+                {isPortuguese ? 'Resultados por página' : 'Results per page'}:
                 <select
                   value={pageSize}
                   onChange={(event) => setPageSize(Number(event.target.value))}
@@ -410,7 +410,7 @@ export default function Step2Search() {
                     : 'Load all pages'}
               </button>
               <div className="ml-2 text-xs text-slate-600">
-                {isPortuguese ? `Pagina ${page}` : `Page ${page}`}
+                {isPortuguese ? `Página ${page}` : `Page ${page}`}
                 {typeof totalResults === 'number'
                   ? isPortuguese
                     ? ` de ~${Math.max(1, Math.ceil(totalResults / pageSize))}`
@@ -427,7 +427,7 @@ export default function Step2Search() {
             <div className="flex flex-wrap items-center gap-2">
               <div className="rounded-[var(--radius-md)] bg-[var(--secondary_container)] px-2 py-1 text-xs font-semibold text-[var(--on_secondary_container)]">
                 {isPortuguese
-                  ? `${selectedSearchArticleIds.length} selecionado(s) para analise`
+                  ? `${selectedSearchArticleIds.length} selecionado(s) para análise`
                   : `${selectedSearchArticleIds.length} selected for analysis`}
               </div>
               <button
@@ -442,7 +442,7 @@ export default function Step2Search() {
                 type="button"
                 className="bg-[var(--surface_container)] px-3 py-1 text-xs font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)]"
               >
-                {isPortuguese ? 'Limpar selecao' : 'Clear selection'}
+                {isPortuguese ? 'Limpar seleção' : 'Clear selection'}
               </button>
             </div>
 

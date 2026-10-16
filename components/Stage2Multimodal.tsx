@@ -60,7 +60,7 @@ export default function Stage2Multimodal() {
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-3">
             <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--on_surface)] md:text-4xl">
-              Stage 2 — Explain &amp; Create
+              {portuguese ? 'Estágio 2 — Explicar e criar' : 'Stage 2 — Explain & Create'}
             </h2>
             <p className="max-w-3xl text-slate-700">
               {portuguese
@@ -82,14 +82,14 @@ export default function Stage2Multimodal() {
           onClick={() => setStage(1)}
           className="rounded-[var(--radius-md)] bg-[var(--surface_container)] px-4 py-2 text-sm font-medium text-[var(--on_surface)] transition hover:bg-[var(--surface_container_low)]"
         >
-          ← {portuguese ? 'Voltar ao Stage 1' : 'Back to Stage 1'}
+          ← {portuguese ? 'Voltar ao Estágio 1' : 'Back to Stage 1'}
         </button>
         <button
           type="button"
           onClick={() => setStage(3)}
           className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--on_primary)] transition hover:opacity-90"
         >
-          {portuguese ? 'Avançar para Stage 3 →' : 'Continue to Stage 3 →'}
+          {portuguese ? 'Avançar para o Estágio 3 →' : 'Continue to Stage 3 →'}
         </button>
       </div>
 
@@ -126,7 +126,7 @@ export default function Stage2Multimodal() {
       {explanationDraft && (
         <div className="rounded-[var(--radius-md)] border border-[var(--outline_variant)] bg-[var(--surface_container_low)] p-4 text-sm text-[var(--on_surface)]">
           <div className="mb-2 font-semibold">
-            {portuguese ? 'Ponte do Step 9 para o Stage 2' : 'Step 9 to Stage 2 bridge'}
+            {portuguese ? 'Ponte da Etapa 9 para o Estágio 2' : 'Step 9 to Stage 2 bridge'}
           </div>
           <div className="text-[var(--on_surface_variant)]">
             {explanationDraft.argumentCore}
@@ -138,7 +138,7 @@ export default function Stage2Multimodal() {
         <div className="rounded-[var(--radius-md)] border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
           ⚠{' '}
           {portuguese
-            ? 'Completa pelo menos o Stage 1 (evidência + estrutura de conhecimento) antes de criar outputs multimodais.'
+            ? 'Completa pelo menos o Estágio 1 (evidência + estrutura de conhecimento) antes de criar outputs multimodais.'
             : 'Complete Stage 1 (evidence + knowledge structure) before creating multimodal outputs.'}
         </div>
       )}

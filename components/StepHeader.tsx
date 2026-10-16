@@ -1,7 +1,7 @@
 "use client"
 
 import type { IBLStepKey } from '@/lib/iblFramework'
-import { getIblEthicalTip, getIblStepMeta } from '@/lib/iblFramework'
+import { getIblEthicalTip, getIblStepMeta, localizeBadge } from '@/lib/iblFramework'
 import EthicalTip from '@/components/EthicalTip'
 import InfoTooltip from '@/components/InfoTooltip'
 import { useI18n } from '@/components/I18nProvider'
@@ -21,7 +21,7 @@ export default function StepHeader({ stepId, title, subtitle, showEthicalTip = t
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <span className="primary-gradient rounded-[var(--radius-md)] px-3 py-1 text-xs font-semibold tracking-wide text-[var(--on_primary)]">
-          {meta.badge}
+          {localizeBadge(meta.badge, locale === 'pt-PT')}
         </span>
         <InfoTooltip label={title} description={meta.title} />
       </div>

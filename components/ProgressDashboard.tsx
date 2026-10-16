@@ -3,7 +3,7 @@
 import React from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import { useI18n } from '@/components/I18nProvider'
-import { getIblStepMeta, type IBLStepKey } from '@/lib/iblFramework'
+import { getIblStepMeta, localizeBadge, type IBLStepKey } from '@/lib/iblFramework'
 
 interface ProgressStep {
   stepId: IBLStepKey | null
@@ -19,7 +19,7 @@ function useProgressSteps(): ProgressStep[] {
     { stepId: 'step1_select', i18nKey: 'progress.candidateQuestions', done: (state.candidateResearchQuestions?.length ?? 0) > 0 || (state.rqCandidates?.length ?? 0) > 0 },
     { stepId: 'step1b_synthesize', i18nKey: 'progress.finalQuestion', done: Boolean(state.finalResearchQuestion) },
     { stepId: 'step2_search_design', i18nKey: 'progress.searchDesign', done: Boolean(state.searchDesign) },
-    { stepId: null, i18nKey: 'progress.searchRetrieval', done: (state.searchArticles?.length ?? 0) > 0, customBadge: 'Step 3' },
+    { stepId: null, i18nKey: 'progress.searchRetrieval', done: (state.searchArticles?.length ?? 0) > 0, customBadge: 'Step 2.5' },
     { stepId: 'step3_evidence_extraction', i18nKey: 'progress.evidence', done: (state.evidenceRecords?.length ?? 0) > 0 },
     { stepId: 'step5_source_selection', i18nKey: 'progress.sourceSelection', done: (state.evidenceRecords?.length ?? 0) > 0 },
     { stepId: 'step4_knowledge_structure', i18nKey: 'progress.knowledgeStructure', done: Boolean(state.knowledgeStructure) },
@@ -98,8 +98,8 @@ export default function ProgressPanel() {
   return (
     <div className="space-y-1 text-sm">
       <div className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-2 py-1.5 text-[11px] text-[var(--on_surface)]">
-        <span className="font-semibold">{pt ? 'Stage ativo:' : 'Active stage:'} </span>
-        <span>{stage === 1 ? 'Stage 1' : stage === 2 ? 'Stage 2' : 'Stage 3'}</span>
+        <span className="font-semibold">{pt ? 'Estágio ativo:' : 'Active stage:'} </span>
+        <span>{pt ? `Estágio ${stage}` : `Stage ${stage}`}</span>
         <span className="opacity-70"> · {activeStagePct}% ({activeStageCompleted}/{activeStageTotal})</span>
       </div>
 
@@ -127,7 +127,7 @@ export default function ProgressPanel() {
             </span>
             {(meta || step.customBadge) && (
               <span className="font-label text-[9px] font-semibold uppercase tracking-wide text-[var(--outline_variant)] min-w-[3.5rem]">
-                {step.customBadge || meta?.badge}
+                {localizeBadge(step.customBadge || meta?.badge || '', pt)}
               </span>
             )}
             <span className={step.done ? 'text-[var(--on_surface)] font-medium' : 'text-[var(--on_surface)] opacity-50'}>

@@ -54,14 +54,14 @@ export default function TopBar({ actions }: { actions: TopBarActions }) {
         <span className="hidden shrink-0 sm:inline-flex">
           <AppBrand bar />
         </span>
-        <nav aria-label={pt ? 'Etapas' : 'Stages'} className="flex items-center gap-1 rounded-full bg-[var(--surface_container)] p-1">
+        <nav aria-label={pt ? 'Estágios' : 'Stages'} className="flex items-center gap-1 rounded-full bg-[var(--surface_container)] p-1">
           {STAGES.map((value) => (
             <button
               key={value}
               type="button"
               onClick={() => setStage(value)}
               aria-current={stage === value ? 'page' : undefined}
-              aria-label={pt ? `Etapa ${value}` : `Stage ${value}`}
+              aria-label={pt ? `Estágio ${value}` : `Stage ${value}`}
               className={`min-h-[36px] min-w-[36px] whitespace-nowrap rounded-full px-2.5 text-xs font-semibold transition sm:px-3 ${
                 stage === value
                   ? 'primary-gradient text-[var(--on_primary)]'
@@ -69,7 +69,7 @@ export default function TopBar({ actions }: { actions: TopBarActions }) {
               }`}
             >
               <span className="sm:hidden">{value}</span>
-              <span className="hidden sm:inline">{pt ? `Etapa ${value}` : `Stage ${value}`}</span>
+              <span className="hidden sm:inline">{pt ? `Estágio ${value}` : `Stage ${value}`}</span>
             </button>
           ))}
         </nav>

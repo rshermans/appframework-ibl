@@ -9,7 +9,7 @@ import { safeFetch } from '@/lib/safeFetch'
 import { buildEvidenceDigest } from '@/lib/multimodalParts'
 import { projectContextSummary } from '@/lib/stage3'
 
-type Stage3PromptId = 'self_assessment' | 'reflection_journal' | 'inquiry_extension'
+type Stage3PromptId = 'self_assessment' | 'reflection_journal' | 'inquiry_extension' | 'abstract_simulation'
 
 /** Turns transport/timeouts into a message a learner can act on. */
 export function friendlyAiError(error: unknown, pt: boolean): string {
@@ -25,7 +25,7 @@ export function friendlyAiError(error: unknown, pt: boolean): string {
   return pt ? `Não foi possível obter ajuda da IA (${message}).` : `Could not get AI help (${message}).`
 }
 
-/** One place that builds the grounded context for every Stage 3 AI call. */
+/** One place that builds the grounded context for the reflective AI calls (Stage 3 and the Step 9 simulations); `extra` can override any field. */
 export function useStage3Ai() {
   const { locale } = useI18n()
   const pt = locale === 'pt-PT'

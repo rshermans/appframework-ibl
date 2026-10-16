@@ -113,6 +113,8 @@ export interface WizardState {
   selectedSearchArticleIds: string[]
   evidenceRecords: EvidenceRecord[]
   knowledgeStructure: KnowledgeStructure | null
+  /** True once the learner has actually seen the glossary (Step 8), so the stepper does not tick it early. */
+  glossarySeen: boolean
   explanationDraft: ExplanationDraft | null
   
   // Stage 2 — Multimodal outputs
@@ -159,6 +161,7 @@ export interface WizardState {
   addEvidenceRecord: (record: EvidenceRecord) => void
   setEvidenceRecords: (records: EvidenceRecord[]) => void
   setKnowledgeStructure: (structure: KnowledgeStructure | null) => void
+  markGlossarySeen: () => void
   setExplanationDraft: (draft: ExplanationDraft | null) => void
   // Stage 2
   setAudience: (audience: Audience) => void

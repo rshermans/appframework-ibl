@@ -37,7 +37,7 @@ export default function GenerateControls({ kind, durationMinutes, hasDraft, labe
             canGenerate
               ? undefined
               : pt
-                ? 'Complete o Step 9 (explicação científica) para gerar aqui, ou use "Exportar para NotebookLM".'
+                ? 'Complete a Etapa 9 (explicação científica) para gerar aqui, ou use "Exportar para NotebookLM".'
                 : 'Complete Step 9 (scientific explanation) to generate here, or use "Export to NotebookLM".'
           }
           className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--on_primary)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
@@ -57,7 +57,7 @@ export default function GenerateControls({ kind, durationMinutes, hasDraft, labe
       {!canGenerate && (
         <p className="text-xs text-[var(--on_surface_variant)]">
           {pt
-            ? 'Para gerar aqui, conclua o Step 9 (explicação científica). Pode sempre usar a exportação para o NotebookLM.'
+            ? 'Para gerar aqui, conclua a Etapa 9 (explicação científica). Pode sempre usar a exportação para o NotebookLM.'
             : 'To generate here, finish Step 9 (scientific explanation). You can always use the NotebookLM export.'}
         </p>
       )}

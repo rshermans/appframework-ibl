@@ -34,6 +34,7 @@ export const useWizardStore = create<WizardState>()(
   selectedSearchArticleIds: [],
   evidenceRecords: [],
   knowledgeStructure: null,
+  glossarySeen: false,
   explanationDraft: null,
   multimodalOutputs: {},
   evidenceFidelityScore: null,
@@ -149,6 +150,9 @@ export const useWizardStore = create<WizardState>()(
   setKnowledgeStructure: (knowledgeStructure) =>
     set({ knowledgeStructure }),
 
+  markGlossarySeen: () =>
+    set((state) => (state.glossarySeen ? state : { glossarySeen: true })),
+
   setExplanationDraft: (explanationDraft) =>
     set({ explanationDraft }),
 
@@ -228,6 +232,7 @@ export const useWizardStore = create<WizardState>()(
         selectedSearchArticleIds: [],
         evidenceRecords: [],
         knowledgeStructure: null,
+        glossarySeen: false,
         explanationDraft: null,
         multimodalOutputs: {},
         evidenceFidelityScore: null,
@@ -263,6 +268,7 @@ export const useWizardStore = create<WizardState>()(
         selectedSearchArticleIds: state.selectedSearchArticleIds,
         evidenceRecords: state.evidenceRecords,
         knowledgeStructure: state.knowledgeStructure,
+        glossarySeen: state.glossarySeen,
         explanationDraft: state.explanationDraft,
         multimodalOutputs: state.multimodalOutputs,
         evidenceFidelityScore: state.evidenceFidelityScore,

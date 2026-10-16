@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 
 const AUTH_ERRORS: Record<string, { pt: string; en: string }> = {
   Configuration: {
-    pt: 'Login indisponivel: configuracao do servidor incompleta (AUTH_SECRET / credenciais Google).',
+    pt: 'Login indisponível: configuração do servidor incompleta (AUTH_SECRET / credenciais Google).',
     en: 'Sign-in unavailable: incomplete server configuration (AUTH_SECRET / Google credentials).',
   },
   AccessDenied: {
@@ -14,7 +14,7 @@ const AUTH_ERRORS: Record<string, { pt: string; en: string }> = {
     en: 'Access denied by Google. If the app is in "Testing" mode, add your account as a test user in Google Cloud Console.',
   },
   OAuthAccountNotLinked: {
-    pt: 'Este email ja esta associado a outro metodo de login.',
+    pt: 'Este email já está associado a outro método de login.',
     en: 'This email is already linked to a different sign-in method.',
   },
   OAuthCallback: {
@@ -22,11 +22,11 @@ const AUTH_ERRORS: Record<string, { pt: string; en: string }> = {
     en: 'Google returned an error during sign-in. Check the authorized redirect URI (/api/auth/callback/google).',
   },
   OAuthSignin: {
-    pt: 'Nao foi possivel iniciar o login com a Google.',
+    pt: 'Não foi possível iniciar o login com a Google.',
     en: 'Could not start the Google sign-in.',
   },
   Callback: {
-    pt: 'Falha ao concluir o login (possivel indisponibilidade da base de dados). Tente novamente.',
+    pt: 'Falha ao concluir o login (possível indisponibilidade da base de dados). Tente novamente.',
     en: 'Failed to complete sign-in (possible database unavailability). Please try again.',
   },
 }
@@ -79,7 +79,7 @@ export default function AuthControls() {
   if (status === 'loading') {
     return (
       <span className="rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-medium text-[var(--on_surface)]">
-        {pt ? 'A validar sessao...' : 'Validating session...'}
+        {pt ? 'A validar sessão...' : 'Validating session...'}
       </span>
     )
   }
@@ -87,14 +87,14 @@ export default function AuthControls() {
   if (!session?.user) {
     if (googleAvailable === false) {
       const detail = pt
-        ? 'Login Google indisponivel (configurar AUTH_GOOGLE_ID/SECRET).'
+        ? 'Login Google indisponível (configurar AUTH_GOOGLE_ID/SECRET).'
         : 'Google login unavailable (set AUTH_GOOGLE_ID/SECRET).'
       return (
         <span
           title={detail}
           className="inline-flex min-h-[40px] items-center rounded-[var(--radius-sm)] bg-[var(--surface_container)] px-3 py-2 text-xs font-medium text-[var(--on_surface)] opacity-80"
         >
-          {pt ? 'Login indisponivel' : 'Login unavailable'}
+          {pt ? 'Login indisponível' : 'Login unavailable'}
           <span className="sr-only"> — {detail}</span>
         </span>
       )

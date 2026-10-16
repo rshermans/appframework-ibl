@@ -55,9 +55,9 @@ export function buildShareEmail(args: {
 }): { subject: string; body: string } {
   const { projectId, topic, stage, interactionCount, pt } = args
   return {
-    subject: pt ? `Sessao IBL ${projectId}` : `IBL Session ${projectId}`,
+    subject: pt ? `Sessão IBL ${projectId}` : `IBL Session ${projectId}`,
     body: pt
-      ? `ID do projeto: ${projectId}\nTopico: ${topic || '-'}\nStage: ${stage}\nInteracoes: ${interactionCount}\n\nUse /api/export/${projectId} para descarregar o registo PDF.`
+      ? `ID do projeto: ${projectId}\nTopico: ${topic || '-'}\nEstágio: ${stage}\nInteracoes: ${interactionCount}\n\nUse /api/export/${projectId} para descarregar o registo PDF.`
       : `Project ID: ${projectId}\nTopic: ${topic || '-'}\nStage: ${stage}\nInteractions: ${interactionCount}\n\nUse /api/export/${projectId} to download the PDF record.`,
   }
 }

@@ -12,6 +12,8 @@ export interface Stage1FlowState {
   searchArticles: unknown[]
   evidenceRecords: unknown[]
   knowledgeStructure: unknown | null
+  /** The glossary has been shown (on Steps 6-7 or on Step 8 itself). */
+  glossarySeen?: boolean
   explanationDraft: unknown | null
 }
 
@@ -47,8 +49,9 @@ export function isStage1StepDone(stepId: IBLStepKey, s: Stage1FlowState): boolea
     case 'step5_source_selection':
       return s.evidenceRecords.length > 0
     case 'step4_knowledge_structure':
-    case 'step8_glossary':
       return Boolean(s.knowledgeStructure)
+    case 'step8_glossary':
+      return Boolean(s.knowledgeStructure) && Boolean(s.glossarySeen)
     case 'step9_explanation':
       return Boolean(s.explanationDraft)
     default:

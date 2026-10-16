@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWizardStore } from '@/store/wizardStore'
 import type { KnowledgeStructure } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
@@ -15,7 +15,12 @@ interface GlossaryEntry {
 
 export default function Step8Glossary() {
   const { t, locale } = useI18n()
-  const { knowledgeStructure, setKnowledgeStructure, setWorkflowStep } = useWizardStore()
+  const { knowledgeStructure, setKnowledgeStructure, setWorkflowStep, markGlossarySeen } = useWizardStore()
+
+  // Opening this step is what "seeing the glossary" means: only now does Step 8 tick as done.
+  useEffect(() => {
+    if (knowledgeStructure) markGlossarySeen()
+  }, [knowledgeStructure, markGlossarySeen])
 
   const initialEntries: GlossaryEntry[] = knowledgeStructure?.glossary ?? []
 

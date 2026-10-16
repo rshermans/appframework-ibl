@@ -6,6 +6,7 @@ import type { ExplanationDraft, EvidenceRecord, SearchArticle } from '@/types/re
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
 import QualityRating from '@/components/QualityRating'
+import ExplorationActions from '@/components/explanation/ExplorationActions'
 import { parseAiJsonWithOptions } from '@/lib/parseAiJson'
 import { retryWithBackoff } from '@/lib/retryHelper'
 import { safeFetch } from '@/lib/safeFetch'
@@ -142,7 +143,7 @@ export default function Step5Explanation() {
       if (nextDraft.bibliography.length === 0) {
         throw new Error(
           isPortuguese
-            ? 'A IA devolveu uma explicacao sem bibliografia aproveitavel.'
+            ? 'A IA devolveu uma explicação sem bibliografia aproveitável.'
             : 'AI returned an explanation without usable bibliography.'
         )
       }
@@ -282,7 +283,7 @@ export default function Step5Explanation() {
         <div className="space-y-5 ai-user-decided rq-active-accent p-5">
           <QualityRating
             label={isPortuguese ? 'Como avalias esta explicação?' : 'How do you rate this explanation?'}
-            helperText={isPortuguese ? 'Usa esta nota para registar se o scaffold está utilizável ou precisa de refazer.' : 'Use this to record whether the scaffold is usable or needs another pass.'}
+            helperText={isPortuguese ? 'Usa esta nota para registar se o esboço está utilizável ou precisa de refazer.' : 'Use this to record whether the scaffold is usable or needs another pass.'}
             value={qualityRating}
             onChange={handleQualityRating}
           />
@@ -404,6 +405,8 @@ export default function Step5Explanation() {
               ))}
             </ul>
           </div>
+
+          <ExplorationActions />
         </div>
       )}
     </div>

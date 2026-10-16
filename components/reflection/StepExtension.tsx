@@ -93,7 +93,7 @@ export default function StepExtension({ onBack }: Props) {
         <button
           type="button"
           disabled={loading || !finalResearchQuestion?.question}
-          title={!finalResearchQuestion?.question ? (pt ? 'Requer uma questão final no Stage 1.' : 'Requires a final question from Stage 1.') : undefined}
+          title={!finalResearchQuestion?.question ? (pt ? 'Requer uma questão final no Estágio 1.' : 'Requires a final question from Stage 1.') : undefined}
           onClick={generate}
           className="rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--on_primary)] transition hover:opacity-90 disabled:opacity-50"
         >

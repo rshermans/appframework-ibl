@@ -24,9 +24,9 @@ describe('Stage 1 - stepper and navigation', () => {
   it('shows progress, the recommended next step and navigates to it', () => {
     resetStore({ stage: 1, workflowStep: 'step1_select', step0OptionalCompleted: true, rqCandidates: ['a'], candidateResearchQuestions: [{}], selectedRQs: ['a', 'b'] })
     renderStep(<Stage1Research />)
-    expect(screen.getByText(/Passo 1 de 9 · 1 concluído/)).toBeInTheDocument()
+    expect(screen.getByText(/Etapa 1 de 9 · 1 concluído/)).toBeInTheDocument()
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '11')
-    const recommended = screen.getByRole('button', { name: /Próximo passo recomendado/ })
+    const recommended = screen.getByRole('button', { name: /Próxima etapa recomendada/ })
     fireEvent.click(recommended)
     expect(state().workflowStep).toBe('step1a_compare') // compare first; 1B stays locked until a comparison exists
   })
@@ -54,7 +54,7 @@ describe('Stage 1 - stepper and navigation', () => {
       explanationDraft: { outline: ['x'], argumentCore: 'c', evidenceReferences: [], bibliography: ['b'] },
     })
     renderStep(<Stage1Research />)
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(msg('steps.step1B.continueButton')) }))
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(msg('common.continueToStage2')) }))
     expect(state().stage).toBe(2)
   })
 
@@ -64,7 +64,7 @@ describe('Stage 1 - stepper and navigation', () => {
       explanationDraft: { outline: ['x'], argumentCore: 'c', evidenceReferences: [], bibliography: ['b'] },
     })
     renderStep(<Stage1Research />)
-    expect(screen.queryByRole('button', { name: new RegExp(`^${msg('steps.step1B.continueButton')}`) })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: new RegExp(`^${msg('common.continueToStage2')}`) })).not.toBeInTheDocument()
     const bar = document.querySelector('.sticky.bottom-0') as HTMLElement
     expect(bar).toBeTruthy()
     fireEvent.click(within(bar).getByRole('button', { name: /→$/ }))
@@ -86,7 +86,7 @@ describe('Stage 2 - outputs hub', () => {
   it('locks every format until Stage 1 produced evidence and a structure', () => {
     resetStore({ stage: 2 })
     renderStep(<Stage2Multimodal />)
-    expect(screen.getByText(/Completa pelo menos o Stage 1|Complete Stage 1/)).toBeInTheDocument()
+    expect(screen.getByText(/Completa pelo menos o Estágio 1|Complete Stage 1/)).toBeInTheDocument()
     screen.getAllByRole('button', { name: /Step 10[A-E]/ }).forEach((card) => expect(card).toBeDisabled())
   })
 
@@ -144,7 +144,7 @@ describe('Stage 3 - reflection hub', () => {
   it('goes back to Stage 2', () => {
     resetStore({ stage: 3 })
     renderStep(<Stage3Reflection />)
-    fireEvent.click(screen.getByRole('button', { name: /Stage 2/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Estágio 2|Stage 2/ }))
     expect(state().stage).toBe(2)
   })
 })
@@ -156,7 +156,7 @@ describe('Login (AuthControls)', () => {
     mockFetch({ other: () => jsonResponse({}) })
     renderStep(<AuthControls />)
     const notice = await screen.findByTitle(/AUTH_GOOGLE_ID/)
-    expect(notice).toHaveTextContent(/indisponivel|unavailable/i) // short label; the env var names are in the tooltip
+    expect(notice).toHaveTextContent(/indispon[ií]vel|unavailable/i) // short label; the env var names are in the tooltip
     expect(screen.queryByRole('button', { name: /Entrar com Google|Sign in with Google/ })).not.toBeInTheDocument()
   })
 
@@ -171,7 +171,7 @@ describe('Login (AuthControls)', () => {
   })
 
   it.each([
-    ['Configuration', /configuracao do servidor|server configuration/i],
+    ['Configuration', /configuração do servidor|server configuration/i],
     ['AccessDenied', /Test users|utilizador de teste|test user/i],
     ['OAuthCallback', /redirect URI/i],
     ['Callback', /base de dados|database/i],

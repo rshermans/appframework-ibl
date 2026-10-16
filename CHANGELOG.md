@@ -12,6 +12,10 @@ e este projeto segue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Mind map (Markmap) e mapa conceptual desenhado como grafo; filtros e acesso da telemetria.
 
 ### Alterado
+- Terminologia: barra superior com **Estágios** (PT) / **Stages** (EN); os passos passam a **Etapas** (PT) / **Steps** (EN) em toda a aplicação. Revisão de textos em PT-PT (rótulos em inglês traduzidos, acentos em falta, "Passo" → "Etapa").
+- A Etapa 8 (glossário) só fica concluída depois de o glossário ser visto (fim da lista nas Etapas 6-7 ou abrir a Etapa 8).
+- Fim do Estágio 1 (Etapa 9): janelas sobrepostas para simular o abstract (PT e EN, via IA com a evidência do aluno), simular a secção de referências, pôr a tese à prova, questões em aberto (com ponte para o Estágio 3) e possibilidades de pesquisa; todas assinaladas como simulação ilustrativa.
+- O botão final do Estágio 1 passa a "Continuar para o Estágio 2".
 - Pedidos à IA: indicador de progresso global (segundos decorridos, aviso quando demora), repetição automática (até 3 tentativas) em timeouts/erros de gateway e ligações perdidas; a pesquisa repete 1 vez por fonte.
 - Stage 3 redesenhado: removida a revisão por pares; auto-avaliação em que o aluno dá a nota (1–5) e a IA é opcional (segunda opinião, sem bloquear); diário reflexivo com 3 perguntas por defeito (IA opcional para personalizar); planeador de extensão com lacunas locais e leitura tolerante da resposta; erros de timeout com mensagem clara.
 - Modelo OpenAI por defeito: `gpt-6-luna` → `gpt-5.6-luna` → `gpt-5-mini` (último recurso `gpt-4o-mini`); `OPENAI_MODEL` continua a sobrepor. Modelos de raciocínio recebem margem de tokens e esforço baixo (evita resposta vazia no Step 2); modelos inexistentes são ignorados nas chamadas seguintes e o erro final indica o motivo de cada modelo.

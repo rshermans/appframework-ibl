@@ -30,7 +30,7 @@ export default function MindMapModal({
     >
       <p className="mb-4 text-sm text-[var(--on_surface)] opacity-70">
         {isPortuguese
-          ? 'Representacao visual do texto futuro e codigo PlantUML pronto para editor externo.'
+          ? 'Representação visual do texto futuro e código PlantUML pronto para editor externo.'
           : 'Visual representation of the future text and PlantUML code ready for external editors.'}
       </p>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -48,7 +48,7 @@ export default function MindMapModal({
             </div>
             <p className="text-sm text-[var(--on_surface)] opacity-90">
               {isPortuguese
-                ? 'O nodo raiz representa a pergunta final. Os ramos de segundo nivel correspondem aos topicos centrais e o terceiro nivel antecipa os detalhes que deverao aparecer no texto cientifico.'
+                ? 'O nodo raiz representa a pergunta final. Os ramos de segundo nivel correspondem aos tópicos centrais e o terceiro nivel antecipa os detalhes que deverão aparecer no texto científico.'
                 : 'The root node represents the final question. Second-level branches capture the central topics, and the third level anticipates the details that should appear in the scientific text.'}
             </p>
           </div>
