@@ -127,10 +127,10 @@ export default function Step1A() {
         <div className="mt-1 opacity-70 text-justified">
           {mode === 'quick'
             ? isPortuguese
-              ? 'Quick: mais rapido, menos profundidade analitica, bom para iteracoes iniciais.'
+              ? 'Quick: mais rapido, menos profundidade analítica, bom para iterações iniciais.'
               : 'Quick: faster and lighter analysis, useful for early iterations.'
             : isPortuguese
-              ? 'Advanced: comparacao profunda, mais detalhe epistemico e riscos de cada pergunta.'
+              ? 'Advanced: comparação profunda, mais detalhe epistémico e riscos de cada pergunta.'
               : 'Advanced: deeper comparison with stronger epistemic analysis and risk breakdown.'}
         </div>
       </div>

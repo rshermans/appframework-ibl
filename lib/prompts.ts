@@ -23,6 +23,7 @@ export type PromptId =
   | 'self_assessment'
   | 'reflection_journal'
   | 'inquiry_extension'
+  | 'abstract_simulation'
 
 type PromptVariables = Record<string, string | undefined>
 
@@ -645,6 +646,33 @@ Respond with valid JSON only:
   ]
 }`,
   },
+  abstract_simulation: {
+    id: 'abstract_simulation',
+    template: `You are a careful scientific-writing coach. A student finished a literature-based explanation and wants to SEE what a short abstract of their own mini-article could look like. This is an illustrative simulation for a course on writing with generative AI: the student will write the real abstract.
+
+Research question: [RQ]
+Argument core (the student's thesis): [EXPLANATION]
+Project context: [CONTEXT]
+Evidence (id - citation - claim): [EVIDENCE]
+Audience: [AUDIENCE]
+
+Write ONE abstract of 120 to 170 words, as a single paragraph that follows this flow without headings: why the question matters, the aim, the approach (a literature-based synthesis of the sources above, not an experiment), the main findings, one limitation and the next step.
+
+Rules:
+- Use ONLY what appears in the argument core and the evidence. Never invent numbers, sample sizes, authors, institutions or results.
+- Hedge honestly (suggests, indicates, is consistent with). State at least one limitation.
+- Plain, human voice. No hype or filler ("groundbreaking", "delves into", "plays a crucial role").
+- Do not claim original experiments or data collection.
+- Also give a short working title and 4 to 5 keywords.
+
+Respond with valid JSON only:
+{
+  "title": "Short working title",
+  "abstract": "The abstract paragraph",
+  "keywords": ["keyword 1", "keyword 2", "keyword 3", "keyword 4"],
+  "teachingNote": "One sentence (max 25 words) pointing out one thing the student should check or rewrite in their own words"
+}`,
+  },
   inquiry_extension: {
     id: 'inquiry_extension',
     template: `You are an inquiry extension planner supporting IBL Stage 3.
@@ -799,6 +827,10 @@ export function buildDefaultUserMessage(
       return portuguese
         ? 'Gera 3 micro-prompts de reflexão metacognitiva para o estágio atual.'
         : 'Generate 3 metacognitive reflective micro-prompts for the current stage.'
+    case 'abstract_simulation':
+      return portuguese
+        ? 'Escreve um abstract ilustrativo (simulação pedagógica) a partir da explicação científica e da evidência.'
+        : 'Write an illustrative abstract (pedagogical simulation) from the scientific explanation and the evidence.'
     case 'inquiry_extension':
       return portuguese
         ? 'Identifica lacunas na investigação e propõe 3 caminhos de extensão distintos.'

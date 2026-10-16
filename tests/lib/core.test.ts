@@ -220,3 +220,21 @@ describe('wizard persistence', () => {
     expect(readPersistedWizardState()).toBeNull()
   })
 })
+
+describe('Step 8 (glossary) only ticks once the glossary was seen', () => {
+  const empty: Stage1FlowState = {
+    candidateResearchQuestions: [], rqCandidates: [], step0OptionalCompleted: false, selectedRQs: [], comparisonResult: null,
+    finalResearchQuestion: null, searchDesign: null, searchArticles: [], evidenceRecords: [], knowledgeStructure: null, explanationDraft: null,
+  }
+  const withStructure: Stage1FlowState = { ...empty, knowledgeStructure: { topics: [] } }
+  it('is not done when the structure exists but the glossary was never shown', () => {
+    expect(isStage1StepDone('step4_knowledge_structure', withStructure)).toBe(true)
+    expect(isStage1StepDone('step8_glossary', withStructure)).toBe(false)
+  })
+  it('is done after the glossary was seen', () => {
+    expect(isStage1StepDone('step8_glossary', { ...withStructure, glossarySeen: true })).toBe(true)
+  })
+  it('is never done without a knowledge structure', () => {
+    expect(isStage1StepDone('step8_glossary', { ...empty, glossarySeen: true })).toBe(false)
+  })
+})

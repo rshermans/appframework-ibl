@@ -58,7 +58,7 @@ export default function Stage3Reflection() {
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-3">
             <h2 className="font-display text-3xl font-semibold tracking-tight text-[var(--on_surface)] md:text-4xl">
-              Stage 3 — Reflect &amp; Improve
+              {isPortuguese ? 'Estágio 3 — Refletir e melhorar' : 'Stage 3 — Reflect & Improve'}
             </h2>
             <p className="max-w-3xl text-slate-700">
               {isPortuguese
@@ -82,7 +82,7 @@ export default function Stage3Reflection() {
           onClick={() => setStage(2)}
           className="rounded-[var(--radius-md)] bg-[var(--surface_container)] px-4 py-2 text-sm font-medium text-[var(--on_surface)] transition hover:bg-[var(--surface_container_low)]"
         >
-          {isPortuguese ? '← Voltar ao Stage 2' : '← Back to Stage 2'}
+          {isPortuguese ? '← Voltar ao Estágio 2' : '← Back to Stage 2'}
         </button>
         <span className="text-xs text-[var(--on_surface_variant)]">
           {isPortuguese ? `${completedCount}/${STEPS.length} completos` : `${completedCount}/${STEPS.length} completed`}
@@ -92,7 +92,7 @@ export default function Stage3Reflection() {
       {!hasFinalQuestion && (
         <div className="rounded-[var(--radius-md)] border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
           {isPortuguese
-            ? 'Para gerar apoio de IA no Stage 3, finalize primeiro a questão de investigação no Stage 1.'
+            ? 'Para gerar apoio de IA no Estágio 3, finalize primeiro a questão de investigação no Estágio 1.'
             : 'To generate AI support in Stage 3, first finalize the research question in Stage 1.'}
         </div>
       )}

@@ -35,7 +35,7 @@ export default function SearchArticleCard({ article, index, selected, onToggle, 
           checked={selected}
           onChange={() => onToggle(article.id)}
         />
-        {isPortuguese ? 'Selecionar para analise' : 'Select for analysis'}
+        {isPortuguese ? 'Selecionar para análise' : 'Select for analysis'}
       </label>
       <div className={`mt-1 font-semibold ${selected ? 'text-[var(--on_primary)]' : 'text-[var(--on_surface)]'}`}>{article.title}</div>
       <div className="mt-1 text-sm opacity-60">

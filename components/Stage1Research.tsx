@@ -64,6 +64,7 @@ export default function Stage1Research() {
     evidenceRecords,
     explanationDraft,
     knowledgeStructure,
+    glossarySeen,
     finalResearchQuestion,
     searchArticles,
     searchDesign,
@@ -113,6 +114,7 @@ export default function Stage1Research() {
     searchArticles,
     evidenceRecords,
     knowledgeStructure,
+    glossarySeen,
     explanationDraft,
   }
 
@@ -140,7 +142,7 @@ export default function Stage1Research() {
     <div className="mx-auto w-full max-w-[1500px] md:grid md:grid-cols-[17.5rem_minmax(0,1fr)] md:gap-6 md:px-5">
       {/* Steps: a sticky strip on phones, a left rail from md up */}
       <aside
-        aria-label={pt ? 'Passos do Stage 1' : 'Stage 1 steps'}
+        aria-label={pt ? 'Etapas do Estágio 1' : 'Stage 1 steps'}
         className="sticky top-0 z-30 border-b border-[var(--outline_variant)] bg-[var(--surface)]/95 backdrop-blur md:z-10 md:max-h-[calc(100dvh-3.5rem)] md:self-start md:overflow-y-auto md:border-0 md:bg-transparent md:py-4 md:backdrop-blur-none"
       >
         <div className="flex snap-x gap-2 overflow-x-auto px-3 py-2 md:flex-col md:gap-1.5 md:overflow-visible md:px-0 md:py-0">
@@ -228,7 +230,7 @@ export default function Stage1Research() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-semibold text-[var(--on_surface)]">
               {pt
-                ? `Passo ${Math.max(activeIndex + 1, 1)} de ${visibleSteps.length} · ${doneCount} ${doneCount === 1 ? 'concluído' : 'concluídos'}`
+                ? `Etapa ${Math.max(activeIndex + 1, 1)} de ${visibleSteps.length} · ${doneCount} ${doneCount === 1 ? 'concluído' : 'concluídos'}`
                 : `Step ${Math.max(activeIndex + 1, 1)} of ${visibleSteps.length} · ${doneCount} completed`}
             </div>
             {nextStepId && nextStepId !== activeStep && (
@@ -237,7 +239,7 @@ export default function Stage1Research() {
                 onClick={() => setWorkflowStep(nextStepId)}
                 className="min-h-[40px] rounded-[var(--radius-md)] bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-[var(--on_primary)] transition hover:brightness-95"
               >
-                {pt ? 'Próximo passo recomendado: ' : 'Recommended next step: '}
+                {pt ? 'Próxima etapa recomendada: ' : 'Recommended next step: '}
                 {stepLabel(nextStepId)} →
               </button>
             )}
@@ -277,7 +279,7 @@ export default function Stage1Research() {
                 onClick={() => setStage(2)}
                 className="flex min-h-[44px] items-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-5 text-sm font-semibold text-[var(--on_primary)] transition hover:brightness-95 active:scale-95"
               >
-                {t('steps.step1B.continueButton')} →
+                {t('common.continueToStage2')} →
               </button>
             ) : followingStepId ? (
               <button

@@ -65,7 +65,7 @@ export default function Step0() {
 
     const alreadyExists = questions.some((question) => question.question.trim() === trimmed)
     if (alreadyExists) {
-      setError(isPortuguese ? 'Esta pergunta ja existe na lista.' : 'This question is already in the list.')
+      setError(isPortuguese ? 'Esta pergunta já existe na lista.' : 'This question is already in the list.')
       return
     }
 
@@ -99,7 +99,7 @@ export default function Step0() {
     setError('')
 
     const refinement = generationGuidance.trim()
-      ? `${isPortuguese ? 'Instrucoes adicionais' : 'Additional instructions'}: ${generationGuidance.trim()}`
+      ? `${isPortuguese ? 'Instruções adicionais' : 'Additional instructions'}: ${generationGuidance.trim()}`
       : ''
 
     try {
@@ -115,7 +115,7 @@ export default function Step0() {
           topic: localTopic,
           level: 'higher-education',
           content: refinement
-            ? `${isPortuguese ? 'Topico' : 'Topic'}: ${localTopic}\n${refinement}`
+            ? `${isPortuguese ? 'Tópico' : 'Topic'}: ${localTopic}\n${refinement}`
             : undefined,
           locale,
         }),
@@ -175,14 +175,14 @@ export default function Step0() {
 
       <div className="bg-[var(--surface_container_low)] p-4">
         <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
-          {isPortuguese ? 'Refazer geracao com orientacoes adicionais' : 'Refine generation with extra guidance'}
+          {isPortuguese ? 'Refazer geração com orientações adicionais' : 'Refine generation with extra guidance'}
         </div>
         <input
           value={generationGuidance}
           onChange={(event) => setGenerationGuidance(event.target.value)}
           placeholder={
             isPortuguese
-              ? 'Ex.: perguntas com foco em impacto social e viabilidade metodologica'
+              ? 'Ex.: perguntas com foco em impacto social e viabilidade metodológica'
               : 'e.g. focus on social impact and methodological feasibility'
           }
           className="ghost-input w-full"
@@ -199,7 +199,7 @@ export default function Step0() {
             onChange={(event) => setManualQuestion(event.target.value)}
             placeholder={
               isPortuguese
-                ? 'Escreve uma pergunta de investigacao manual'
+                ? 'Escreve uma pergunta de investigação manual'
                 : 'Write a manual research question'
             }
             className="ghost-input min-w-[260px] flex-1"
@@ -222,7 +222,7 @@ export default function Step0() {
       <button
         onClick={runGeneration}
         disabled={loading}
-        title={isPortuguese ? 'Executar geracao assistida por IA para criar perguntas candidatas.' : 'Run AI-assisted generation to create candidate questions.'}
+        title={isPortuguese ? 'Executar geração assistida por IA para criar perguntas candidatas.' : 'Run AI-assisted generation to create candidate questions.'}
         className="primary-gradient w-full rounded-[var(--radius-md)] px-4 py-3 font-semibold text-[var(--on_primary)] transition hover:brightness-110 disabled:opacity-50"
       >
         {loading ? t('steps.step0.generating') : t('steps.step0.generate')}
@@ -236,7 +236,7 @@ export default function Step0() {
         }}
         className="w-full bg-[var(--surface_container)] px-4 py-2 text-sm font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_low)]"
       >
-        {isPortuguese ? 'Ignorar Step 0 (opcional)' : 'Skip Step 0 (optional)'}
+        {isPortuguese ? 'Ignorar Etapa 0 (opcional)' : 'Skip Step 0 (optional)'}
       </button>
 
       {questions.length > 0 && (

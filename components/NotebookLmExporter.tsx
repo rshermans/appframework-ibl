@@ -258,7 +258,7 @@ export default function NotebookLmExporter({
           <div className="rounded-md bg-amber-50 p-3 text-xs text-amber-900">
             {pt ? (
               <>
-                <p className="font-semibold mb-1">Próximos passos:</p>
+                <p className="font-semibold mb-1">Próximas etapas:</p>
                 <ol className="list-inside list-decimal space-y-1">
                   <li>Clique "Copiar Prompt" (já está na clipboard)</li>
                   <li>Clique "Abrir NotebookLM"</li>

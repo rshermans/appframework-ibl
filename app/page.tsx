@@ -396,7 +396,7 @@ export default function Home() {
                 <p className="mt-5 max-w-xl text-sm leading-7 text-slate-700">{t('home.intro')}</p>
               </div>
               <div className="bg-[var(--surface_container_low)] p-5">
-                <p className="font-label text-xs uppercase tracking-[0.12em] text-slate-500">IBL Context</p>
+                <p className="font-label text-xs uppercase tracking-[0.12em] text-slate-500">{t('home.iblContextLabel')}</p>
                 <p className="mt-3 text-sm leading-7 text-slate-700">
                   {t('home.iblContext')}
                 </p>

@@ -84,7 +84,7 @@ describe('GenerateControls (chunked direct generation)', () => {
     seedStore({ explanationDraft: null })
     renderControls()
     expect(screen.getByRole('button', { name: /Gerar com IA|Generate with AI/ })).toBeDisabled()
-    expect(screen.getByText(/Step 9/)).toBeInTheDocument()
+    expect(screen.getByText(/Etapa 9|Step 9/)).toBeInTheDocument()
   })
 })
 

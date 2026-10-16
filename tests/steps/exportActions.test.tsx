@@ -77,7 +77,7 @@ describe('export actions in the top-bar menu', () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     const api = mockFetch({ other: () => jsonResponse({}) })
     renderStep(<Home />)
-    await openMenuItem(/Download PDF/)
+    await openMenuItem(/Descarregar PDF|Download PDF/)
 
     await waitFor(() => expect(click).toHaveBeenCalled(), { timeout: 5000 })
     expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob))

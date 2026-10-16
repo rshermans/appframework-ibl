@@ -52,7 +52,7 @@ export default function Step1B() {
 
     const refinementInstructions = [
       refinementPrompt.trim()
-        ? `${isPortuguese ? 'Instrucoes de melhoria' : 'Refinement instructions'}: ${refinementPrompt.trim()}`
+        ? `${isPortuguese ? 'Instruções de melhoria' : 'Refinement instructions'}: ${refinementPrompt.trim()}`
         : '',
       refinementKeywords.trim()
         ? `${isPortuguese ? 'Palavras complementares' : 'Complementary keywords'}: ${refinementKeywords.trim()}`
@@ -139,7 +139,7 @@ export default function Step1B() {
     }
 
     if (!rewriteDraft.trim()) {
-      setError(isPortuguese ? 'A reformulacao nao pode estar vazia.' : 'Rewrite cannot be empty.')
+      setError(isPortuguese ? 'A reformulação não pode estar vazia.' : 'Rewrite cannot be empty.')
       return
     }
 
@@ -163,7 +163,7 @@ export default function Step1B() {
 
       <div className="bg-[var(--surface_container_low)] p-4">
         <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
-          {isPortuguese ? 'Escolha humana da RQ final (sem geracao automatica)' : 'Human selection of the final RQ (no auto-generation)'}
+          {isPortuguese ? 'Escolha humana da RQ final (sem geração automática)' : 'Human selection of the final RQ (no auto-generation)'}
         </div>
         <div className="space-y-3">
           {selectedRQs.map((rq) => (
@@ -184,7 +184,7 @@ export default function Step1B() {
           onChange={(event) => setManualJustification(event.target.value)}
           placeholder={
             isPortuguese
-              ? 'Justificacao opcional para esta escolha manual'
+              ? 'Justificação opcional para esta escolha manual'
               : 'Optional justification for this manual choice'
           }
           className="ghost-input mt-3 w-full"
@@ -217,7 +217,7 @@ export default function Step1B() {
 
       <div className="bg-[var(--surface_container_low)] p-4">
         <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
-          {isPortuguese ? 'Refazer sintese com input do utilizador' : 'Redo synthesis with user input'}
+          {isPortuguese ? 'Refazer síntese com input do utilizador' : 'Redo synthesis with user input'}
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           <input
@@ -296,7 +296,7 @@ export default function Step1B() {
               onClick={applyRewrite}
               className="mt-2 rounded-[var(--radius-md)] bg-[var(--surface_container)] px-3 py-2 text-sm font-semibold text-[var(--on_surface)] transition hover:bg-[var(--surface_container_high)]"
             >
-              {isPortuguese ? 'Aplicar reformulacao' : 'Apply rewrite'}
+              {isPortuguese ? 'Aplicar reformulação' : 'Apply rewrite'}
             </button>
           </div>
 

@@ -110,8 +110,8 @@ export default async function TelemetryDashboardPage({ searchParams }: PageProps
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             {signedIn
-              ? (pt ? 'A sua conta nao tem permissao para ver a telemetria.' : 'Your account is not allowed to view telemetry.')
-              : (pt ? 'Inicie sessao com Google na pagina inicial para ver a telemetria.' : 'Sign in with Google on the home page to view telemetry.')}
+              ? (pt ? 'A sua conta não tem permissão para ver a telemetria.' : 'Your account is not allowed to view telemetry.')
+              : (pt ? 'Inicie sessão com Google na página inicial para ver a telemetria.' : 'Sign in with Google on the home page to view telemetry.')}
           </p>
           <a href="/" className="mt-5 inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
             {pt ? 'Voltar ao inicio' : 'Back to home'}

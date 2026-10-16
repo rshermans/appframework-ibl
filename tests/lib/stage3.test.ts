@@ -67,3 +67,23 @@ describe('friendlyAiError', () => {
     expect(friendlyAiError(new Error('boom'), false)).toMatch(/boom/)
   })
 })
+
+import { parseAbstractSimulation, referenceSectionText, buildReferenceSection } from '@/lib/explorationActivities'
+import { getPrompt } from '@/lib/prompts'
+
+describe('abstract simulation', () => {
+  it('parses tolerant shapes and rejects an empty abstract', () => {
+    expect(parseAbstractSimulation({ titulo: 'T', resumo: 'R', keywords: ['a', ' b '] })).toMatchObject({ title: 'T', abstract: 'R', keywords: ['a', 'b'] })
+    expect(() => parseAbstractSimulation({})).toThrow()
+  })
+  it('the prompt fills every placeholder', () => {
+    const prompt = getPrompt('abstract_simulation', { RQ: 'q', EXPLANATION: 'tese', CONTEXT: 'ctx', EVIDENCE: '[e1] x', AUDIENCE: 'general' }, { locale: 'en' })
+    expect(prompt).toContain('tese')
+    expect(prompt).not.toMatch(/\[(RQ|EXPLANATION|CONTEXT|EVIDENCE|AUDIENCE)\]/)
+  })
+  it('lists references alphabetically', () => {
+    const refs = buildReferenceSection([{ id: 'a', citation: 'Zeta (2020).' }, { id: 'b', citation: 'Alfa (2019).' }] as never, [])
+    expect(refs.map((r) => r.citation)).toEqual(['Alfa (2019).', 'Zeta (2020).'])
+    expect(referenceSectionText(refs, true)).toMatch(/^Referências/)
+  })
+})

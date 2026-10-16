@@ -68,6 +68,7 @@ const LIMITS: Partial<Record<PromptId, AiLimits>> = {
   self_assessment: { maxOutputTokens: 1500, attemptTimeoutMs: 14000 },
   reflection_journal: { maxOutputTokens: 600, attemptTimeoutMs: 9000 },
   inquiry_extension: { maxOutputTokens: 1500, attemptTimeoutMs: 14000 },
+  abstract_simulation: { maxOutputTokens: 700, attemptTimeoutMs: 14000 },
 }
 
 export function getAiLimits(promptId: PromptId): AiLimits | undefined {

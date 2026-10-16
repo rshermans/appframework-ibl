@@ -14,28 +14,28 @@ interface Message {
 const STEP_SUGGESTIONS: Record<string, Array<{ label: string; icon: React.ReactNode }>> = {
   default: [
     { label: 'Como funciona o IBL?', icon: <BookOpen className="w-3 h-3" /> },
-    { label: 'Qual é o próximo passo?', icon: <HelpCircle className="w-3 h-3" /> },
+    { label: 'Qual é a próxima etapa?', icon: <HelpCircle className="w-3 h-3" /> },
     { label: 'Dicas de ética na IA', icon: <Sparkles className="w-3 h-3" /> },
   ],
   step0_generate: [
     { label: 'Como gerar boas perguntas?', icon: <BookOpen className="w-3 h-3" /> },
     { label: 'O que é um tipo epistemológico?', icon: <HelpCircle className="w-3 h-3" /> },
-    { label: 'Dica ética para o Step 0', icon: <Sparkles className="w-3 h-3" /> },
+    { label: 'Dica ética para a Etapa 0', icon: <Sparkles className="w-3 h-3" /> },
   ],
   step1_select: [
     { label: 'Como selecionar a melhor RQ?', icon: <BookOpen className="w-3 h-3" /> },
     { label: 'Que critérios usar na seleção?', icon: <HelpCircle className="w-3 h-3" /> },
-    { label: 'Dica ética para o Step 1', icon: <Sparkles className="w-3 h-3" /> },
+    { label: 'Dica ética para a Etapa 1', icon: <Sparkles className="w-3 h-3" /> },
   ],
   step1a_compare: [
-    { label: 'O que é o Step 1A?', icon: <BookOpen className="w-3 h-3" /> },
+    { label: 'O que é a Etapa 1A?', icon: <BookOpen className="w-3 h-3" /> },
     { label: 'Como sintetizar a pergunta final?', icon: <HelpCircle className="w-3 h-3" /> },
     { label: 'As 8 dimensões de avaliação', icon: <Sparkles className="w-3 h-3" /> },
   ],
   step1b_synthesize: [
     { label: 'O que é análise epistemológica?', icon: <BookOpen className="w-3 h-3" /> },
     { label: 'A minha pergunta está bem formulada?', icon: <HelpCircle className="w-3 h-3" /> },
-    { label: 'Dica ética para o Step 1B', icon: <Sparkles className="w-3 h-3" /> },
+    { label: 'Dica ética para a Etapa 1B', icon: <Sparkles className="w-3 h-3" /> },
   ],
   step2_search_design: [
     { label: 'Como construir uma string booleana?', icon: <BookOpen className="w-3 h-3" /> },
@@ -65,7 +65,7 @@ const STEP_SUGGESTIONS: Record<string, Array<{ label: string; icon: React.ReactN
   step9_explanation: [
     { label: 'Como estruturar a explicação científica?', icon: <BookOpen className="w-3 h-3" /> },
     { label: 'Como ancorar a evidência?', icon: <HelpCircle className="w-3 h-3" /> },
-    { label: 'Dica ética — Stage 2', icon: <Sparkles className="w-3 h-3" /> },
+    { label: 'Dica ética — Estágio 2', icon: <Sparkles className="w-3 h-3" /> },
   ],
   step6_multimodal: [
     { label: 'Que formatos multimodais existem?', icon: <BookOpen className="w-3 h-3" /> },
@@ -75,7 +75,7 @@ const STEP_SUGGESTIONS: Record<string, Array<{ label: string; icon: React.ReactN
   step7_reflection: [
     { label: 'O que é a reflexão metacognitiva?', icon: <BookOpen className="w-3 h-3" /> },
     { label: 'Como fazer a auto-avaliação?', icon: <HelpCircle className="w-3 h-3" /> },
-    { label: 'Dica ética — Stage 3', icon: <Sparkles className="w-3 h-3" /> },
+    { label: 'Dica ética — Estágio 3', icon: <Sparkles className="w-3 h-3" /> },
   ],
 }
 
@@ -128,7 +128,7 @@ export default function ChatAssistant() {
   const quickSuggestions = userProfile?.domain
     ? [
         {
-          label: `Como aplicar este passo em ${userProfile.domain}?`,
+          label: `Como aplicar esta etapa em ${userProfile.domain}?`,
           icon: <BookOpen className="w-3 h-3" />,
         },
         ...baseSuggestions.slice(0, 2),

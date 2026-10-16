@@ -5,6 +5,7 @@ import { useWizardStore } from '@/store/wizardStore'
 import type { KnowledgeStructure } from '@/types/research-workflow'
 import { useI18n } from '@/components/I18nProvider'
 import StepHeader from '@/components/StepHeader'
+import SeenSentinel from '@/components/ui/SeenSentinel'
 import MindMapModal from '@/components/MindMapModal'
 import { parseAiJson } from '@/lib/parseAiJson'
 import { normalizeKnowledgeStructure, type RawKnowledgeStructure } from '@/lib/knowledgeStructure'
@@ -21,6 +22,7 @@ export default function Step4Structure() {
     projectId,
     setKnowledgeStructure,
     setWorkflowStep,
+    markGlossarySeen,
     topic,
   } = useWizardStore()
   const [loading, setLoading] = useState(false)
@@ -52,7 +54,7 @@ export default function Step4Structure() {
       const evidenceJson = JSON.stringify(evidenceRecords, null, 2)
       const hasRefine = Boolean(refineInstructions.trim())
       const requiredFieldsReminder = isPortuguese
-        ? 'Devolve obrigatoriamente JSON com os campos "topics" (array nao vazio) e "concept_map_nodes" (array nao vazio).'
+        ? 'Devolve obrigatoriamente JSON com os campos "topics" (array não vazio) e "concept_map_nodes" (array não vazio).'
         : 'You MUST return JSON with non-empty "topics" array and non-empty "concept_map_nodes" array.'
       const { response, json: payload } = await safeFetch('/api/ai', {
         method: 'POST',
@@ -68,7 +70,7 @@ export default function Step4Structure() {
           evidence: evidenceJson,
           evidenceRecords,
           content: hasRefine
-            ? `${isPortuguese ? 'Instrucoes complementares' : 'Additional instructions'}: ${refineInstructions.trim()}\n\n${requiredFieldsReminder}`
+            ? `${isPortuguese ? 'Instruções complementares' : 'Additional instructions'}: ${refineInstructions.trim()}\n\n${requiredFieldsReminder}`
             : requiredFieldsReminder,
           locale,
         }),
@@ -86,7 +88,7 @@ export default function Step4Structure() {
       if (nextStructure.topics.length === 0 && nextStructure.conceptMapNodes.length === 0) {
         throw new Error(
           isPortuguese
-            ? 'A IA devolveu uma estrutura sem topicos nem nos do mapa conceptual. Tente refinar as instrucoes.'
+            ? 'A IA devolveu uma estrutura sem tópicos nem nós do mapa conceptual. Tente refinar as instruções.'
             : 'AI returned a structure without topics or concept-map nodes. Try refining your instructions.'
         )
       }
@@ -118,7 +120,7 @@ export default function Step4Structure() {
 
       <div className="bg-[var(--surface_container_low)] p-4">
         <div className="mb-2 text-sm font-semibold text-[var(--on_surface)]">
-          {isPortuguese ? 'Refazer estrutura com instrucoes adicionais' : 'Redo structure with additional instructions'}
+          {isPortuguese ? 'Refazer estrutura com instruções adicionais' : 'Redo structure with additional instructions'}
         </div>
         <textarea
           value={refineInstructions}
@@ -126,7 +128,7 @@ export default function Step4Structure() {
           rows={3}
           placeholder={
             isPortuguese
-              ? 'Ex.: destacar relacoes causais e criar glossario focado em termos tecnicos'
+              ? 'Ex.: destacar relações causais e criar glossário focado em termos técnicos'
               : 'e.g. emphasize causal links and build a glossary focused on technical terms'
           }
           className="ghost-input w-full"
@@ -220,7 +222,7 @@ export default function Step4Structure() {
             <ConceptMapGraph
               nodes={knowledgeStructure.conceptMapNodes}
               edges={knowledgeStructure.conceptMapEdges}
-              emptyLabel={isPortuguese ? 'Sem relacoes para desenhar.' : 'No relations to draw.'}
+              emptyLabel={isPortuguese ? 'Sem relações para desenhar.' : 'No relations to draw.'}
             />
           </div>
 
@@ -254,7 +256,7 @@ export default function Step4Structure() {
           {Array.isArray(knowledgeStructure.glossary) && knowledgeStructure.glossary.length > 0 && (
             <div>
               <div className="mb-2 font-label text-[10px] uppercase tracking-[0.12em] text-[var(--secondary)]">
-                {isPortuguese ? 'Glossario' : 'Glossary'}
+                {isPortuguese ? 'Etapa 8 · Glossário' : 'Step 8 · Glossary'}
               </div>
               <ul className="space-y-2">
                 {knowledgeStructure.glossary.map((entry) => (
@@ -263,6 +265,8 @@ export default function Step4Structure() {
                   </li>
                 ))}
               </ul>
+              {/* Reaching the end of the glossary is what ticks Step 8 in the stepper */}
+              <SeenSentinel onSeen={markGlossarySeen} />
             </div>
           )}
 

@@ -167,37 +167,37 @@ export const IBL_ETHICAL_TIPS_EN: Record<IBLStageKey | IBLStepKey, string> = {
 
 export const IBL_ETHICAL_TIPS_PT: Record<IBLStageKey | IBLStepKey, string> = {
   stage0:
-    'As atribuicoes de papeis por IA sao propostas, nao ordens. A distribuicao final de tarefas deve ser decidida em equipa.',
+    'As atribuições de papéis por IA são propostas, não ordens. A distribuição final de tarefas deve ser decidida em equipa.',
   stage1:
-    'Valida sempre cada saida face ao objetivo da investigacao e aos criterios de qualidade das fontes.',
+    'Valida sempre cada saída face ao objetivo da investigação e aos critérios de qualidade das fontes.',
   stage2:
-    'Todas as explicacoes e outputs devem manter fidelidade a evidencia validada no Stage 1.',
+    'Todas as explicações e outputs devem manter fidelidade a evidência validada no Estágio 1.',
   stage3:
-    'A reflexao e trabalho humano. A IA pode sugerir, mas as conclusoes honestas devem ser escritas pela equipa.',
+    'A reflexão e trabalho humano. A IA pode sugerir, mas as conclusões honestas devem ser escritas pela equipa.',
   step0_generate:
-    'As perguntas geradas por IA sao pontos de partida. A avaliacao e selecao continuam a ser decisoes humanas.',
+    'As perguntas geradas por IA são pontos de partida. A avaliação e seleção continuam a ser decisões humanas.',
   step1_select:
-    'Classifica as perguntas candidatas de forma independente antes de ver recomendacoes da IA para reduzir enviesamento de ancoragem.',
+    'Classifica as perguntas candidatas de forma independente antes de ver recomendações da IA para reduzir enviesamento de ancoragem.',
   step1a_compare:
-    'Usa a comparacao da IA para testar alternativas, nao para substituir o raciocinio disciplinar.',
+    'Usa a comparação da IA para testar alternativas, não para substituir o raciocínio disciplinar.',
   step1b_synthesize:
-    'A IA pode sugerir sinteses, mas a validade da pergunta final depende do teu julgamento metodologico.',
+    'A IA pode sugerir sinteses, mas a validade da pergunta final depende do teu julgamento metodológico.',
   step2_search_design:
     'Testa manualmente cada string de pesquisa. Simplifica as strings que devolvem menos de 5 ou mais de 500 resultados.',
   step3_evidence_extraction:
-    'A IA extrai apenas do texto fornecido. Se a evidencia for ambigua, a interpretacao do artigo tem prioridade.',
+    'A IA extrai apenas do texto fornecido. Se a evidência for ambígua, a interpretação do artigo tem prioridade.',
   step5_source_selection:
-    'O CRAAP avalia credibilidade, mas a relevancia para a tua pergunta continua a ser teu julgamento. Cruza pelo menos 2 fontes com Scimago ou Sherpa Romeo. Exclui: Wikipedia, Studocu, SlideShare.',
+    'O CRAAP avalia credibilidade, mas a relevância para a tua pergunta continua a ser teu julgamento. Cruza pelo menos 2 fontes com Scimago ou Sherpa Romeo. Exclui: Wikipedia, Studocu, SlideShare.',
   step4_knowledge_structure:
-    'Cada topico e cada no do mapa deve estar ancorado em pelo menos uma fonte ja revista pela equipa.',
+    'Cada tópico e cada nó do mapa deve estar ancorado em pelo menos uma fonte já revista pela equipa.',
   step8_glossary:
-    'Inclui apenas termos presentes nas fontes revistas. Remove jargao gerado por IA que nao aparece na literatura do topico.',
+    'Inclui apenas termos presentes nas fontes revistas. Remove jargão gerado por IA que não aparece na literatura do tópico.',
   step9_explanation:
-    'A explicacao cientifica deve manter fidelidade a evidencia. Revise os rascunhos da IA antes de publicar.',
+    'A explicação científica deve manter fidelidade a evidência. Revise os rascunhos da IA antes de publicar.',
   step6_multimodal:
-    'Elementos visuais gerados por IA podem distorcer estruturas. Cruza sempre com referencias revistas por pares antes de finalizar.',
+    'Elementos visuais gerados por IA podem distorcer estruturas. Cruza sempre com referências revistas por pares antes de finalizar.',
   step7_reflection:
-    'Usa prompts de IA apenas como gatilhos. As declaracoes de reflexao devem ser autenticas e escritas pela equipa.',
+    'Usa prompts de IA apenas como gatilhos. As declarações de reflexão devem ser autênticas e escritas pela equipa.',
 }
 
 export function getIblStepMeta(stepId: IBLStepKey): IBLStepMeta {
@@ -209,4 +209,10 @@ export function getIblEthicalTip(
   locale: 'pt-PT' | 'en' = 'en'
 ): string {
   return locale === 'pt-PT' ? IBL_ETHICAL_TIPS_PT[key] : IBL_ETHICAL_TIPS_EN[key]
+}
+
+/** "Step 1B" -> "Etapa 1B", "Steps 6-7" -> "Etapas 6-7", "Stage 3" -> "Estágio 3" in pt-PT; unchanged in English. */
+export function localizeBadge(badge: string, pt: boolean): string {
+  if (!pt) return badge
+  return badge.replace(/^Steps\b/, 'Etapas').replace(/^Step\b/, 'Etapa').replace(/^Stage\b/, 'Estágio')
 }

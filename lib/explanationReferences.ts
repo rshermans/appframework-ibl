@@ -106,11 +106,11 @@ export function buildCompleteBibliography(
 export function buildFallbackOutline(isPortuguese: boolean): string[] {
   return isPortuguese
     ? [
-        'Enquadramento da pergunta de investigacao',
-        'Sintese da evidencia principal',
-        'Analise critica dos achados',
-        'Implicacoes e proximos passos',
-        'Conclusao',
+        'Enquadramento da pergunta de investigação',
+        'Síntese da evidência principal',
+        'Análise crítica dos achados',
+        'Implicações e próximos passos',
+        'Conclusão',
       ]
     : [
         'Research question framing',
@@ -128,6 +128,6 @@ export function buildFallbackArgumentCore(
 ): string {
   const evidenceCount = evidenceRecords.length
   return isPortuguese
-    ? `Com base em ${evidenceCount} registos de evidencia analisados sobre ${topic || 'o tema em estudo'}, observa-se um padrao consistente que sustenta uma explicacao cientifica inicial, ainda sujeita a refinamento critico.`
+    ? `Com base em ${evidenceCount} registos de evidência analisados sobre ${topic || 'o tema em estudo'}, observa-se um padrão consistente que sustenta uma explicação científica inicial, ainda sujeita a refinamento crítico.`
     : `Based on ${evidenceCount} analyzed evidence records about ${topic || 'the current topic'}, the available findings support an initial scientific explanation that can be refined further.`
 }
